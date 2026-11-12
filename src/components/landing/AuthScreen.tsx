@@ -56,6 +56,25 @@ function Preview() {
   );
 }
 
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+      <path d="M16.37 12.62c-.02-2.18 1.78-3.23 1.86-3.28-1.01-1.48-2.59-1.69-3.15-1.71-1.34-.14-2.62.79-3.3.79-.68 0-1.73-.77-2.84-.75-1.46.02-2.81.85-3.56 2.16-1.52 2.64-.39 6.55 1.09 8.69.72 1.05 1.59 2.22 2.72 2.18 1.09-.04 1.5-.7 2.82-.7 1.31 0 1.69.7 2.84.68 1.17-.02 1.92-1.07 2.64-2.12.83-1.21 1.17-2.38 1.19-2.44-.03-.01-2.28-.88-2.31-3.5ZM14.2 6.2c.6-.73 1-1.74.89-2.75-.86.04-1.9.57-2.52 1.3-.55.64-1.04 1.67-.91 2.66.96.07 1.94-.49 2.54-1.21Z" />
+    </svg>
+  );
+}
+
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path fill="#4285F4" d="M23.04 12.26c0-.82-.07-1.6-.21-2.36H12v4.46h6.19a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.43-4.96 3.43-8.47Z" />
+      <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1.03 7.6-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.88 1.1-2.98 0-5.5-2.01-6.4-4.72H1.76v2.98A11.5 11.5 0 0 0 12 23.5Z" />
+      <path fill="#FBBC05" d="M5.6 14.2a6.9 6.9 0 0 1 0-4.4V6.82H1.76a11.5 11.5 0 0 0 0 10.36L5.6 14.2Z" />
+      <path fill="#EA4335" d="M12 5.08c1.69 0 3.2.58 4.39 1.72l3.3-3.3C17.7 1.64 15.1.5 12 .5A11.5 11.5 0 0 0 1.76 6.82L5.6 9.8c.9-2.71 3.42-4.72 6.4-4.72Z" />
+    </svg>
+  );
+}
+
 const input = "w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base text-foreground outline-none transition placeholder:text-subtle-foreground focus:border-primary focus:ring-4 focus:ring-primary/15";
 
 export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolean; onClose: () => void; initial?: Mode }) {
@@ -64,11 +83,13 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
   const [vals, setVals] = useState({ first: "", last: "", email: "", password: "" });
   const [err, setErr] = useState<Record<string, string>>({});
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
+  const [via, setVia] = useState<"Apple" | "Google" | null>(null);
 
   useEffect(() => {
     if (open) {
       setMode(initial);
       setState("idle");
+      setVia(null);
       setErr({});
     }
   }, [open, initial]);
@@ -106,6 +127,15 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
     if (mode === "signup" ? !checks.every((c) => c.ok) : pw.length < 1) next.password = mode === "signup" ? "Meet all three password rules" : "Enter your password";
     setErr(next);
     if (Object.keys(next).length) return;
+    setVia(null);
+    setState("sending");
+    window.setTimeout(() => setState("done"), 900);
+  }
+
+  function social(provider: "Apple" | "Google") {
+    if (state === "sending") return;
+    setErr({});
+    setVia(provider);
     setState("sending");
     window.setTimeout(() => setState("done"), 900);
   }
@@ -113,10 +143,10 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
   return (
     <div className="menu-in fixed inset-0 z-[70] flex bg-navy" role="dialog" aria-modal="true" aria-label={mode === "signup" ? "Create your Vendora account" : "Sign in to Vendora"}>
       {/* left: brand */}
-      <aside className="relative hidden shrink-0 flex-col justify-center overflow-hidden bg-gradient-to-br from-navy via-navy-2 to-indigo/40 px-10 py-10 lg:flex lg:w-[40%] xl:px-14">
+      <aside className="relative hidden shrink-0 flex-col justify-center overflow-hidden bg-gradient-to-br from-navy via-navy-2 to-indigo/40 px-10 py-10 lg:flex lg:w-1/2 xl:px-16">
         <div className="bg-grid-dark mask-radial pointer-events-none absolute inset-0 opacity-60" />
         <div className="glow-blue animate-orb-slow pointer-events-none absolute -bottom-40 -left-40 h-[560px] w-[560px] opacity-60" />
-        <div className="relative z-10 flex w-full max-w-[500px] flex-col items-start text-left">
+        <div className="relative z-10 mx-auto flex w-full max-w-[480px] flex-col items-start text-left">
           <Logo className="-ml-1 h-20 xl:h-24" />
           <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">
             Take <span className="grad-rupee" style={{ animation: "gradient-pan 6s ease infinite" }}>control</span> of your procurement.
@@ -129,11 +159,11 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
       </aside>
 
       {/* right: form */}
-      <main className="relative flex w-full flex-1 flex-col overflow-y-auto bg-white">
+      <main className="relative flex w-full flex-1 flex-col overflow-y-auto bg-white lg:w-1/2 lg:flex-none xl:px-16">
         <button type="button" onClick={onClose} aria-label="Close" className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-muted text-foreground transition hover:rotate-90 hover:bg-accent">
           <X className="h-5 w-5" />
         </button>
-        <div className="mx-auto my-auto w-full max-w-[640px] px-6 py-14 sm:px-12">
+        <div className="mx-auto my-auto w-full max-w-[480px] px-6 py-14 sm:px-0">
           {state === "done" ? (
             <div className="pop-in text-center">
               <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-emerald text-white shadow-glow">
@@ -141,7 +171,11 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
               </span>
               <h3 className="mt-6 text-3xl font-semibold text-foreground">{mode === "signup" ? `Welcome, ${vals.first.trim() || "there"}.` : "You're almost in."}</h3>
               <p className="mt-3 text-lg text-muted-foreground">
-                The Vendora app opens soon. We'll email <b className="text-foreground">{vals.email}</b> the moment your workspace is ready.
+                {via ? (
+                  <>You continued with <b className="text-foreground">{via}</b>. The Vendora app opens soon, and we'll let you know the moment your workspace is ready.</>
+                ) : (
+                  <>The Vendora app opens soon. We'll email <b className="text-foreground">{vals.email}</b> the moment your workspace is ready.</>
+                )}
               </p>
               <button type="button" onClick={onClose} className="mt-8 rounded-full bg-gradient-primary px-8 py-3.5 text-lg font-semibold text-white shadow-glow transition hover:scale-105">
                 Back to the site
@@ -165,7 +199,33 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
                 ))}
               </div>
 
-              <form onSubmit={submit} noValidate className="mt-7 space-y-5">
+              <div className="mt-6 space-y-3">
+                {(
+                  [
+                    ["Apple", AppleIcon],
+                    ["Google", GoogleIcon],
+                  ] as const
+                ).map(([name, Icon]) => (
+                  <button
+                    key={name}
+                    type="button"
+                    disabled={state === "sending"}
+                    onClick={() => social(name)}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-input bg-white py-3.5 text-base font-medium text-foreground shadow-card transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-muted/60 disabled:opacity-60"
+                  >
+                    <Icon className="h-5 w-5" />
+                    Continue with {name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="my-6 flex items-center gap-4 text-sm text-subtle-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or
+                <span className="h-px flex-1 bg-border" />
+              </div>
+
+              <form onSubmit={submit} noValidate className="space-y-5">
                 {mode === "signup" ? (
                   <div className="grid grid-cols-2 gap-4">
                     <label className="block">

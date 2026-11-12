@@ -1,14 +1,4 @@
-# Branded Motion Studio
 
-i have attached a logo of the product name okay?
-
-pls follow the same one dont try to edit okay keep the same one 
-
-make the website more aimated and colorfull and branded premium okay?
-
-follow the standards and do it correctly
-
-This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 

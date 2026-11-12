@@ -45,7 +45,7 @@ export function computeSupplierPerformance(
     const peers = quotations.filter((x) => x.rfqId === q.rfqId);
     if (peers.length < 2) continue;
     const totals = peers.map((p) => p.lines.reduce((s, l) => s + l.qty * l.unitPrice, 0)).sort((a, b) => a - b);
-    const median = totals[Math.floor(totals.length / 2)];
+    const median = totals[Math.floor(totals.length / 2)] ?? 0;
     const mine = q.lines.reduce((s, l) => s + l.qty * l.unitPrice, 0);
     if (median > 0) variances.push((mine - median) / median);
   }

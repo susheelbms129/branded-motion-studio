@@ -407,3 +407,58 @@
 @utility bg-gradient-blue { background-image: linear-gradient(135deg, oklch(0.68 0.17 245) 0%, var(--brand-blue) 100%); }
 @utility bg-gradient-purple { background-image: linear-gradient(135deg, var(--brand-indigo) 0%, var(--brand-violet) 100%); }
 @utility bg-gradient-ai { background-image: linear-gradient(135deg, var(--brand-violet) 0%, var(--brand-magenta) 60%, var(--brand-pink) 100%); }
+
+/* ───────────── Landing page motion ───────────── */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+
+.reveal { opacity: 0; transform: translate3d(0, 32px, 0); transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), transform 800ms cubic-bezier(0.16, 1, 0.3, 1); will-change: transform, opacity; }
+.reveal.in { opacity: 1; transform: none; }
+.reveal-scale { opacity: 0; transform: scale(0.94) translate3d(0, 24px, 0); transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), transform 900ms cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-scale.in { opacity: 1; transform: none; }
+
+.word { display: inline-block; opacity: 0; transform: translate3d(0, 60%, 0) rotate(3deg); filter: blur(10px); animation: word-in 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes word-in { to { opacity: 1; transform: none; filter: blur(0); } }
+
+.spot { position: relative; overflow: hidden; }
+.spot::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 300ms; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), oklch(0.65 0.22 285 / 22%), transparent 60%); }
+.spot:hover::before { opacity: 1; }
+
+.btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+.btn-shine::after { content: ""; position: absolute; inset: 0; z-index: -1; transform: translateX(-120%); background: linear-gradient(100deg, transparent 20%, oklch(1 0 0 / 35%) 50%, transparent 80%); transition: transform 700ms ease; }
+.btn-shine:hover::after { transform: translateX(120%); }
+
+.bar-grow { transform-origin: bottom; animation: bar-grow 1100ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes bar-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.line-draw { stroke-dasharray: 600; stroke-dashoffset: 600; animation: line-draw 2200ms ease-out 400ms forwards; }
+@keyframes line-draw { to { stroke-dashoffset: 0; } }
+.pop-in { animation: pop-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.85) translateY(8px); } to { opacity: 1; transform: none; } }
+.slide-in-r { animation: slide-in-r 600ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes slide-in-r { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+.caret::after { content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -2px; background: currentColor; animation: caret 1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.progress-fill { transform-origin: left; animation: progress-fill var(--dur, 5000ms) linear forwards; }
+@keyframes progress-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dot-live { animation: pulse-ring 2s ease-out infinite; }
+.menu-in { animation: menu-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.animate-gradient-pan { animation: gradient-pan 8s ease infinite; }
+.animate-float { animation: float-y 6s ease-in-out infinite; }
+.animate-float-slow { animation: float-y 9s ease-in-out infinite reverse; }
+.animate-orb { animation: orb-float 18s ease-in-out infinite; }
+.animate-orb-slow { animation: orb-float 26s ease-in-out infinite reverse; }
+.animate-marquee { animation: marquee 46s linear infinite; }
+.animate-marquee-rev { animation: marquee 56s linear infinite reverse; }
+.marquee-pause:hover .animate-marquee, .marquee-pause:hover .animate-marquee-rev { animation-play-state: paused; }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 22s linear infinite; }
+
+/* Headline word colours */
+.grad-every { background-image: linear-gradient(100deg, oklch(0.85 0.17 85), oklch(0.78 0.19 50) 45%, oklch(0.72 0.21 25)); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.grad-rupee { background-image: linear-gradient(100deg, oklch(0.82 0.14 205), oklch(0.68 0.2 275) 40%, oklch(0.7 0.27 330) 75%, oklch(0.82 0.14 205)); background-size: 250% auto; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.word.grad-every { animation: word-in 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards, gradient-pan 7s ease infinite; }
+.word.grad-rupee { animation: word-in 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards, gradient-pan 6s ease infinite; }
+
+/* Hand cursor on everything clickable */
+button:not(:disabled), [role="button"], [role="tab"], [role="switch"], summary, select, a[href], input[type="range"], input[type="checkbox"], label[for] { cursor: pointer; }
+button:disabled { cursor: not-allowed; }

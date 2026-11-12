@@ -10,33 +10,279 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
+import { Route as AppInsightsRouteImport } from './routes/app.insights'
+import { Route as AppMaterialsRouteImport } from './routes/app.materials'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
+import { Route as AppPurchaseOrdersIdRouteImport } from './routes/app.purchase-orders.$id'
+import { Route as AppRequestsIndexRouteImport } from './routes/app.requests.index'
+import { Route as AppRequestsIdRouteImport } from './routes/app.requests.$id'
+import { Route as AppRequestsNewRouteImport } from './routes/app.requests.new'
+import { Route as AppRfqsIndexRouteImport } from './routes/app.rfqs.index'
+import { Route as AppRfqsIdRouteImport } from './routes/app.rfqs.$id'
+import { Route as AppSuppliersIndexRouteImport } from './routes/app.suppliers.index'
+import { Route as AppSuppliersIdRouteImport } from './routes/app.suppliers.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInsightsRoute = AppInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMaterialsRoute = AppMaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamRoute = AppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPurchaseOrdersIndexRoute = AppPurchaseOrdersIndexRouteImport.update({
+  id: '/purchase-orders/',
+  path: '/purchase-orders/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPurchaseOrdersIdRoute = AppPurchaseOrdersIdRouteImport.update({
+  id: '/purchase-orders/$id',
+  path: '/purchase-orders/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRequestsIndexRoute = AppRequestsIndexRouteImport.update({
+  id: '/requests/',
+  path: '/requests/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRequestsIdRoute = AppRequestsIdRouteImport.update({
+  id: '/requests/$id',
+  path: '/requests/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRequestsNewRoute = AppRequestsNewRouteImport.update({
+  id: '/requests/new',
+  path: '/requests/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRfqsIndexRoute = AppRfqsIndexRouteImport.update({
+  id: '/rfqs/',
+  path: '/rfqs/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRfqsIdRoute = AppRfqsIdRouteImport.update({
+  id: '/rfqs/$id',
+  path: '/rfqs/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSuppliersIndexRoute = AppSuppliersIndexRouteImport.update({
+  id: '/suppliers/',
+  path: '/suppliers/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSuppliersIdRoute = AppSuppliersIdRouteImport.update({
+  id: '/suppliers/$id',
+  path: '/suppliers/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/signup': typeof SignupRoute
+  '/app/analytics': typeof AppAnalyticsRoute
+  '/app/insights': typeof AppInsightsRoute
+  '/app/materials': typeof AppMaterialsRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/team': typeof AppTeamRoute
+  '/app/': typeof AppIndexRoute
+  '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
+  '/app/requests/$id': typeof AppRequestsIdRoute
+  '/app/requests/new': typeof AppRequestsNewRoute
+  '/app/rfqs/$id': typeof AppRfqsIdRoute
+  '/app/suppliers/$id': typeof AppSuppliersIdRoute
+  '/app/purchase-orders/': typeof AppPurchaseOrdersIndexRoute
+  '/app/requests/': typeof AppRequestsIndexRoute
+  '/app/rfqs/': typeof AppRfqsIndexRoute
+  '/app/suppliers/': typeof AppSuppliersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/signup': typeof SignupRoute
+  '/app/analytics': typeof AppAnalyticsRoute
+  '/app/insights': typeof AppInsightsRoute
+  '/app/materials': typeof AppMaterialsRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/team': typeof AppTeamRoute
+  '/app': typeof AppIndexRoute
+  '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
+  '/app/requests/$id': typeof AppRequestsIdRoute
+  '/app/requests/new': typeof AppRequestsNewRoute
+  '/app/rfqs/$id': typeof AppRfqsIdRoute
+  '/app/suppliers/$id': typeof AppSuppliersIdRoute
+  '/app/purchase-orders': typeof AppPurchaseOrdersIndexRoute
+  '/app/requests': typeof AppRequestsIndexRoute
+  '/app/rfqs': typeof AppRfqsIndexRoute
+  '/app/suppliers': typeof AppSuppliersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/signup': typeof SignupRoute
+  '/app/analytics': typeof AppAnalyticsRoute
+  '/app/insights': typeof AppInsightsRoute
+  '/app/materials': typeof AppMaterialsRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/team': typeof AppTeamRoute
+  '/app/': typeof AppIndexRoute
+  '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
+  '/app/requests/$id': typeof AppRequestsIdRoute
+  '/app/requests/new': typeof AppRequestsNewRoute
+  '/app/rfqs/$id': typeof AppRfqsIdRoute
+  '/app/suppliers/$id': typeof AppSuppliersIdRoute
+  '/app/purchase-orders/': typeof AppPurchaseOrdersIndexRoute
+  '/app/requests/': typeof AppRequestsIndexRoute
+  '/app/rfqs/': typeof AppRfqsIndexRoute
+  '/app/suppliers/': typeof AppSuppliersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/onboarding'
+    | '/signup'
+    | '/app/analytics'
+    | '/app/insights'
+    | '/app/materials'
+    | '/app/notifications'
+    | '/app/settings'
+    | '/app/team'
+    | '/app/'
+    | '/app/purchase-orders/$id'
+    | '/app/requests/$id'
+    | '/app/requests/new'
+    | '/app/rfqs/$id'
+    | '/app/suppliers/$id'
+    | '/app/purchase-orders/'
+    | '/app/requests/'
+    | '/app/rfqs/'
+    | '/app/suppliers/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/signup'
+    | '/app/analytics'
+    | '/app/insights'
+    | '/app/materials'
+    | '/app/notifications'
+    | '/app/settings'
+    | '/app/team'
+    | '/app'
+    | '/app/purchase-orders/$id'
+    | '/app/requests/$id'
+    | '/app/requests/new'
+    | '/app/rfqs/$id'
+    | '/app/suppliers/$id'
+    | '/app/purchase-orders'
+    | '/app/requests'
+    | '/app/rfqs'
+    | '/app/suppliers'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/onboarding'
+    | '/signup'
+    | '/app/analytics'
+    | '/app/insights'
+    | '/app/materials'
+    | '/app/notifications'
+    | '/app/settings'
+    | '/app/team'
+    | '/app/'
+    | '/app/purchase-orders/$id'
+    | '/app/requests/$id'
+    | '/app/requests/new'
+    | '/app/rfqs/$id'
+    | '/app/suppliers/$id'
+    | '/app/purchase-orders/'
+    | '/app/requests/'
+    | '/app/rfqs/'
+    | '/app/suppliers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +294,195 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/analytics': {
+      id: '/app/analytics'
+      path: '/analytics'
+      fullPath: '/app/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/insights': {
+      id: '/app/insights'
+      path: '/insights'
+      fullPath: '/app/insights'
+      preLoaderRoute: typeof AppInsightsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/materials': {
+      id: '/app/materials'
+      path: '/materials'
+      fullPath: '/app/materials'
+      preLoaderRoute: typeof AppMaterialsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/team': {
+      id: '/app/team'
+      path: '/team'
+      fullPath: '/app/team'
+      preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/purchase-orders/': {
+      id: '/app/purchase-orders/'
+      path: '/purchase-orders'
+      fullPath: '/app/purchase-orders/'
+      preLoaderRoute: typeof AppPurchaseOrdersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/purchase-orders/$id': {
+      id: '/app/purchase-orders/$id'
+      path: '/purchase-orders/$id'
+      fullPath: '/app/purchase-orders/$id'
+      preLoaderRoute: typeof AppPurchaseOrdersIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/requests/': {
+      id: '/app/requests/'
+      path: '/requests'
+      fullPath: '/app/requests/'
+      preLoaderRoute: typeof AppRequestsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/requests/$id': {
+      id: '/app/requests/$id'
+      path: '/requests/$id'
+      fullPath: '/app/requests/$id'
+      preLoaderRoute: typeof AppRequestsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/requests/new': {
+      id: '/app/requests/new'
+      path: '/requests/new'
+      fullPath: '/app/requests/new'
+      preLoaderRoute: typeof AppRequestsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/rfqs/': {
+      id: '/app/rfqs/'
+      path: '/rfqs'
+      fullPath: '/app/rfqs/'
+      preLoaderRoute: typeof AppRfqsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/rfqs/$id': {
+      id: '/app/rfqs/$id'
+      path: '/rfqs/$id'
+      fullPath: '/app/rfqs/$id'
+      preLoaderRoute: typeof AppRfqsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/suppliers/': {
+      id: '/app/suppliers/'
+      path: '/suppliers'
+      fullPath: '/app/suppliers/'
+      preLoaderRoute: typeof AppSuppliersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/suppliers/$id': {
+      id: '/app/suppliers/$id'
+      path: '/suppliers/$id'
+      fullPath: '/app/suppliers/$id'
+      preLoaderRoute: typeof AppSuppliersIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppInsightsRoute: typeof AppInsightsRoute
+  AppMaterialsRoute: typeof AppMaterialsRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppTeamRoute: typeof AppTeamRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppPurchaseOrdersIdRoute: typeof AppPurchaseOrdersIdRoute
+  AppRequestsIdRoute: typeof AppRequestsIdRoute
+  AppRequestsNewRoute: typeof AppRequestsNewRoute
+  AppRfqsIdRoute: typeof AppRfqsIdRoute
+  AppSuppliersIdRoute: typeof AppSuppliersIdRoute
+  AppPurchaseOrdersIndexRoute: typeof AppPurchaseOrdersIndexRoute
+  AppRequestsIndexRoute: typeof AppRequestsIndexRoute
+  AppRfqsIndexRoute: typeof AppRfqsIndexRoute
+  AppSuppliersIndexRoute: typeof AppSuppliersIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
+  AppInsightsRoute: AppInsightsRoute,
+  AppMaterialsRoute: AppMaterialsRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppTeamRoute: AppTeamRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppPurchaseOrdersIdRoute: AppPurchaseOrdersIdRoute,
+  AppRequestsIdRoute: AppRequestsIdRoute,
+  AppRequestsNewRoute: AppRequestsNewRoute,
+  AppRfqsIdRoute: AppRfqsIdRoute,
+  AppSuppliersIdRoute: AppSuppliersIdRoute,
+  AppPurchaseOrdersIndexRoute: AppPurchaseOrdersIndexRoute,
+  AppRequestsIndexRoute: AppRequestsIndexRoute,
+  AppRfqsIndexRoute: AppRfqsIndexRoute,
+  AppSuppliersIndexRoute: AppSuppliersIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

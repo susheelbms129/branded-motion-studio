@@ -30,12 +30,12 @@ import { cn } from "@/lib/utils";
 /** Exact landing-page lockup in the sidebar; just the V mark when the sidebar is collapsed. */
 function BrandLogo({ collapsed }: { collapsed: boolean }) {
   return collapsed ? (
-    <img src="/brand/vendora-mark.png" alt="Vendora" className="h-7 w-auto" />
+    <img src="/brand/vendora-mark.png" alt="Vendora" className="h-9 w-auto" />
   ) : (
     <img
       src="/brand/vendora-logo.png"
       alt="Vendora — Smarter Buying. Greater Business."
-      className="h-12 w-auto"
+      className="h-14 w-auto"
     />
   );
 }
@@ -60,17 +60,17 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
   };
   return (
     <nav
-      className="flex min-h-0 flex-1 flex-col justify-evenly overflow-hidden px-3 py-[1.2vh]"
+      className="flex min-h-0 flex-1 flex-col justify-evenly gap-1 overflow-y-auto px-4 py-[1.2vh] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Main"
     >
       {GROUPS.map((g) => (
         <div key={g.label}>
           {!collapsed ? (
-            <div className="mb-[0.5vh] px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-navy-muted/70 [@media(max-height:690px)]:hidden">
+            <div className="mb-1.5 px-2 text-xs font-semibold uppercase tracking-[0.16em] text-navy-muted/80 [@media(max-height:640px)]:hidden">
               {g.label}
             </div>
           ) : null}
-          <ul className="space-y-px">
+          <ul className="space-y-0.5">
             {g.keys.map((k) => {
               const m = MODULES[k];
               const to = appPath(m.path);
@@ -86,9 +86,9 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
                     onClick={onNavigate}
                     title={collapsed ? m.label : undefined}
                     className={cn(
-                      "group relative flex items-center gap-3 rounded-xl px-2.5 py-[clamp(0.25rem,0.8vh,0.5rem)] text-sm text-sidebar-foreground transition",
+                      "group relative flex items-center gap-3.5 rounded-lg px-3 py-[clamp(0.3rem,0.9vh,0.55rem)] text-sm font-medium text-sidebar-foreground transition",
                       active
-                        ? "bg-gradient-to-r from-primary/25 via-violet/10 to-transparent text-sidebar-accent-foreground ring-1 ring-white/10"
+                        ? "bg-gradient-to-r from-primary/30 via-violet/15 to-transparent text-sidebar-accent-foreground ring-1 ring-white/15"
                         : "hover:bg-navy-foreground/5 hover:text-navy-foreground",
                       collapsed && "justify-center",
                     )}
@@ -97,23 +97,23 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
                       <motion.span
                         layoutId="nav-active"
                         className={cn(
-                          "absolute left-0 h-5 w-1 rounded-r-full",
+                          "absolute left-0 h-7 w-1.5 rounded-r-full",
                           ACCENT[m.accent].dot,
                         )}
                       />
                     ) : null}
                     <span
                       className={cn(
-                        "grid size-7 shrink-0 place-items-center rounded-lg transition",
+                        "grid size-9 shrink-0 place-items-center rounded-xl transition",
                         active ? ACCENT[m.accent].chip : "bg-navy-foreground/5",
                         active && "text-on-brand shadow-glow",
                       )}
                     >
-                      <m.icon className="size-4" />
+                      <m.icon className="size-[19px]" />
                     </span>
                     {!collapsed ? <span className="flex-1 truncate">{m.label}</span> : null}
                     {!collapsed && n > 0 ? (
-                      <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold tabular text-primary-foreground">
+                      <span className="rounded-full bg-gradient-cta px-2 py-0.5 text-xs font-semibold tabular text-on-brand shadow-glow">
                         {n}
                       </span>
                     ) : null}
@@ -153,11 +153,11 @@ export function AppShell() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
-  // Same compact scale as the landing page, applied only while the app is open.
+  // Comfortable, premium type scale (slightly under the landing page's 16px base), applied only while the app is open.
   useEffect(() => {
     const el = document.documentElement;
     const prev = el.style.fontSize;
-    el.style.fontSize = "14px";
+    el.style.fontSize = "14.5px";
     return () => {
       el.style.fontSize = prev;
     };
@@ -176,19 +176,19 @@ export function AppShell() {
       {/* Brand backdrop: grid + glowing orbs, like the landing hero */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
         <div className="bg-grid-dark mask-radial absolute inset-0 opacity-0 dark:opacity-60" />
-        <div className="glow-violet animate-orb absolute -left-40 top-0 size-[38rem] opacity-30 dark:opacity-60" />
-        <div className="glow-blue animate-orb-slow absolute -right-40 top-24 size-[36rem] opacity-25 dark:opacity-55" />
+        <div className="glow-violet animate-orb absolute -left-40 top-0 size-[38rem] opacity-40 dark:opacity-60" />
+        <div className="glow-blue animate-orb-slow absolute -right-40 top-24 size-[36rem] opacity-35 dark:opacity-55" />
         <div className="glow-magenta animate-orb absolute bottom-[-12rem] left-1/3 size-[30rem] opacity-10 dark:opacity-35" />
       </div>
       <aside
         className={cn(
           "sticky top-0 z-20 hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-gradient-sidebar transition-[width] duration-300 lg:flex",
-          collapsed ? "w-[72px]" : "w-64",
+          collapsed ? "w-[88px]" : "w-72",
         )}
       >
         <div
           className={cn(
-            "flex h-[4.5rem] shrink-0 items-center border-b border-sidebar-border px-4",
+            "flex h-20 shrink-0 items-center border-b border-sidebar-border px-5",
             collapsed && "justify-center px-0",
           )}
         >
@@ -197,7 +197,7 @@ export function AppShell() {
           </AppLink>
         </div>
         <NavList collapsed={collapsed} />
-        <div className="shrink-0 border-t border-sidebar-border p-2.5">
+        <div className="shrink-0 border-t border-sidebar-border p-3">
           <Button
             variant="ghost-dark"
             size="sm"
@@ -214,10 +214,10 @@ export function AppShell() {
       <Sheet open={mobile} onOpenChange={setMobile}>
         <SheetContent
           side="left"
-          className="flex w-72 flex-col border-0 bg-gradient-sidebar p-0 [&>button]:text-navy-foreground"
+          className="flex w-80 flex-col border-0 bg-gradient-sidebar p-0 [&>button]:text-navy-foreground"
         >
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <div className="flex h-[4.5rem] items-center border-b border-sidebar-border px-4">
+          <div className="flex h-20 items-center border-b border-sidebar-border px-5">
             <BrandLogo collapsed={false} />
           </div>
           <NavList collapsed={false} onNavigate={() => setMobile(false)} />
@@ -225,7 +225,7 @@ export function AppShell() {
       </Sheet>
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-[4.5rem] items-center gap-3 border-b border-white/10 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-white/10 bg-background/70 px-4 shadow-[0_1px_0_0_oklch(0.563_0.24_263.8/12%)] backdrop-blur-xl sm:px-8">
           <Button
             variant="ghost"
             size="icon"
@@ -236,13 +236,13 @@ export function AppShell() {
             <Menu />
           </Button>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold">{org?.name}</div>
-            <div className="text-[11px] text-muted-foreground">
+            <div className="truncate text-lg font-semibold tracking-tight">{org?.name}</div>
+            <div className="text-[13px] capitalize text-muted-foreground">
               {org?.plan} plan · {demo ? "Demo workspace" : "Your workspace"}
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <label className="hidden items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs backdrop-blur sm:flex">
+          <div className="ml-auto flex items-center gap-2.5">
+            <label className="hidden items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm backdrop-blur light:border-border light:bg-card/70 sm:flex">
               <span className="text-muted-foreground">Demo data</span>
               <Switch
                 checked={demo}
@@ -256,7 +256,7 @@ export function AppShell() {
             </label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                <Button variant="outline" className="hidden sm:inline-flex">
                   {ROLE_LABEL[role]}
                 </Button>
               </DropdownMenuTrigger>
@@ -273,7 +273,7 @@ export function AppShell() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Button asChild className="hidden sm:inline-flex">
               <AppLink to="requests/new">
                 <Plus />
                 New request
@@ -289,7 +289,7 @@ export function AppShell() {
               <AppLink to="notifications">
                 <Bell />
                 {unread ? (
-                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-coral" />
+                  <span className="absolute right-2 top-2 size-2.5 rounded-full bg-coral ring-2 ring-background" />
                 ) : null}
               </AppLink>
             </Button>
@@ -298,8 +298,8 @@ export function AppShell() {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button aria-label="Account">
-                  <Person name={user?.name ?? actor?.name ?? "You"} accent="violet" size={34} />
+                <button aria-label="Account" className="rounded-full ring-2 ring-primary/40 transition hover:ring-primary">
+                  <Person name={user?.name ?? actor?.name ?? "You"} accent="violet" size={44} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -320,7 +320,7 @@ export function AppShell() {
             </DropdownMenu>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-[1800px] flex-1 px-3 py-6 sm:px-4 lg:px-5">
           <AnimatePresence mode="wait">
             <motion.div
               key={loc.pathname}

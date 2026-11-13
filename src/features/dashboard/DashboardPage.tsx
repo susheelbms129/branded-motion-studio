@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowRight,
   ClipboardCheck,
   FileSpreadsheet,
   IndianRupee,
@@ -10,14 +11,13 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, format as formatDate, parseISO } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
   ChartTip,
   EmptyState,
   KpiCard,
-  PageHeader,
   Panel,
   Person,
   StatusBadge,
@@ -67,47 +67,85 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title={`${greeting()}, ${(user?.name ?? "there").split(" ")[0]}`}
-        description="Here's what needs your attention across purchasing today."
-        accent="blue"
-        actions={
-          <>
-            <Button variant="outline" asChild>
-              <AppLink to="rfqs">
-                <FileSpreadsheet />
-                RFQs
+      <section className="relative isolate mb-8 overflow-hidden rounded-xl border border-white/15 bg-gradient-to-br from-[oklch(0.38_0.15_275)] via-[oklch(0.31_0.14_282)] to-[oklch(0.27_0.11_262)] px-6 py-8 shadow-lift sm:px-8 sm:py-10">
+        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+          <div className="bg-grid-dark mask-radial absolute inset-0 opacity-50" />
+          <div className="glow-violet animate-orb absolute -left-24 -top-28 size-[26rem] opacity-90" />
+          <div className="glow-blue animate-orb-slow absolute -right-24 -top-10 size-[24rem] opacity-90" />
+          <div className="glow-magenta animate-orb absolute -bottom-40 left-1/3 size-[22rem] opacity-60" />
+        </div>
+        <div className="flex flex-wrap items-end justify-between gap-10">
+          <div className="min-w-0 max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/90 backdrop-blur">
+              <Sparkles className="size-4 text-magenta" />
+              {formatDate(new Date(), "EEEE, d MMMM")}
+            </div>
+            <h1 className="mt-6 text-4xl font-semibold leading-[1.08] text-white sm:text-5xl">
+              {greeting()},{" "}
+              <span className="grad-rupee animate-gradient-pan">
+                {(user?.name ?? "there").split(" ")[0]}
+              </span>
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-navy-muted sm:text-lg">
+              Here's what needs your attention across purchasing today.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Button asChild variant="hero" size="lg">
+                <AppLink to="requests/new">
+                  <Plus />
+                  New request
+                </AppLink>
+              </Button>
+              <Button asChild variant="glass" size="lg">
+                <AppLink to="rfqs">
+                  <FileSpreadsheet />
+                  RFQs
+                </AppLink>
+              </Button>
+            </div>
+          </div>
+          <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            {[
+              { label: "Awaiting approval", value: pendingReq.length, to: "requests?status=pending_approval" },
+              { label: "Open RFQs", value: openRfq.length, to: "rfqs" },
+              { label: "Overdue", value: overdue.length, to: "purchase-orders" },
+            ].map((c) => (
+              <AppLink
+                key={c.label}
+                to={c.to}
+                className="glass-dark group flex min-w-[10rem] items-center justify-between gap-4 rounded-lg px-5 py-4 transition hover:bg-white/10"
+              >
+                <div>
+                  <div className="text-3xl font-semibold tabular text-white">{c.value}</div>
+                  <div className="text-sm text-navy-muted">{c.label}</div>
+                </div>
+                <ArrowRight className="size-5 text-navy-muted transition group-hover:translate-x-1 group-hover:text-white" />
               </AppLink>
-            </Button>
-            <Button asChild>
-              <AppLink to="requests/new">
-                <Plus />
-                New request
-              </AppLink>
-            </Button>
-          </>
-        }
-      />
+            ))}
+          </div>
+        </div>
+      </section>
 
       {empty ? (
         <Panel
           title="Get started"
           description="Four quick steps to a working procurement flow"
-          className="mb-6"
+          className="mb-8"
         >
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {checklist.map((c) => (
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {checklist.map((c, i) => (
               <li key={c.label}>
                 <AppLink
                   to={c.to}
-                  className="flex items-center gap-3 rounded-xl border p-3 text-sm transition hover:bg-accent/50"
+                  className="card-lift flex items-center gap-4 rounded-lg border p-5 text-base font-medium"
                 >
                   <span
-                    className={`grid size-5 place-items-center rounded-full border text-[11px] ${c.done ? "border-success bg-success text-success-foreground" : ""}`}
+                    className={`grid size-9 shrink-0 place-items-center rounded-full text-sm font-semibold ${c.done ? "bg-success text-success-foreground" : "bg-gradient-primary text-on-brand shadow-glow"}`}
                   >
-                    {c.done ? "✓" : ""}
+                    {c.done ? "✓" : i + 1}
                   </span>
-                  {c.label}
+                  <span className="flex-1">{c.label}</span>
+                  <ArrowRight className="size-5 text-muted-foreground" />
                 </AppLink>
               </li>
             ))}
@@ -115,7 +153,7 @@ export function DashboardPage() {
         </Panel>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Spend this month"
           value={cur}
@@ -152,13 +190,13 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <Panel
           title="Monthly spend"
           description="Purchase orders issued, last 12 months"
           className="xl:col-span-2"
         >
-          <div className="h-64">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={months}>
                 <defs>
@@ -173,14 +211,14 @@ export function DashboardPage() {
                   dataKey="month"
                   tickLine={false}
                   axisLine={false}
-                  fontSize={11}
+                  fontSize={13}
                   stroke="var(--muted-foreground)"
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  fontSize={11}
-                  width={52}
+                  fontSize={13}
+                  width={64}
                   tickFormatter={(v) => formatMoneyCompact(v)}
                   stroke="var(--muted-foreground)"
                 />
@@ -188,7 +226,7 @@ export function DashboardPage() {
                   content={<ChartTip format={(n) => formatMoney(n)} />}
                   cursor={{ fill: "var(--accent)" }}
                 />
-                <Bar dataKey="spend" name="Spend" fill="url(#bar-brand)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="spend" name="Spend" fill="url(#bar-brand)" radius={[10, 10, 0, 0]} maxBarSize={44} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -196,25 +234,25 @@ export function DashboardPage() {
         <Panel
           title="Needs your attention"
           action={
-            <AppLink to="requests?status=pending_approval" className="text-xs text-primary">
+            <AppLink to="requests?status=pending_approval" className="text-sm font-semibold text-primary">
               View all
             </AppLink>
           }
         >
           {pendingReq.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">You're all caught up.</p>
+            <p className="py-10 text-center text-base text-muted-foreground">You're all caught up.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {pendingReq.slice(0, 5).map((r) => (
                 <li key={r.id}>
                   <AppLink
                     to={`requests/${r.id}`}
-                    className="flex items-center gap-3 rounded-xl border p-3 transition hover:bg-accent/50"
+                    className="card-lift flex items-center gap-4 rounded-lg border p-4"
                   >
-                    <Person name={nameOf(ws.members, r.requesterId)} accent="blue" />
+                    <Person name={nameOf(ws.members, r.requesterId)} accent="blue" size={42} />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{r.title}</div>
-                      <div className="text-xs text-muted-foreground tabular">{r.number}</div>
+                      <div className="truncate text-base font-semibold">{r.title}</div>
+                      <div className="text-sm text-muted-foreground tabular">{r.number}</div>
                     </div>
                     <StatusBadge kind="priority" value={r.priority} />
                   </AppLink>
@@ -225,21 +263,21 @@ export function DashboardPage() {
         </Panel>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <Panel title="Spend by category" description="All time">
           {byCat.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No spend recorded yet.</p>
+            <p className="py-10 text-center text-base text-muted-foreground">No spend recorded yet.</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-5">
               {byCat.map((c, i) => (
                 <li key={c.name}>
-                  <div className="mb-1 flex justify-between text-xs">
+                  <div className="mb-2 flex justify-between text-[15px] font-medium">
                     <span>{c.name}</span>
-                    <span className="tabular text-muted-foreground">
+                    <span className="tabular font-semibold text-muted-foreground">
                       {formatMoneyCompact(c.spend)}
                     </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-3 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -256,7 +294,7 @@ export function DashboardPage() {
         <Panel
           title="AI insights"
           action={
-            <AppLink to="insights" className="text-xs text-primary">
+            <AppLink to="insights" className="text-sm font-semibold text-primary">
               Open
             </AppLink>
           }
@@ -270,27 +308,27 @@ export function DashboardPage() {
               className="border-0 py-6"
             />
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {insights.slice(0, 4).map((i) => (
                 <li key={i.id}>
                   <AppLink
                     to="insights"
-                    className="flex items-start gap-3 rounded-xl border p-3 transition hover:bg-accent/50"
+                    className="card-lift flex items-start gap-4 rounded-lg border p-4"
                   >
                     <span
-                      className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg text-on-brand ${ACCENT.ai.chip}`}
+                      className={`mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl text-on-brand shadow-glow ${ACCENT.ai.chip}`}
                     >
                       {i.type === "repeated_delay" ? (
-                        <Truck className="size-4" />
+                        <Truck className="size-5" />
                       ) : i.type === "possible_duplicate" ? (
-                        <AlertTriangle className="size-4" />
+                        <AlertTriangle className="size-5" />
                       ) : (
-                        <Sparkles className="size-4" />
+                        <Sparkles className="size-5" />
                       )}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium">{i.title}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[15px] font-semibold">{i.title}</div>
+                      <div className="mt-0.5 text-sm text-muted-foreground">
                         {i.impactAmount
                           ? `Impact ≈ ${formatMoneyCompact(i.impactAmount)}`
                           : "Based on your records"}
@@ -304,21 +342,21 @@ export function DashboardPage() {
         </Panel>
         <Panel title="Recent activity">
           {ws.activity.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
+            <p className="py-10 text-center text-base text-muted-foreground">
               Nothing yet — activity shows up as your team works.
             </p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-5">
               {ws.activity.slice(0, 6).map((a) => (
-                <li key={a.id} className="flex items-start gap-3 text-sm">
-                  <Person name={nameOf(ws.members, a.actorId)} accent="cyan" size={26} />
+                <li key={a.id} className="flex items-start gap-4 text-[15px]">
+                  <Person name={nameOf(ws.members, a.actorId)} accent="cyan" size={38} />
                   <div className="min-w-0">
                     <span className="font-medium">
                       {nameOf(ws.members, a.actorId).split(" ")[0]}
                     </span>{" "}
                     <span className="text-muted-foreground">{a.verb}</span>{" "}
                     <span className="tabular">{a.target}</span>
-                    <div className="text-xs text-subtle-foreground">{formatRelative(a.at)}</div>
+                    <div className="mt-0.5 text-sm text-subtle-foreground">{formatRelative(a.at)}</div>
                   </div>
                 </li>
               ))}

@@ -144,24 +144,24 @@ export function PageHeader({
   meta?: ReactNode;
 }) {
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-8">
       <div
         className={cn(
-          "pointer-events-none absolute -left-10 -top-16 h-40 w-80 opacity-40 blur-3xl",
+          "pointer-events-none absolute -left-10 -top-16 h-48 w-96 opacity-50 blur-3xl",
           ACCENT[accent].glow,
         )}
         aria-hidden
       />
       <nav
         aria-label="Breadcrumb"
-        className="relative mb-2 flex items-center gap-1 text-xs text-muted-foreground"
+        className="relative mb-3 flex items-center gap-1.5 text-sm text-muted-foreground"
       >
         <AppLink to="" className="hover:text-foreground">
           Home
         </AppLink>
         {crumbs.map((c, i) => (
           <span key={c.label} className="flex items-center gap-1">
-            <Chev className="size-3" />
+            <Chev className="size-3.5" />
             {c.to !== undefined && i < crumbs.length - 1 ? (
               <AppLink to={c.to} className="hover:text-foreground">
                 {c.label}
@@ -174,15 +174,15 @@ export function PageHeader({
       </nav>
       <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight sm:text-[30px]">
+          <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight sm:text-[40px] sm:leading-[1.1]">
             <span className="title-gradient">{title}</span>
             {meta}
           </h1>
           {description ? (
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+            <p className="mt-2 max-w-2xl text-base text-muted-foreground sm:text-lg">{description}</p>
           ) : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
       </div>
     </div>
   );
@@ -206,22 +206,26 @@ export function Panel({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-white/10 bg-card shadow-card backdrop-blur-xl light:border-border",
+        "relative overflow-hidden rounded-xl border border-white/10 bg-card shadow-card backdrop-blur-xl light:border-border",
         className,
       )}
     >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-cta opacity-60"
+        aria-hidden
+      />
       {title ? (
-        <header className="flex items-start justify-between gap-3 px-5 pt-4">
+        <header className="flex items-start justify-between gap-4 px-6 pt-5">
           <div>
-            <h2 className="text-[15px] font-semibold">{title}</h2>
+            <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
             {description ? (
-              <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
             ) : null}
           </div>
           {action}
         </header>
       ) : null}
-      <div className={cn("p-5", title ? "pt-3" : "", bodyClassName)}>{children}</div>
+      <div className={cn("p-6", title ? "pt-4" : "", bodyClassName)}>{children}</div>
     </section>
   );
 }
@@ -239,8 +243,8 @@ export function ChartTip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border bg-popover/95 px-3 py-2 text-xs shadow-lift backdrop-blur">
-      {label ? <div className="mb-1 font-medium">{label}</div> : null}
+    <div className="rounded-lg border bg-popover/95 px-4 py-3 text-sm shadow-lift backdrop-blur">
+      {label ? <div className="mb-1.5 font-semibold">{label}</div> : null}
       {payload.map((p) => (
         <div key={String(p.dataKey)} className="flex items-center gap-2 text-muted-foreground">
           <span className="size-2 rounded-full" style={{ background: p.color }} />
@@ -273,7 +277,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-2xl border border-dashed bg-card/60 px-6 py-14 text-center",
+        "flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/60 px-6 py-14 text-center",
         className,
       )}
     >
@@ -293,15 +297,15 @@ export function EmptyState({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 18 }}
           className={cn(
-            "relative grid size-14 place-items-center rounded-2xl text-on-brand shadow-lift",
+            "relative grid size-14 place-items-center rounded-lg text-on-brand shadow-lift",
             a.chip,
           )}
         >
           <Icon className="size-6" />
         </motion.div>
       </div>
-      <h3 className="text-base font-semibold">{title}</h3>
-      <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{body}</p>
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-2 max-w-sm text-[15px] text-muted-foreground">{body}</p>
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -309,8 +313,8 @@ export function EmptyState({
 
 export function ErrorState({ onRetry, message }: { onRetry?: () => void; message?: string }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border bg-card px-6 py-14 text-center shadow-card">
-      <div className="mb-4 grid size-12 place-items-center rounded-2xl tint-red">
+    <div className="flex flex-col items-center rounded-lg border bg-card px-6 py-14 text-center shadow-card">
+      <div className="mb-4 grid size-12 place-items-center rounded-lg tint-red">
         <AlertTriangle className="size-6" />
       </div>
       <h3 className="font-semibold">We couldn't load this</h3>
@@ -358,41 +362,45 @@ export function KpiCard({
   const up = (trend?.pct ?? 0) >= 0;
   const good = trend ? (trend.goodWhenUp === false ? !up : up) : true;
   return (
-    <div className="card-lift group relative overflow-hidden rounded-2xl border border-white/10 bg-card p-4 shadow-card backdrop-blur-xl">
+    <div className="card-lift group relative overflow-hidden rounded-xl border border-white/10 bg-card p-6 shadow-card backdrop-blur-xl light:border-border">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-cta opacity-60"
+        aria-hidden
+      />
       <div
         className={cn(
-          "pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-30 blur-2xl transition-opacity group-hover:opacity-70",
+          "pointer-events-none absolute -right-12 -top-12 size-44 rounded-full opacity-40 blur-2xl transition-opacity group-hover:opacity-80",
           a.glow,
         )}
       />
       <div className="flex items-start justify-between">
         <div
           className={cn(
-            "grid size-9 place-items-center rounded-xl text-on-brand shadow-glow",
+            "grid size-12 place-items-center rounded-lg text-on-brand shadow-glow",
             a.chip,
           )}
         >
-          <Icon className="size-[18px]" />
+          <Icon className="size-6" />
         </div>
         {trend ? (
           <span
             className={cn(
-              "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium tabular",
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold tabular",
               good ? "tint-green" : "tint-red",
             )}
           >
-            {up ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+            {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
             {Math.abs(trend.pct * 100).toFixed(1)}%
           </span>
         ) : null}
       </div>
-      <div className="mt-3 text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-2xl font-semibold tracking-tight">
+      <div className="mt-5 text-[15px] font-medium text-muted-foreground">{label}</div>
+      <div className="mt-1 text-4xl font-semibold tracking-tight">
         <CountUp value={value} format={format} />
       </div>
-      {hint ? <div className="mt-1 text-xs text-subtle-foreground">{hint}</div> : null}
+      {hint ? <div className="mt-1.5 text-sm text-subtle-foreground">{hint}</div> : null}
       {spark && spark.length > 1 ? (
-        <div className="-mx-1 mt-2 h-9">
+        <div className="-mx-1 mt-3 h-12">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={spark.map((v, i) => ({ i, v }))}>
               <defs>
@@ -405,7 +413,7 @@ export function KpiCard({
                 type="monotone"
                 dataKey="v"
                 stroke={a.color}
-                strokeWidth={1.8}
+                strokeWidth={2.2}
                 fill={`url(#sp-${accent}-${label.length})`}
               />
             </AreaChart>
@@ -504,7 +512,7 @@ export function DataTable<T>({
   const cur = Math.min(page, pages - 1);
   const view = data.slice(cur * pageSize, cur * pageSize + pageSize);
   return (
-    <div className="rounded-2xl border bg-card shadow-card">
+    <div className="rounded-lg border bg-card shadow-card">
       <div className="flex flex-wrap items-center gap-2 border-b p-3">
         {searchText ? (
           <div className="relative w-full sm:w-64">

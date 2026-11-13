@@ -2,8 +2,10 @@ import { Bell, CheckCheck } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
-import { EmptyState, PageHeader } from "@/components/vendora/kit";
+import { Switch } from "@/components/ui/switch";
+import { EmptyState, PageHeader, Panel } from "@/components/vendora/kit";
 import { formatRelative } from "@/lib/format";
+import { MAIL_CATEGORIES, useMailLog, useMailPrefs, type MailCategory } from "@/lib/mail";
 import { appPath } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useWs } from "@/lib/ws-store";
@@ -11,6 +13,8 @@ import { useWs } from "@/lib/ws-store";
 export function NotificationsPage() {
   const ws = useWs();
   const nav = useNavigate();
+  const { prefs, set } = useMailPrefs();
+  const log = useMailLog();
   return (
     <>
       <PageHeader
@@ -69,6 +73,49 @@ export function NotificationsPage() {
           ))}
         </ul>
       )}
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Email notifications"
+          description="Invitations and account-security emails are always sent."
+        >
+          <ul className="divide-y">
+            {(Object.keys(MAIL_CATEGORIES) as MailCategory[]).map((k) => (
+              <li key={k} className="flex items-center gap-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{MAIL_CATEGORIES[k].label}</div>
+                  <div className="text-xs text-muted-foreground">{MAIL_CATEGORIES[k].hint}</div>
+                </div>
+                <Switch checked={prefs[k]} onCheckedChange={(v) => set(k, v)} aria-label={MAIL_CATEGORIES[k].label} />
+              </li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel title="Recent email activity" description="Last 40 sends from this browser">
+          {log.entries.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No emails sent yet.</p>
+          ) : (
+            <ul className="max-h-72 divide-y overflow-y-auto">
+              {log.entries.map((e) => (
+                <li key={e.id} className="flex items-center gap-3 py-2.5 text-sm">
+                  <span
+                    className={cn(
+                      "size-2 shrink-0 rounded-full",
+                      e.status === "sent" ? "bg-emerald" : "bg-destructive",
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate">
+                      {e.kind.replace(/_/g, " ")} → {e.to}
+                    </div>
+                    {e.error ? <div className="truncate text-xs text-destructive">{e.error}</div> : null}
+                  </div>
+                  <span className="text-xs text-subtle-foreground">{formatRelative(e.at)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
     </>
   );
 }

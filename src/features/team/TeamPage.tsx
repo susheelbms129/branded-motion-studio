@@ -1,4 +1,4 @@
-import { Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { Mail, Megaphone, Send, ShieldCheck, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Can, PageHeader, Panel, Person, StatusBadge, useCan } from "@/components/vendora/kit";
 import { formatRelative } from "@/lib/format";
+import { deliverAnnouncement, deliverInvite, resolveRecipients } from "@/lib/mail";
 import {
   PERMISSION_LABEL,
   ROLE_LABEL,
@@ -40,6 +42,10 @@ export function TeamPage() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
+  const [annOpen, setAnnOpen] = useState(false);
+  const [annSubject, setAnnSubject] = useState("");
+  const [annBody, setAnnBody] = useState("");
+  const [annBusy, setAnnBusy] = useState(false);
   const perms = Object.keys(PERMISSION_LABEL) as Permission[];
   const valid = /^\S+@\S+\.\S+$/.test(email);
   return (
@@ -51,10 +57,16 @@ export function TeamPage() {
         description="Invite colleagues and control exactly what each role can do."
         actions={
           <Can permission="team.manage">
-            <Button onClick={() => setOpen(true)}>
-              <UserPlus />
-              Invite member
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setAnnOpen(true)}>
+                <Megaphone />
+                Announcement
+              </Button>
+              <Button onClick={() => setOpen(true)}>
+                <UserPlus />
+                Invite member
+              </Button>
+            </div>
           </Can>
         }
       />
@@ -135,6 +147,13 @@ export function TeamPage() {
                     </div>
                   </div>
                   <Can permission="team.manage">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void deliverInvite(i, Date.now())}
+                    >
+                      Resend
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => ws.revokeInvite(i.id)}>
                       Revoke
                     </Button>
@@ -192,7 +211,7 @@ export function TeamPage() {
           <DialogHeader>
             <DialogTitle>Invite a team member</DialogTitle>
             <DialogDescription>
-              They'll get an email invitation (simulated in this demo).
+              They'll get an email with a secure link that expires in 7 days.
             </DialogDescription>
           </DialogHeader>
           <div>
@@ -228,13 +247,73 @@ export function TeamPage() {
             <Button
               disabled={!valid}
               onClick={() => {
+                // The email itself is sent by the mail listener; it reports success or failure.
                 ws.inviteMember(email, role, { actorId: actor });
-                toast.success(`Invitation sent to ${email}`);
                 setEmail("");
                 setOpen(false);
               }}
             >
               Send invitation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={annOpen} onOpenChange={setAnnOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send an announcement</DialogTitle>
+            <DialogDescription>
+              Emails every active team member individually. It is sent from Vendora's verified
+              address with your name, and replies go to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="as">Subject</Label>
+            <Input
+              id="as"
+              className="mt-1.5"
+              maxLength={120}
+              value={annSubject}
+              onChange={(e) => setAnnSubject(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="ab">Message</Label>
+            <Textarea
+              id="ab"
+              className="mt-1.5 min-h-32"
+              maxLength={3000}
+              value={annBody}
+              onChange={(e) => setAnnBody(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAnnOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={annBusy || annSubject.trim().length < 3 || annBody.trim().length < 5}
+              onClick={async () => {
+                const targets = resolveRecipients(
+                  ws.members.filter((m) => m.status === "active").map((m) => m.id),
+                );
+                if (targets.length === 0) {
+                  toast.error("No deliverable email addresses. Sign in with your real email first.");
+                  return;
+                }
+                setAnnBusy(true);
+                const r = await deliverAnnouncement(targets, annSubject.trim(), annBody.trim());
+                setAnnBusy(false);
+                if (r.sent > 0 && r.failed === 0) {
+                  toast.success(`Announcement sent to ${r.sent} ${r.sent === 1 ? "person" : "people"}`);
+                  setAnnSubject("");
+                  setAnnBody("");
+                  setAnnOpen(false);
+                } else toast.error(r.error ?? "Announcement could not be sent");
+              }}
+            >
+              <Send />
+              {annBusy ? "Sending…" : "Send"}
             </Button>
           </DialogFooter>
         </DialogContent>

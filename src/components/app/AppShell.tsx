@@ -19,6 +19,7 @@ import { Person } from "@/components/vendora/kit";
 import { VendoraLogo } from "@/components/vendora/Logo";
 import { ACCENT } from "@/lib/accents";
 import { setActiveCurrency } from "@/lib/format";
+import { startMailEvents } from "@/lib/mail-events";
 import { MODULES, type ModuleKey } from "@/lib/modules";
 import { appPath, AppLink } from "@/lib/nav";
 import { ROLES, ROLE_LABEL } from "@/lib/permissions";
@@ -143,6 +144,8 @@ export function AppShell() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [loc.pathname]);
+  // Email notifications for workspace events (invites, approvals, POs, ...). Never blocks the UI.
+  useEffect(() => startMailEvents(), []);
 
   return (
     <div className="flex min-h-screen bg-background">

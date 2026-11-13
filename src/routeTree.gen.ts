@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -21,6 +22,7 @@ import { Route as AppMaterialsRouteImport } from './routes/app.materials'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as ApiPublicResendWebhookRouteImport } from './routes/api.public.resend-webhook'
 import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
 import { Route as AppPurchaseOrdersIdRouteImport } from './routes/app.purchase-orders.$id'
 import { Route as AppRequestsIndexRouteImport } from './routes/app.requests.index'
@@ -34,6 +36,11 @@ import { Route as AppSuppliersIdRouteImport } from './routes/app.suppliers.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteRoute = AcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -91,6 +98,11 @@ const AppTeamRoute = AppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
+  id: '/api/public/resend-webhook',
+  path: '/api/public/resend-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPurchaseOrdersIndexRoute = AppPurchaseOrdersIndexRouteImport.update({
   id: '/purchase-orders/',
   path: '/purchase-orders/',
@@ -139,6 +151,7 @@ const AppSuppliersIdRoute = AppSuppliersIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -150,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
   '/app/requests/$id': typeof AppRequestsIdRoute
   '/app/requests/new': typeof AppRequestsNewRoute
@@ -162,6 +176,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
@@ -172,6 +187,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
   '/app': typeof AppIndexRoute
+  '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
   '/app/requests/$id': typeof AppRequestsIdRoute
   '/app/requests/new': typeof AppRequestsNewRoute
@@ -185,6 +201,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accept-invite': typeof AcceptInviteRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -196,6 +213,7 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
   '/app/requests/$id': typeof AppRequestsIdRoute
   '/app/requests/new': typeof AppRequestsNewRoute
@@ -210,6 +228,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/accept-invite'
     | '/app'
     | '/login'
     | '/onboarding'
@@ -221,6 +240,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/team'
     | '/app/'
+    | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
     | '/app/requests/$id'
     | '/app/requests/new'
@@ -233,6 +253,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/accept-invite'
     | '/login'
     | '/onboarding'
     | '/signup'
@@ -243,6 +264,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/team'
     | '/app'
+    | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
     | '/app/requests/$id'
     | '/app/requests/new'
@@ -255,6 +277,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/accept-invite'
     | '/app'
     | '/login'
     | '/onboarding'
@@ -266,6 +289,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/team'
     | '/app/'
+    | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
     | '/app/requests/$id'
     | '/app/requests/new'
@@ -279,10 +303,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcceptInviteRoute: typeof AcceptInviteRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite': {
+      id: '/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof AcceptInviteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -370,6 +403,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/team'
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/public/resend-webhook': {
+      id: '/api/public/resend-webhook'
+      path: '/api/public/resend-webhook'
+      fullPath: '/api/public/resend-webhook'
+      preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/purchase-orders/': {
       id: '/app/purchase-orders/'
@@ -479,10 +519,12 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcceptInviteRoute: AcceptInviteRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

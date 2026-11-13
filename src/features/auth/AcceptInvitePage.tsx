@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { VendoraLogo } from "@/components/vendora/Logo";
 import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
-import { acceptInvite, checkInvite } from "@/server/mail.functions";
+import { acceptInvite, checkInvite } from "@/lib/mail.functions";
 
 type Info = Extract<Awaited<ReturnType<typeof checkInvite>>, { valid: true }>;
 type View =

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { LoginPage } from "@/features/auth/AuthPages";
-
+// Legacy URL: sign-in lives at /signin.
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Login — Vendora" }] }),
-  component: LoginPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/signin" });
+  },
 });

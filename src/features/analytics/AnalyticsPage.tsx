@@ -133,6 +133,13 @@ export function AnalyticsPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthly}>
+                <defs>
+                  <linearGradient id="bar-brand-a" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--brand-cyan)" />
+                    <stop offset="55%" stopColor="var(--brand-blue)" />
+                    <stop offset="100%" stopColor="var(--brand-violet)" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="month" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis
@@ -149,7 +156,7 @@ export function AnalyticsPage() {
                 <Bar
                   dataKey="spend"
                   name="Spend"
-                  fill="var(--brand-indigo)"
+                  fill="url(#bar-brand-a)"
                   radius={[6, 6, 0, 0]}
                 />
               </BarChart>

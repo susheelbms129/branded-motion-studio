@@ -16,7 +16,6 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/sonner";
 import { Person } from "@/components/vendora/kit";
-import { VendoraLogo } from "@/components/vendora/Logo";
 import { ACCENT } from "@/lib/accents";
 import { setActiveCurrency } from "@/lib/format";
 import { startMailEvents } from "@/lib/mail-events";
@@ -27,6 +26,19 @@ import { signOutUser } from "@/lib/auth";
 import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
 import { cn } from "@/lib/utils";
+
+/** Exact landing-page lockup in the sidebar; just the V mark when the sidebar is collapsed. */
+function BrandLogo({ collapsed }: { collapsed: boolean }) {
+  return collapsed ? (
+    <img src="/brand/vendora-mark.png" alt="Vendora" className="h-7 w-auto" />
+  ) : (
+    <img
+      src="/brand/vendora-logo.png"
+      alt="Vendora — Smarter Buying. Greater Business."
+      className="h-12 w-auto"
+    />
+  );
+}
 
 const GROUPS: { label: string; keys: ModuleKey[] }[] = [
   { label: "Workspace", keys: ["dashboard", "requests", "rfqs", "purchaseOrders"] },
@@ -47,15 +59,18 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
     notifications: unread,
   };
   return (
-    <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="Main">
+    <nav
+      className="flex min-h-0 flex-1 flex-col justify-evenly overflow-hidden px-3 py-[1.2vh]"
+      aria-label="Main"
+    >
       {GROUPS.map((g) => (
         <div key={g.label}>
           {!collapsed ? (
-            <div className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-navy-muted/70">
+            <div className="mb-[0.5vh] px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-navy-muted/70 [@media(max-height:690px)]:hidden">
               {g.label}
             </div>
           ) : null}
-          <ul className="space-y-0.5">
+          <ul className="space-y-px">
             {g.keys.map((k) => {
               const m = MODULES[k];
               const to = appPath(m.path);
@@ -71,9 +86,9 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
                     onClick={onNavigate}
                     title={collapsed ? m.label : undefined}
                     className={cn(
-                      "group relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-sidebar-foreground transition",
+                      "group relative flex items-center gap-3 rounded-xl px-2.5 py-[clamp(0.25rem,0.8vh,0.5rem)] text-sm text-sidebar-foreground transition",
                       active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        ? "bg-gradient-to-r from-primary/25 via-violet/10 to-transparent text-sidebar-accent-foreground ring-1 ring-white/10"
                         : "hover:bg-navy-foreground/5 hover:text-navy-foreground",
                       collapsed && "justify-center",
                     )}
@@ -89,9 +104,9 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
                     ) : null}
                     <span
                       className={cn(
-                        "grid size-7 shrink-0 place-items-center rounded-lg",
+                        "grid size-7 shrink-0 place-items-center rounded-lg transition",
                         active ? ACCENT[m.accent].chip : "bg-navy-foreground/5",
-                        active && "text-on-brand",
+                        active && "text-on-brand shadow-glow",
                       )}
                     >
                       <m.icon className="size-4" />
@@ -138,6 +153,15 @@ export function AppShell() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+  // Same compact scale as the landing page, applied only while the app is open.
+  useEffect(() => {
+    const el = document.documentElement;
+    const prev = el.style.fontSize;
+    el.style.fontSize = "14px";
+    return () => {
+      el.style.fontSize = prev;
+    };
+  }, []);
   useEffect(() => {
     if (org) setActiveCurrency(org.currency);
   }, [org]);
@@ -148,25 +172,32 @@ export function AppShell() {
   useEffect(() => startMailEvents(), []);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen bg-background text-foreground">
+      {/* Brand backdrop: grid + glowing orbs, like the landing hero */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+        <div className="bg-grid-dark mask-radial absolute inset-0 opacity-0 dark:opacity-60" />
+        <div className="glow-violet animate-orb absolute -left-40 top-0 size-[38rem] opacity-30 dark:opacity-60" />
+        <div className="glow-blue animate-orb-slow absolute -right-40 top-24 size-[36rem] opacity-25 dark:opacity-55" />
+        <div className="glow-magenta animate-orb absolute bottom-[-12rem] left-1/3 size-[30rem] opacity-10 dark:opacity-35" />
+      </div>
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen shrink-0 flex-col bg-gradient-sidebar transition-[width] duration-300 lg:flex",
+          "sticky top-0 z-20 hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-gradient-sidebar transition-[width] duration-300 lg:flex",
           collapsed ? "w-[72px]" : "w-64",
         )}
       >
         <div
           className={cn(
-            "flex h-16 items-center border-b border-sidebar-border px-4",
+            "flex h-[4.5rem] shrink-0 items-center border-b border-sidebar-border px-4",
             collapsed && "justify-center px-0",
           )}
         >
           <AppLink to="" aria-label="Vendora home">
-            <VendoraLogo variant={collapsed ? "mark" : "full"} height={30} />
+            <BrandLogo collapsed={collapsed} />
           </AppLink>
         </div>
         <NavList collapsed={collapsed} />
-        <div className="border-t border-sidebar-border p-3">
+        <div className="shrink-0 border-t border-sidebar-border p-2.5">
           <Button
             variant="ghost-dark"
             size="sm"
@@ -183,18 +214,18 @@ export function AppShell() {
       <Sheet open={mobile} onOpenChange={setMobile}>
         <SheetContent
           side="left"
-          className="w-72 border-0 bg-gradient-sidebar p-0 [&>button]:text-navy-foreground"
+          className="flex w-72 flex-col border-0 bg-gradient-sidebar p-0 [&>button]:text-navy-foreground"
         >
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <div className="flex h-16 items-center border-b border-sidebar-border px-4">
-            <VendoraLogo height={30} />
+          <div className="flex h-[4.5rem] items-center border-b border-sidebar-border px-4">
+            <BrandLogo collapsed={false} />
           </div>
           <NavList collapsed={false} onNavigate={() => setMobile(false)} />
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-lg sm:px-6">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-[4.5rem] items-center gap-3 border-b border-white/10 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -211,7 +242,7 @@ export function AppShell() {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <label className="hidden items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs sm:flex">
+            <label className="hidden items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs backdrop-blur sm:flex">
               <span className="text-muted-foreground">Demo data</span>
               <Switch
                 checked={demo}

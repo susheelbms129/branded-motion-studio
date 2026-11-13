@@ -186,28 +186,30 @@
 }
 
 .dark {
-  --background: oklch(0.15 0.035 269);
-  --foreground: oklch(0.96 0.01 270);
-  --surface: oklch(0.19 0.045 269);
-  --card: oklch(0.19 0.045 269);
-  --card-foreground: oklch(0.96 0.01 270);
-  --popover: oklch(0.2 0.05 269);
-  --popover-foreground: oklch(0.96 0.01 270);
-  --primary: oklch(0.64 0.21 262);
+  /* Same navy family as the landing page (--navy / --navy-2 / --navy-3) */
+  --background: var(--navy);
+  --foreground: oklch(0.97 0.01 270);
+  --surface: oklch(0.2 0.055 270);
+  --card: oklch(0.215 0.06 270 / 72%);
+  --card-foreground: oklch(0.97 0.01 270);
+  --popover: oklch(0.21 0.06 270);
+  --popover-foreground: oklch(0.97 0.01 270);
+  --primary: oklch(0.66 0.21 262);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.25 0.06 270);
+  --secondary: oklch(0.27 0.07 270);
   --secondary-foreground: oklch(0.92 0.03 275);
-  --muted: oklch(0.23 0.045 269);
-  --muted-foreground: oklch(0.74 0.03 268);
-  --subtle-foreground: oklch(0.6 0.03 268);
-  --accent: oklch(0.26 0.06 270);
-  --accent-foreground: oklch(0.96 0.01 270);
-  --destructive: oklch(0.65 0.2 25);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
+  --muted: oklch(0.25 0.055 270 / 80%);
+  --muted-foreground: var(--navy-muted);
+  --subtle-foreground: oklch(0.62 0.03 268);
+  --accent: oklch(1 0 0 / 7%);
+  --accent-foreground: oklch(0.97 0.01 270);
+  --destructive: oklch(0.68 0.2 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
   --lavender: oklch(0.22 0.05 275);
   --gradient-lavender: linear-gradient(180deg, oklch(0.17 0.04 270) 0%, oklch(0.2 0.05 280) 100%);
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 30%), 0 8px 24px -8px oklch(0 0 0 / 45%);
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 30%);
+  --shadow-card: 0 1px 0 oklch(1 0 0 / 5%) inset, 0 10px 30px -12px oklch(0 0 0 / 55%);
   --shadow-lift: 0 2px 4px oklch(0 0 0 / 30%), 0 18px 40px -12px oklch(0 0 0 / 60%);
 }
 
@@ -462,3 +464,32 @@ html { scroll-behavior: smooth; scroll-padding-top: 88px; }
 /* Hand cursor on everything clickable */
 button:not(:disabled), [role="button"], [role="tab"], [role="switch"], summary, select, a[href], input[type="range"], input[type="checkbox"], label[for] { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
+
+
+/* ───────────── In-app look (matches the landing page) ───────────── */
+/* Soft tinted chips/badges: lighter text on the dark surface so they stay readable. */
+.dark .tint-blue { color: oklch(0.8 0.12 258); }
+.dark .tint-cyan { color: oklch(0.85 0.11 205); }
+.dark .tint-violet { color: oklch(0.8 0.13 295); }
+.dark .tint-magenta { color: oklch(0.82 0.14 325); }
+.dark .tint-emerald { color: oklch(0.85 0.14 160); }
+.dark .tint-amber { color: oklch(0.87 0.13 80); }
+.dark .tint-coral { color: oklch(0.82 0.13 18); }
+.dark .tint-pink { color: oklch(0.83 0.13 355); }
+.dark .tint-indigo { color: oklch(0.8 0.12 275); }
+.dark .tint-red { color: oklch(0.8 0.13 25); }
+.dark .tint-green { color: oklch(0.84 0.14 150); }
+
+/* Dark, thin scrollbars on the main content */
+.dark * { scrollbar-width: thin; scrollbar-color: oklch(1 0 0 / 18%) transparent; }
+
+/* Gradient page titles, same treatment as the landing headline */
+.dark .title-gradient {
+  background-image: linear-gradient(100deg, oklch(0.99 0.005 270) 0%, oklch(0.9 0.05 280) 55%, oklch(0.82 0.12 250) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* `light:` variant (used above) = only when the dark class is absent */
+@custom-variant light (&:where(:not(.dark) *));

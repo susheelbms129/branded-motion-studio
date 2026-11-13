@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 import { createSeed } from "@/mocks/seed";
 import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
-import { sendAnnouncement, sendInvite, sendNotification } from "@/server/mail.functions";
+import { sendAnnouncement, sendInvite, sendNotification } from "@/lib/mail.functions";
 import type { Role } from "@/types/domain";
 
 /**

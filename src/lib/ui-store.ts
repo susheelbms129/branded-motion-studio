@@ -32,7 +32,7 @@ export const useUi = create<UiState>()(
       onboarded: false,
       demo: true,
       role: "owner",
-      theme: "light",
+      theme: "dark",
       sidebarCollapsed: false,
       signIn: (user) => set({ user }),
       signOut: () => set({ user: null }),
@@ -42,6 +42,15 @@ export const useUi = create<UiState>()(
       toggleTheme: () => set((s) => ({ theme: s.theme === "light" ? "dark" : "light" })),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
     }),
-    { name: "vendora-ui" },
+    {
+      name: "vendora-ui",
+      // v2: the app now follows the landing page's dark brand look by default. Existing saved
+      // sessions that still hold the old light default are moved to dark once.
+      version: 2,
+      migrate: (persisted, version) => {
+        const s = (persisted ?? {}) as Partial<UiState>;
+        return version < 2 ? { ...s, theme: "dark" } : s;
+      },
+    },
   ),
 );

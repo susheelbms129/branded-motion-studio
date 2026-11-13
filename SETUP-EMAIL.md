@@ -34,7 +34,7 @@ Resend → **Webhooks → Add endpoint**
 6. **Notifications** page → toggle email categories and see the delivery log.
 
 ## What was built (and why)
-- All sending is server-side (`src/server/mail.functions.ts`); the key never reaches the browser.
+- All sending is server-side (`src/lib/mail.functions.ts`); the key never reaches the browser.
 - Reliability: 3 attempts with exponential backoff on 429/5xx/network errors, an `Idempotency-Key` per email so retries/double-clicks never duplicate, errors returned (never thrown) so business actions are never blocked.
 - Invitations: HMAC-signed, 7-day expiry, role/email/org locked inside the signature (tamper = rejected), resend creates a fresh link, expired/invalid/used links show clear screens.
 - Safety: rate limits per IP and per recipient, strict input validation, HTML escaping, display-name sanitising, real sender is always your verified domain, links limited to in-app paths.

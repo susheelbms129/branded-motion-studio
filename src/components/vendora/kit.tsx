@@ -174,8 +174,8 @@ export function PageHeader({
       </nav>
       <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight sm:text-[28px]">
-            {title}
+          <h1 className="flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight sm:text-[30px]">
+            <span className="title-gradient">{title}</span>
             {meta}
           </h1>
           {description ? (
@@ -204,11 +204,16 @@ export function Panel({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cn("rounded-2xl border bg-card shadow-card", className)}>
+    <section
+      className={cn(
+        "rounded-2xl border border-white/10 bg-card shadow-card backdrop-blur-xl light:border-border",
+        className,
+      )}
+    >
       {title ? (
         <header className="flex items-start justify-between gap-3 px-5 pt-4">
           <div>
-            <h2 className="text-sm font-semibold">{title}</h2>
+            <h2 className="text-[15px] font-semibold">{title}</h2>
             {description ? (
               <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
             ) : null}
@@ -353,17 +358,17 @@ export function KpiCard({
   const up = (trend?.pct ?? 0) >= 0;
   const good = trend ? (trend.goodWhenUp === false ? !up : up) : true;
   return (
-    <div className="card-lift group relative overflow-hidden rounded-2xl border bg-card p-4 shadow-card">
+    <div className="card-lift group relative overflow-hidden rounded-2xl border border-white/10 bg-card p-4 shadow-card backdrop-blur-xl">
       <div
         className={cn(
-          "pointer-events-none absolute -right-10 -top-10 size-28 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-60",
+          "pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-30 blur-2xl transition-opacity group-hover:opacity-70",
           a.glow,
         )}
       />
       <div className="flex items-start justify-between">
         <div
           className={cn(
-            "grid size-9 place-items-center rounded-xl text-on-brand shadow-soft",
+            "grid size-9 place-items-center rounded-xl text-on-brand shadow-glow",
             a.chip,
           )}
         >

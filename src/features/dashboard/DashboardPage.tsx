@@ -161,6 +161,13 @@ export function DashboardPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={months}>
+                <defs>
+                  <linearGradient id="bar-brand" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--brand-cyan)" />
+                    <stop offset="55%" stopColor="var(--brand-blue)" />
+                    <stop offset="100%" stopColor="var(--brand-violet)" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid vertical={false} stroke="var(--border)" />
                 <XAxis
                   dataKey="month"
@@ -181,7 +188,7 @@ export function DashboardPage() {
                   content={<ChartTip format={(n) => formatMoney(n)} />}
                   cursor={{ fill: "var(--accent)" }}
                 />
-                <Bar dataKey="spend" name="Spend" fill="var(--brand-blue)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="spend" name="Spend" fill="url(#bar-brand)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

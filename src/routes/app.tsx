@@ -1,15 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/app/AppShell";
-import { useUi } from "@/lib/ui-store";
+import { requireWorkspace } from "@/lib/auth";
 
-// The signed-in app is client-only: demo data is date-relative and UI state lives in localStorage.
+// The signed-in app is client-only: the session lives in the browser and demo data is date-relative.
 export const Route = createFileRoute("/app")({
   ssr: false,
-  beforeLoad: () => {
-    const s = useUi.getState();
-    if (!s.user) throw redirect({ to: "/signin" });
-    if (!s.onboarded) throw redirect({ to: "/onboarding" });
+  beforeLoad: async () => {
+    const r = await requireWorkspace();
+    if (r === "signin") throw redirect({ to: "/signin" });
+    if (r === "onboarding") throw redirect({ to: "/onboarding" });
   },
   head: () => ({ meta: [{ title: "Vendora — Procurement workspace" }] }),
   component: AppShell,

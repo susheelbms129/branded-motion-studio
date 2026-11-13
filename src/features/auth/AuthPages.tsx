@@ -1,12 +1,11 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { VendoraLogo } from "@/components/vendora/Logo";
+import { authInputClass } from "@/components/landing/AuthScreen";
+import { Logo } from "@/components/landing/Logo";
+import { createWorkspace } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
@@ -32,96 +31,98 @@ export function OnboardingPage() {
   const [co, setCo] = useState({ name: user?.company ?? "", industry: "Manufacturing", city: "" });
   const [cats, setCats] = useState<string[]>(["Raw Materials", "Packaging"]);
   const [demo, setDemo] = useState(true);
-  const finish = () => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const finish = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await createWorkspace({ name: co.name, industry: co.industry, city: co.city.trim() });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't create your workspace. Please try again.");
+      setBusy(false);
+      return;
+    }
     finishOnboarding(demo);
     reset(demo);
     if (!demo) updateOrg({ name: co.name || "My Workspace", industry: co.industry, city: co.city });
     void nav({ to: "/app" });
   };
+  const label = "mb-1.5 block text-sm font-medium text-foreground";
+  const cta =
+    "btn-shine group flex items-center justify-center gap-2 rounded-xl bg-gradient-cta px-9 py-4 text-lg font-semibold text-white shadow-glow transition hover:scale-[1.01] disabled:opacity-60 disabled:hover:scale-100";
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gradient-lavender px-4 py-10">
-      <Link to="/" className="mb-8 rounded-xl bg-navy px-4 py-2">
-        <VendoraLogo height={28} />
-      </Link>
-      <div className="w-full max-w-xl">
-        <ol className="mb-6 flex items-center gap-2" aria-label="Progress">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-lavender px-5 py-12">
+      <div className="glow-violet animate-orb pointer-events-none absolute -right-32 -top-20 size-[34rem] opacity-30" />
+      <div className="glow-blue animate-orb-slow pointer-events-none absolute -bottom-32 -left-32 size-[34rem] opacity-30" />
+      <div className="glow-magenta animate-orb pointer-events-none absolute bottom-10 right-1/4 size-80 opacity-15" />
+
+      {/* Exact brand logo, unmodified. It is white-on-transparent, so it sits on the brand navy. Not a link. */}
+      <div className="relative mb-10 rounded-3xl bg-navy px-10 py-4 shadow-lift">
+        <Logo className="h-20" />
+      </div>
+
+      <div className="relative w-full max-w-3xl">
+        <ol className="mb-8 flex items-center gap-3" aria-label="Progress">
           {STEPS.map((s, i) => (
-            <li key={s} className="flex flex-1 items-center gap-2">
+            <li key={s} className="flex flex-1 items-center gap-3">
               <span
                 className={cn(
-                  "grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold",
-                  i <= step
-                    ? "bg-gradient-primary text-on-brand"
-                    : "bg-muted text-muted-foreground",
+                  "grid size-11 shrink-0 place-items-center rounded-full text-base font-semibold transition",
+                  i <= step ? "bg-gradient-primary text-on-brand shadow-glow" : "bg-white text-muted-foreground shadow-card",
                 )}
               >
-                {i < step ? <Check className="size-3.5" /> : i + 1}
+                {i < step ? <Check className="size-5" strokeWidth={3} /> : i + 1}
               </span>
-              <span
-                className={cn(
-                  "hidden text-xs sm:block",
-                  i === step ? "font-medium" : "text-muted-foreground",
-                )}
-              >
+              <span className={cn("hidden text-base sm:block", i === step ? "font-semibold text-foreground" : "text-muted-foreground")}>
                 {s}
               </span>
-              {i < 2 ? <span className="h-px flex-1 bg-border" /> : null}
+              {i < 2 ? <span className={cn("h-0.5 flex-1 rounded-full", i < step ? "bg-primary/60" : "bg-border")} /> : null}
             </li>
           ))}
         </ol>
+
         <motion.div
           key={step}
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          className="rounded-3xl border bg-card p-6 shadow-lift sm:p-8"
+          className="rounded-[2rem] border border-white/60 bg-white p-8 shadow-lift sm:p-12"
         >
           {step === 0 ? (
             <>
-              <h1 className="text-xl font-semibold">Tell us about your company</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                This appears on your purchase orders.
-              </p>
-              <div className="mt-5 space-y-4">
-                <div>
-                  <Label htmlFor="co">Company name</Label>
-                  <Input
-                    id="co"
-                    className="mt-1.5"
+              <h1 className="text-4xl font-semibold text-foreground">Tell us about your company</h1>
+              <p className="mt-2 text-lg text-muted-foreground">This appears on your purchase orders.</p>
+              <div className="mt-8 space-y-5">
+                <label className="block">
+                  <span className={label}>Company name</span>
+                  <input
+                    className={authInputClass}
                     value={co.name}
                     onChange={(e) => setCo({ ...co, name: e.target.value })}
+                    autoComplete="organization"
                   />
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="ind">Industry</Label>
-                    <Input
-                      id="ind"
-                      className="mt-1.5"
-                      value={co.industry}
-                      onChange={(e) => setCo({ ...co, industry: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      className="mt-1.5"
-                      placeholder="Pune"
-                      value={co.city}
-                      onChange={(e) => setCo({ ...co, city: e.target.value })}
-                    />
-                  </div>
+                </label>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <label className="block">
+                    <span className={label}>Industry</span>
+                    <input className={authInputClass} value={co.industry} onChange={(e) => setCo({ ...co, industry: e.target.value })} />
+                  </label>
+                  <label className="block">
+                    <span className={label}>City</span>
+                    <input className={authInputClass} placeholder="Pune" value={co.city} onChange={(e) => setCo({ ...co, city: e.target.value })} />
+                  </label>
                 </div>
               </div>
             </>
           ) : null}
+
           {step === 1 ? (
             <>
-              <h1 className="text-xl font-semibold">What do you mostly buy?</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h1 className="text-4xl font-semibold text-foreground">What do you mostly buy?</h1>
+              <p className="mt-2 text-lg text-muted-foreground">
                 Pick your main categories — we'll set up budgets and suppliers around them.
               </p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-8 flex flex-wrap gap-3">
                 {CATS.map((c) => {
                   const on = cats.includes(c);
                   return (
@@ -131,8 +132,8 @@ export function OnboardingPage() {
                       aria-pressed={on}
                       onClick={() => setCats(on ? cats.filter((x) => x !== c) : [...cats, c])}
                       className={cn(
-                        "rounded-full border px-4 py-2 text-sm transition",
-                        on ? "border-primary/40 bg-primary/10 text-primary" : "hover:bg-accent",
+                        "rounded-full border px-6 py-3 text-base font-medium transition",
+                        on ? "border-primary/40 bg-primary/10 text-primary" : "border-input bg-white text-foreground hover:border-primary/40 hover:bg-muted/60",
                       )}
                     >
                       {on ? "✓ " : ""}
@@ -143,13 +144,12 @@ export function OnboardingPage() {
               </div>
             </>
           ) : null}
+
           {step === 2 ? (
             <>
-              <h1 className="text-xl font-semibold">How would you like to start?</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                You can switch any time from the top bar.
-              </p>
-              <div className="mt-5 grid gap-3">
+              <h1 className="text-4xl font-semibold text-foreground">How would you like to start?</h1>
+              <p className="mt-2 text-lg text-muted-foreground">You can switch any time from the top bar.</p>
+              <div className="mt-8 grid gap-4">
                 {[
                   {
                     v: true,
@@ -168,36 +168,40 @@ export function OnboardingPage() {
                     onClick={() => setDemo(o.v)}
                     aria-pressed={demo === o.v}
                     className={cn(
-                      "rounded-2xl border p-4 text-left transition",
-                      demo === o.v
-                        ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20"
-                        : "hover:bg-accent/50",
+                      "rounded-2xl border p-6 text-left transition",
+                      demo === o.v ? "border-primary/50 bg-primary/5 ring-4 ring-primary/15" : "border-input bg-white hover:border-primary/40 hover:bg-muted/60",
                     )}
                   >
-                    <div className="font-medium">{o.t}</div>
-                    <div className="mt-0.5 text-sm text-muted-foreground">{o.d}</div>
+                    <div className="text-xl font-semibold text-foreground">{o.t}</div>
+                    <div className="mt-1 text-base text-muted-foreground">{o.d}</div>
                   </button>
                 ))}
               </div>
             </>
           ) : null}
-          <div className="mt-8 flex items-center justify-between">
-            <Button variant="ghost" disabled={step === 0} onClick={() => setStep(step - 1)}>
+
+          {error ? <p role="alert" className="mt-6 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p> : null}
+
+          <div className="mt-10 flex items-center justify-between">
+            <button
+              type="button"
+              disabled={step === 0 || busy}
+              onClick={() => setStep(step - 1)}
+              className="rounded-xl px-5 py-3 text-lg font-semibold text-muted-foreground transition hover:text-foreground disabled:invisible"
+            >
               Back
-            </Button>
+            </button>
             {step < 2 ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                disabled={step === 0 && co.name.trim().length < 2}
-              >
+              <button type="button" className={cta} onClick={() => setStep(step + 1)} disabled={step === 0 && co.name.trim().length < 2}>
                 Continue
-                <ArrowRight />
-              </Button>
+                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+              </button>
             ) : (
-              <Button variant="hero" size="lg" onClick={finish}>
+              <button type="button" className={cta} disabled={busy} onClick={() => void finish()}>
+                {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
                 Enter workspace
-                <ArrowRight />
-              </Button>
+                {busy ? null : <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />}
+              </button>
             )}
           </div>
         </motion.div>

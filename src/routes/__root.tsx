@@ -13,6 +13,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { AuthScreen } from "../components/landing/AuthScreen";
+import { clearAuthCache } from "../lib/auth";
+import { getSupabase, isSupabaseConfigured } from "../lib/supabase";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -128,12 +130,23 @@ function AuthRoute() {
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const mode = path === "/signup" ? "signup" : path === "/signin" ? "signin" : null;
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const { data } = getSupabase().auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        clearAuthCache();
+        if (window.location.pathname.startsWith("/app")) void nav({ to: "/signin" });
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [nav]);
   return (
     <AuthScreen
       open={mode !== null}
       mode={mode ?? "signup"}
       onModeChange={(m) => void nav({ to: m === "signup" ? "/signup" : "/signin", replace: true })}
       onClose={() => void nav({ to: "/" })}
+      onAuthed={() => void nav({ to: "/app" })}
     />
   );
 }

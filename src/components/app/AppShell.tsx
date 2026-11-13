@@ -23,6 +23,7 @@ import { startMailEvents } from "@/lib/mail-events";
 import { MODULES, type ModuleKey } from "@/lib/modules";
 import { appPath, AppLink } from "@/lib/nav";
 import { ROLES, ROLE_LABEL } from "@/lib/permissions";
+import { signOutUser } from "@/lib/auth";
 import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
 import { cn } from "@/lib/utils";
@@ -123,7 +124,6 @@ export function AppShell() {
     role,
     setRole,
     user,
-    signOut,
   } = useUi();
   const org = useWs((s) => s.organizations[0]);
   const reset = useWs((s) => s.reset);
@@ -279,8 +279,7 @@ export function AppShell() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
-                    signOut();
-                    void nav({ to: "/signin" });
+                    void signOutUser().then(() => nav({ to: "/signin" }));
                   }}
                 >
                   <LogOut className="size-4" />

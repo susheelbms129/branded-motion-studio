@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Eye, EyeOff, Loader2, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import { signInWithEmail, signInWithProvider, signUpWithEmail } from "@/lib/auth";
 import { formatMoneyCompact } from "@/lib/format";
 
 import { Logo } from "./Logo";
@@ -76,8 +77,10 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 const input = "w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base text-foreground outline-none transition placeholder:text-subtle-foreground focus:border-primary focus:ring-4 focus:ring-primary/15";
+/** Shared by the signup panel and onboarding so every input looks identical. */
+export const authInputClass = input;
 
-export function AuthScreen({ open, mode, onModeChange, onClose }: { open: boolean; mode: AuthMode; onModeChange: (m: AuthMode) => void; onClose: () => void }) {
+export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { open: boolean; mode: AuthMode; onModeChange: (m: AuthMode) => void; onClose: () => void; onAuthed: () => void }) {
   const [show, setShow] = useState(false);
   const [vals, setVals] = useState({ first: "", last: "", email: "", password: "" });
   const [err, setErr] = useState<Record<string, string>>({});
@@ -135,7 +138,7 @@ export function AuthScreen({ open, mode, onModeChange, onClose }: { open: boolea
     { label: "Mixed case", ok: /[a-z]/.test(pw) && /[A-Z]/.test(pw) },
   ];
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     const next: Record<string, string> = {};
     if (mode === "signup") {
@@ -148,15 +151,34 @@ export function AuthScreen({ open, mode, onModeChange, onClose }: { open: boolea
     if (Object.keys(next).length) return;
     setVia(null);
     setState("sending");
-    window.setTimeout(() => setState("done"), 900);
+    const email = vals.email.trim();
+    const res =
+      mode === "signup"
+        ? await signUpWithEmail({ name: `${vals.first.trim()} ${vals.last.trim()}`.trim(), email, password: vals.password })
+        : await signInWithEmail(email, vals.password);
+    if (!res.ok) {
+      setState("idle");
+      setErr({ form: res.message });
+      return;
+    }
+    if (res.needsConfirm) {
+      setState("done");
+      return;
+    }
+    onAuthed();
   }
 
-  function social(provider: "Apple" | "Google") {
+  async function social(provider: "Apple" | "Google") {
     if (state === "sending") return;
     setErr({});
     setVia(provider);
     setState("sending");
-    window.setTimeout(() => setState("done"), 900);
+    const res = await signInWithProvider(provider === "Apple" ? "apple" : "google");
+    if (!res.ok) {
+      setState("idle");
+      setVia(null);
+      setErr({ form: res.message });
+    }
   }
 
   return (
@@ -188,13 +210,9 @@ export function AuthScreen({ open, mode, onModeChange, onClose }: { open: boolea
               <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-emerald text-white shadow-glow">
                 <Check className="h-8 w-8" strokeWidth={3} />
               </span>
-              <h3 className="mt-6 text-3xl font-semibold text-foreground">{mode === "signup" ? `Welcome, ${vals.first.trim() || "there"}.` : "You're almost in."}</h3>
+              <h3 className="mt-6 text-3xl font-semibold text-foreground">Check your email</h3>
               <p className="mt-3 text-lg text-muted-foreground">
-                {via ? (
-                  <>You continued with <b className="text-foreground">{via}</b>. The Vendora app opens soon, and we'll let you know the moment your workspace is ready.</>
-                ) : (
-                  <>The Vendora app opens soon. We'll email <b className="text-foreground">{vals.email}</b> the moment your workspace is ready.</>
-                )}
+                If this address can be registered, we've sent a confirmation link to <b className="text-foreground">{vals.email.trim()}</b>. Open it to activate your account, then sign in.
               </p>
               <button type="button" onClick={onClose} className="mt-8 rounded-full bg-gradient-primary px-8 py-3.5 text-lg font-semibold text-white shadow-glow transition hover:scale-105">
                 Back to the site
@@ -290,6 +308,8 @@ export function AuthScreen({ open, mode, onModeChange, onClose }: { open: boolea
                 ) : null}
 
                 {mode === "signup" ? <p className="text-sm text-muted-foreground">By signing up, you agree to our <span className="text-primary">Terms</span> and <span className="text-primary">Privacy Policy</span>.</p> : null}
+
+                {err.form ? <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{err.form}</p> : null}
 
                 <button type="submit" disabled={state === "sending"} className="btn-shine group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-cta py-4 text-lg font-semibold text-white shadow-glow transition hover:scale-[1.01] disabled:opacity-70">
                   {state === "sending" ? <Loader2 className="h-5 w-5 animate-spin" /> : null}

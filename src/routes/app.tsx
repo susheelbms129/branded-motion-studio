@@ -9,9 +9,9 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   beforeLoad: async () => {
     const r = await requireWorkspace();
-    if (r === "signin") throw redirect({ to: "/signin" });
+    if (r === "signin") throw redirect({ to: "/buyer/signin" });
     if ((await signedInAccountType()) === "supplier") throw redirect({ to: "/supplier/dashboard" });
-    if (r === "onboarding") throw redirect({ to: "/onboarding" });
+    if (r === "onboarding") throw redirect({ to: "/buyer/onboarding" });
   },
   head: () => ({ meta: [{ title: "Vendora — Procurement workspace" }] }),
   component: AppShell,

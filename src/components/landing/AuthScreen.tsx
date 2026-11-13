@@ -175,7 +175,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
   const set = (k: keyof typeof vals) => (e: { target: { value: string } }) => setVals((v) => ({ ...v, [k]: e.target.value }));
   const pw = vals.password;
   const checks = [
-    { label: "Min 12 characters", ok: pw.length >= 12 },
+    { label: "Min 8 characters", ok: pw.length >= 8 },
     { label: "Min 1 number", ok: /\d/.test(pw) },
     { label: "Mixed case", ok: /[a-z]/.test(pw) && /[A-Z]/.test(pw) },
   ];
@@ -198,7 +198,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
       mode === "signup"
         ? await signUpWithEmail(
             { name: `${vals.first.trim()} ${vals.last.trim()}`.trim(), email, password: vals.password, accountType: variant },
-            supplier ? { redirectPath: "/supplier/onboarding" } : undefined,
+            { redirectPath: supplier ? "/supplier/onboarding" : "/buyer/onboarding" },
           )
         : await signInWithEmail(email, vals.password, variant);
     if (!res.ok) {
@@ -220,7 +220,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
     setState("sending");
     const res = await signInWithProvider(
       provider === "Apple" ? "apple" : "google",
-      supplier ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : "/app",
+      supplier ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : mode === "signup" ? "/buyer/onboarding" : "/app",
       // Only a brand-new sign-up records which kind of account this is.
       mode === "signup" ? variant : undefined,
     );
@@ -241,7 +241,9 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
           <Logo className="-ml-1 h-20 xl:h-24" />
           {supplier ? (
             <>
-              <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">Win orders from businesses that are ready to buy.</h2>
+              <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">
+                Win <span className="grad-rupee" style={{ animation: "gradient-pan 6s ease infinite" }}>orders</span> from businesses that are ready to buy.
+              </h2>
               <p className="mt-5 max-w-md text-base leading-relaxed text-navy-muted xl:text-lg">
                 List your products, answer quote requests and track purchase orders from the buyers you work with, all in one supplier workspace.
               </p>
@@ -389,7 +391,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
               </p>
               <p className="mt-3 text-center text-sm text-muted-foreground">
                 {supplier ? "Looking to buy? " : "Selling to businesses? "}
-                <Link to={supplier ? (mode === "signup" ? "/signup" : "/signin") : mode === "signup" ? "/supplier/signup" : "/supplier/signin"} replace className="font-semibold text-primary hover:underline">
+                <Link to={supplier ? (mode === "signup" ? "/buyer/signup" : "/buyer/signin") : mode === "signup" ? "/supplier/signup" : "/supplier/signin"} replace className="font-semibold text-primary hover:underline">
                   {supplier ? (mode === "signup" ? "Create a buyer account" : "Buyer sign in") : mode === "signup" ? "Create a supplier account" : "Supplier sign in"}
                 </Link>
               </p>

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { LandingPage } from "@/components/landing/LandingPage";
-
+// Legacy URL: buyer sign-up now lives at /buyer/signup.
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Sign up — Vendora" }] }),
-  component: LandingPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/buyer/signup" });
+  },
 });

@@ -318,7 +318,7 @@ export function AppShell() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
-                    void signOutUser().then(() => nav({ to: "/signin" }));
+                    void signOutUser().then(() => nav({ to: "/buyer/signin" }));
                   }}
                 >
                   <LogOut className="size-4" />

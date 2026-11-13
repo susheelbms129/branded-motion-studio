@@ -12,7 +12,7 @@ function ChoiceImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-function Choice({ to, art, title, text, tag, tagClass, cta }: { to: "/signup" | "/supplier/signup"; art: React.ReactNode; title: string; text: string; tag: string; tagClass: string; cta: string }) {
+function Choice({ to, art, title, text, tag, tagClass, cta }: { to: "/buyer/signup" | "/supplier/signup"; art: React.ReactNode; title: string; text: string; tag: string; tagClass: string; cta: string }) {
   return (
     <Link to={to} className="group flex flex-col rounded-3xl border border-white/15 bg-white/5 p-4 backdrop-blur transition hover:-translate-y-1 hover:border-white/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan">
       {art}
@@ -56,7 +56,7 @@ export function AccountTypePicker() {
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <Choice
-              to="/signup"
+              to="/buyer/signup"
               art={<ChoiceImage src="/images/buyer-company.jpg" alt="Buyer team reviewing procurement on a tablet in a warehouse" />}
               title="I'm a Buyer"
               tag="Buyer"
@@ -83,7 +83,7 @@ export function AccountTypePicker() {
 
         <p className="pt-2 text-center text-base text-navy-muted">
           Already have an account? Log in as a{" "}
-          <Link to="/signin" className="font-semibold text-white underline-offset-4 hover:underline">
+          <Link to="/buyer/signin" className="font-semibold text-white underline-offset-4 hover:underline">
             buyer
           </Link>{" "}
           or a{" "}

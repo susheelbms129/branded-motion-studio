@@ -24,6 +24,9 @@ import { Route as AppMaterialsRouteImport } from './routes/app.materials'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as BuyerOnboardingRouteImport } from './routes/buyer.onboarding'
+import { Route as BuyerSigninRouteImport } from './routes/buyer.signin'
+import { Route as BuyerSignupRouteImport } from './routes/buyer.signup'
 import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
@@ -114,6 +117,21 @@ const AppTeamRoute = AppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
+const BuyerOnboardingRoute = BuyerOnboardingRouteImport.update({
+  id: '/buyer/onboarding',
+  path: '/buyer/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerSigninRoute = BuyerSigninRouteImport.update({
+  id: '/buyer/signin',
+  path: '/buyer/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerSignupRoute = BuyerSignupRouteImport.update({
+  id: '/buyer/signup',
+  path: '/buyer/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupplierDashboardRoute = SupplierDashboardRouteImport.update({
   id: '/supplier/dashboard',
   path: '/supplier/dashboard',
@@ -200,6 +218,9 @@ export interface FileRoutesByFullPath {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/buyer/onboarding': typeof BuyerOnboardingRoute
+  '/buyer/signin': typeof BuyerSigninRoute
+  '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -230,6 +251,9 @@ export interface FileRoutesByTo {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/buyer/onboarding': typeof BuyerOnboardingRoute
+  '/buyer/signin': typeof BuyerSigninRoute
+  '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -262,6 +286,9 @@ export interface FileRoutesById {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/buyer/onboarding': typeof BuyerOnboardingRoute
+  '/buyer/signin': typeof BuyerSigninRoute
+  '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -295,6 +322,9 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/buyer/onboarding'
+    | '/buyer/signin'
+    | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
     | '/supplier/signin'
@@ -325,6 +355,9 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/buyer/onboarding'
+    | '/buyer/signin'
+    | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
     | '/supplier/signin'
@@ -356,6 +389,9 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/buyer/onboarding'
+    | '/buyer/signin'
+    | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
     | '/supplier/signin'
@@ -382,6 +418,9 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  BuyerOnboardingRoute: typeof BuyerOnboardingRoute
+  BuyerSigninRoute: typeof BuyerSigninRoute
+  BuyerSignupRoute: typeof BuyerSignupRoute
   SupplierDashboardRoute: typeof SupplierDashboardRoute
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
   SupplierSigninRoute: typeof SupplierSigninRoute
@@ -495,6 +534,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/team'
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/buyer/onboarding': {
+      id: '/buyer/onboarding'
+      path: '/buyer/onboarding'
+      fullPath: '/buyer/onboarding'
+      preLoaderRoute: typeof BuyerOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/signin': {
+      id: '/buyer/signin'
+      path: '/buyer/signin'
+      fullPath: '/buyer/signin'
+      preLoaderRoute: typeof BuyerSigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/signup': {
+      id: '/buyer/signup'
+      path: '/buyer/signup'
+      fullPath: '/buyer/signup'
+      preLoaderRoute: typeof BuyerSignupRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/supplier/dashboard': {
       id: '/supplier/dashboard'
@@ -646,6 +706,9 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  BuyerOnboardingRoute: BuyerOnboardingRoute,
+  BuyerSigninRoute: BuyerSigninRoute,
+  BuyerSignupRoute: BuyerSignupRoute,
   SupplierDashboardRoute: SupplierDashboardRoute,
   SupplierOnboardingRoute: SupplierOnboardingRoute,
   SupplierSigninRoute: SupplierSigninRoute,

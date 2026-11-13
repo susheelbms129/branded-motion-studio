@@ -16,7 +16,7 @@ function friendly(message: string, fallback: string): string {
   if (m.includes("email not confirmed")) return "Please confirm your email first. Check your inbox for the link.";
   if (m.includes("rate limit") || m.includes("too many")) return "Too many attempts. Please wait a few minutes and try again.";
   if (m.includes("password") && (m.includes("weak") || m.includes("short") || m.includes("least")))
-    return "That password is too weak. Use 12+ characters with a number and mixed case.";
+    return "That password is too weak. Use 8+ characters with a number and mixed case.";
   return fallback;
 }
 
@@ -49,7 +49,7 @@ function accountTypeOf(meta: unknown): AccountType {
 
 /** Where each kind of account lives. Buyers and suppliers never share a workspace or a sign-in page. */
 export const homePathFor = (t: AccountType) => (t === "supplier" ? "/supplier/dashboard" : "/app");
-export const signInPathFor = (t: AccountType) => (t === "supplier" ? "/supplier/signin" : "/signin");
+export const signInPathFor = (t: AccountType) => (t === "supplier" ? "/supplier/signin" : "/buyer/signin");
 
 /**
  * `expected` is the side of the site the person is signing in on. If the account is the other kind,

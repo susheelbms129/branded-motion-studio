@@ -126,12 +126,12 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 // Sign up / sign in is one full-screen panel whose side and mode live in the URL:
-//   buyers:    /signup  /signin
+//   buyers:    /buyer/signup  /buyer/signin
 //   suppliers: /supplier/signup  /supplier/signin
 // The two sides are fully separate: each tab and link stays on its own side.
 const AUTH_PATHS: Record<string, { mode: "signup" | "signin"; variant: "buyer" | "supplier" }> = {
-  "/signup": { mode: "signup", variant: "buyer" },
-  "/signin": { mode: "signin", variant: "buyer" },
+  "/buyer/signup": { mode: "signup", variant: "buyer" },
+  "/buyer/signin": { mode: "signin", variant: "buyer" },
   "/supplier/signup": { mode: "signup", variant: "supplier" },
   "/supplier/signin": { mode: "signin", variant: "supplier" },
 };
@@ -149,7 +149,7 @@ function AuthRoute() {
         clearAuthCache();
         // Signed out inside a workspace: go to that side's own sign-in.
         const p = window.location.pathname;
-        if (p.startsWith("/app")) void nav({ to: "/signin" });
+        if (p.startsWith("/app")) void nav({ to: "/buyer/signin" });
         else if (p === "/supplier/dashboard" || p === "/supplier/onboarding") void nav({ to: "/supplier/signin" });
       }
     });
@@ -162,15 +162,22 @@ function AuthRoute() {
       variant={variant}
       onModeChange={(m) => {
         if (m === mode) return;
-        const to = variant === "supplier" ? (m === "signup" ? "/supplier/signup" : "/supplier/signin") : m === "signup" ? "/signup" : "/signin";
+        const to = variant === "supplier" ? (m === "signup" ? "/supplier/signup" : "/supplier/signin") : m === "signup" ? "/buyer/signup" : "/buyer/signin";
         void nav({ to, replace: true });
       }}
       onClose={() => void nav({ to: "/" })}
       onAuthed={() =>
         void nav({
-          // A brand-new supplier sets up their business; a returning supplier goes to their dashboard
-          // (which sends them to setup if it isn't finished). Buyers go to their own workspace.
-          to: variant === "supplier" ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : "/app",
+          // A brand-new account sets up their business first; a returning one goes to their workspace
+          // (which sends them to setup if it isn't finished). Each side has its own onboarding.
+          to:
+            variant === "supplier"
+              ? mode === "signup"
+                ? "/supplier/onboarding"
+                : "/supplier/dashboard"
+              : mode === "signup"
+                ? "/buyer/onboarding"
+                : "/app",
         })
       }
     />

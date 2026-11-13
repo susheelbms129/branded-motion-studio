@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as GetStartedRouteImport } from './routes/get-started'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as SigninRouteImport } from './routes/signin'
@@ -23,6 +24,9 @@ import { Route as AppMaterialsRouteImport } from './routes/app.materials'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
+import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
+import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api.public.resend-webhook'
 import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
 import { Route as AppPurchaseOrdersIdRouteImport } from './routes/app.purchase-orders.$id'
@@ -47,6 +51,11 @@ const AcceptInviteRoute = AcceptInviteRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetStartedRoute = GetStartedRouteImport.update({
+  id: '/get-started',
+  path: '/get-started',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -104,6 +113,21 @@ const AppTeamRoute = AppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
+const SupplierDashboardRoute = SupplierDashboardRouteImport.update({
+  id: '/supplier/dashboard',
+  path: '/supplier/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupplierOnboardingRoute = SupplierOnboardingRouteImport.update({
+  id: '/supplier/onboarding',
+  path: '/supplier/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupplierSignupRoute = SupplierSignupRouteImport.update({
+  id: '/supplier/signup',
+  path: '/supplier/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -159,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/app': typeof AppRouteWithChildren
+  '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signin': typeof SigninRoute
@@ -169,6 +194,9 @@ export interface FileRoutesByFullPath {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/supplier/dashboard': typeof SupplierDashboardRoute
+  '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/signup': typeof SupplierSignupRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -184,6 +212,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
+  '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signin': typeof SigninRoute
@@ -194,6 +223,9 @@ export interface FileRoutesByTo {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/supplier/dashboard': typeof SupplierDashboardRoute
+  '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/signup': typeof SupplierSignupRoute
   '/app': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -211,6 +243,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/app': typeof AppRouteWithChildren
+  '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signin': typeof SigninRoute
@@ -221,6 +254,9 @@ export interface FileRoutesById {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/supplier/dashboard': typeof SupplierDashboardRoute
+  '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/signup': typeof SupplierSignupRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -239,6 +275,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/app'
+    | '/get-started'
     | '/login'
     | '/onboarding'
     | '/signin'
@@ -249,6 +286,9 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/supplier/dashboard'
+    | '/supplier/onboarding'
+    | '/supplier/signup'
     | '/app/'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -264,6 +304,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/accept-invite'
+    | '/get-started'
     | '/login'
     | '/onboarding'
     | '/signin'
@@ -274,6 +315,9 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/supplier/dashboard'
+    | '/supplier/onboarding'
+    | '/supplier/signup'
     | '/app'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -290,6 +334,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/app'
+    | '/get-started'
     | '/login'
     | '/onboarding'
     | '/signin'
@@ -300,6 +345,9 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/supplier/dashboard'
+    | '/supplier/onboarding'
+    | '/supplier/signup'
     | '/app/'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -317,10 +365,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcceptInviteRoute: typeof AcceptInviteRoute
   AppRoute: typeof AppRouteWithChildren
+  GetStartedRoute: typeof GetStartedRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  SupplierDashboardRoute: typeof SupplierDashboardRoute
+  SupplierOnboardingRoute: typeof SupplierOnboardingRoute
+  SupplierSignupRoute: typeof SupplierSignupRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
 }
 
@@ -345,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-started': {
+      id: '/get-started'
+      path: '/get-started'
+      fullPath: '/get-started'
+      preLoaderRoute: typeof GetStartedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -423,6 +482,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/team'
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/supplier/dashboard': {
+      id: '/supplier/dashboard'
+      path: '/supplier/dashboard'
+      fullPath: '/supplier/dashboard'
+      preLoaderRoute: typeof SupplierDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/onboarding': {
+      id: '/supplier/onboarding'
+      path: '/supplier/onboarding'
+      fullPath: '/supplier/onboarding'
+      preLoaderRoute: typeof SupplierOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/signup': {
+      id: '/supplier/signup'
+      path: '/supplier/signup'
+      fullPath: '/supplier/signup'
+      preLoaderRoute: typeof SupplierSignupRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/resend-webhook': {
       id: '/api/public/resend-webhook'
@@ -541,10 +621,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptInviteRoute: AcceptInviteRoute,
   AppRoute: AppRouteWithChildren,
+  GetStartedRoute: GetStartedRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  SupplierDashboardRoute: SupplierDashboardRoute,
+  SupplierOnboardingRoute: SupplierOnboardingRoute,
+  SupplierSignupRoute: SupplierSignupRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
 }
 export const routeTree = rootRouteImport

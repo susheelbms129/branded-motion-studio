@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { OnboardingPage } from "@/features/auth/AuthPages";
-import { requireWorkspace } from "@/lib/auth";
+import { requireWorkspace, signedInAccountType } from "@/lib/auth";
 
 export const Route = createFileRoute("/onboarding")({
   ssr: false,
@@ -9,6 +9,7 @@ export const Route = createFileRoute("/onboarding")({
     const r = await requireWorkspace();
     if (r === "signin") throw redirect({ to: "/signin" });
     if (r === "ok") throw redirect({ to: "/app" });
+    if ((await signedInAccountType()) === "supplier") throw redirect({ to: "/supplier/onboarding" });
   },
   head: () => ({ meta: [{ title: "Onboarding — Vendora" }] }),
   component: OnboardingPage,

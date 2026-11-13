@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, Play, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -51,10 +52,10 @@ export function Hero() {
         </p>
 
         <div className={`mt-10 flex flex-col items-center justify-center gap-4 transition duration-1000 delay-[900ms] sm:flex-row ${mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
-          <a href="#demo" className="btn-shine group inline-flex items-center gap-3 rounded-full bg-gradient-cta px-9 py-5 text-lg font-semibold text-white shadow-glow transition hover:scale-105">
-            Book a Demo
+          <Link to="/get-started" className="btn-shine group inline-flex items-center gap-3 rounded-full bg-gradient-cta px-9 py-5 text-lg font-semibold text-white shadow-glow transition hover:scale-105">
+            Get started
             <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1.5" />
-          </a>
+          </Link>
           <a href="#lab" className="group inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-8 py-5 text-lg font-semibold text-white backdrop-blur transition hover:bg-white/10">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 transition group-hover:scale-110">
               <Play className="h-3.5 w-3.5 fill-white" />

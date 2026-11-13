@@ -2,6 +2,8 @@ import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useUi } from "@/lib/ui-store";
 import type { Role } from "@/types/domain";
 
+export type AccountType = "buyer" | "supplier";
+
 export type AuthResult = { ok: true; needsConfirm: boolean } | { ok: false; message: string };
 
 const NOT_CONFIGURED = "Sign-in isn't available right now. Please try again later.";
@@ -19,7 +21,7 @@ function friendly(message: string, fallback: string): string {
 }
 
 export async function signUpWithEmail(
-  input: { name: string; email: string; password: string },
+  input: { name: string; email: string; password: string; accountType?: AccountType },
   // Only our own code passes this (the invitation page). It must be an in-app path.
   opts?: { redirectPath?: string },
 ): Promise<AuthResult> {
@@ -29,7 +31,7 @@ export async function signUpWithEmail(
     const { data, error } = await getSupabase().auth.signUp({
       email: input.email,
       password: input.password,
-      options: { data: { name: input.name }, emailRedirectTo: `${origin()}${path}` },
+      options: { data: { name: input.name, account_type: input.accountType ?? "buyer" }, emailRedirectTo: `${origin()}${path}` },
     });
     if (error) return { ok: false, message: friendly(error.message, "We couldn't create your account. Please try again.") };
     // With "Confirm email" on, there is no session yet. We say the same thing whether or not the
@@ -52,12 +54,12 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 // Redirects the browser to Google / Apple; the session is picked up when the user returns to /app.
-export async function signInWithProvider(provider: "google" | "apple"): Promise<AuthResult> {
+export async function signInWithProvider(provider: "google" | "apple", redirectPath = "/app"): Promise<AuthResult> {
   if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED };
   try {
     const { error } = await getSupabase().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${origin()}/app` },
+      options: { redirectTo: `${origin()}${redirectPath}` },
     });
     if (error) return { ok: false, message: "That sign-in option isn't available yet." };
     return { ok: true, needsConfirm: false };
@@ -150,6 +152,21 @@ export async function requireWorkspace(): Promise<"signin" | "onboarding" | "ok"
     useUi.setState({ onboarded: ws !== null });
   }
   return cache.hasOrg ? "ok" : "onboarding";
+}
+
+/** Which kind of account this person chose at sign-up. Anyone without the choice recorded is a buyer. */
+export async function signedInAccountType(): Promise<AccountType> {
+  if (!isSupabaseConfigured) return "buyer";
+  const { data } = await getSupabase().auth.getSession();
+  const meta = data.session?.user.user_metadata as { account_type?: string } | undefined;
+  return meta?.account_type === "supplier" ? "supplier" : "buyer";
+}
+
+/** Guard for the supplier area: only needs a session for now (supplier workspaces arrive with the database step). */
+export async function requireSession(): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { data } = await getSupabase().auth.getSession();
+  return !!data.session?.user;
 }
 
 function slugify(name: string): string {

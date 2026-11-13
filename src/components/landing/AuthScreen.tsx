@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Eye, EyeOff, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowRight, Boxes, Check, Eye, EyeOff, FileText, Loader2, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { signInWithEmail, signInWithProvider, signUpWithEmail } from "@/lib/auth";
@@ -7,6 +7,7 @@ import { formatMoneyCompact } from "@/lib/format";
 import { Logo } from "./Logo";
 
 export type AuthMode = "signup" | "signin";
+export type AuthVariant = "buyer" | "supplier";
 
 const BARS = [38, 52, 44, 66, 58, 78, 70, 92];
 const APPROVALS = [
@@ -57,6 +58,45 @@ function Preview() {
   );
 }
 
+function SupplierPreview() {
+  const rows = [
+    ["RFQ-2026-118", "Hydraulic hose, 300 m", "Sharma Precision"],
+    ["RFQ-2026-121", "Packaging film, 2 t", "Kaveri Foods"],
+  ] as const;
+  return (
+    <div className="relative mt-10 w-full max-w-[440px]">
+      <div className="glow-emerald animate-orb absolute -inset-10 -z-10 opacity-60" />
+      <div className="overflow-hidden rounded-3xl border border-white/20 bg-white shadow-[0_40px_100px_-20px_oklch(0.6_0.15_162/50%)]">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+          <div>
+            <p className="text-xs text-subtle-foreground">Quote requests this week</p>
+            <p className="text-2xl font-semibold tabular text-foreground">12</p>
+          </div>
+          <span className="tint-emerald rounded-full px-3 py-1 text-xs font-semibold">3 need a quote</span>
+        </div>
+        <ul className="divide-y divide-border">
+          {rows.map(([id, item, buyer], i) => (
+            <li key={id} className="pop-in flex items-center gap-3 px-5 py-4" style={{ animationDelay: `${0.4 + i * 0.15}s` }}>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-emerald text-white">
+                <FileText className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-foreground">{item}</span>
+                <span className="block truncate text-xs text-subtle-foreground">{id} from {buyer}</span>
+              </span>
+              <span className="tint-amber rounded-full px-2.5 py-0.5 text-[11px] font-semibold">Open</span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex items-center gap-3 border-t border-border bg-muted/50 px-5 py-3.5">
+          <Boxes className="h-5 w-5 text-emerald" />
+          <p className="text-sm text-muted-foreground">Your catalogue is visible to verified buyers.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppleIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
@@ -80,7 +120,8 @@ const input = "w-full rounded-xl border border-input bg-white px-4 py-3.5 text-b
 /** Shared by the signup panel and onboarding so every input looks identical. */
 export const authInputClass = input;
 
-export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { open: boolean; mode: AuthMode; onModeChange: (m: AuthMode) => void; onClose: () => void; onAuthed: () => void }) {
+export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClose, onAuthed }: { open: boolean; mode: AuthMode; variant?: AuthVariant; onModeChange: (m: AuthMode) => void; onClose: () => void; onAuthed: () => void }) {
+  const supplier = variant === "supplier";
   const [show, setShow] = useState(false);
   const [vals, setVals] = useState({ first: "", last: "", email: "", password: "" });
   const [err, setErr] = useState<Record<string, string>>({});
@@ -154,7 +195,10 @@ export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { op
     const email = vals.email.trim();
     const res =
       mode === "signup"
-        ? await signUpWithEmail({ name: `${vals.first.trim()} ${vals.last.trim()}`.trim(), email, password: vals.password })
+        ? await signUpWithEmail(
+            { name: `${vals.first.trim()} ${vals.last.trim()}`.trim(), email, password: vals.password, accountType: variant },
+            supplier ? { redirectPath: "/supplier/onboarding" } : undefined,
+          )
         : await signInWithEmail(email, vals.password);
     if (!res.ok) {
       setState("idle");
@@ -173,7 +217,7 @@ export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { op
     setErr({});
     setVia(provider);
     setState("sending");
-    const res = await signInWithProvider(provider === "Apple" ? "apple" : "google");
+    const res = await signInWithProvider(provider === "Apple" ? "apple" : "google", supplier && mode === "signup" ? "/supplier/onboarding" : "/app");
     if (!res.ok) {
       setState("idle");
       setVia(null);
@@ -182,20 +226,32 @@ export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { op
   }
 
   return (
-    <div className="menu-in fixed inset-0 z-[70] flex bg-navy" role="dialog" aria-modal="true" aria-label={mode === "signup" ? "Create your Vendora account" : "Sign in to Vendora"}>
+    <div className="menu-in fixed inset-0 z-[70] flex bg-navy" role="dialog" aria-modal="true" aria-label={mode === "signup" ? (supplier ? "Create your Vendora supplier account" : "Create your Vendora account") : "Sign in to Vendora"}>
       {/* left: brand */}
       <aside className="relative hidden shrink-0 flex-col justify-center overflow-hidden bg-gradient-to-br from-navy via-navy-2 to-indigo/40 px-10 py-10 lg:flex lg:w-1/2 xl:px-16">
         <div className="bg-grid-dark mask-radial pointer-events-none absolute inset-0 opacity-60" />
         <div className="glow-blue animate-orb-slow pointer-events-none absolute -bottom-40 -left-40 h-[560px] w-[560px] opacity-60" />
         <div className="relative z-10 mx-auto flex w-full max-w-[480px] flex-col items-start text-left">
           <Logo className="-ml-1 h-20 xl:h-24" />
-          <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">
-            Take <span className="grad-rupee" style={{ animation: "gradient-pan 6s ease infinite" }}>control</span> of your procurement.
-          </h2>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-navy-muted xl:text-lg">
-            Vendora brings requests, suppliers, approvals and purchase orders into one place, so you compare real landed costs and see where every rupee goes.
-          </p>
-          <Preview />
+          {mode === "signup" && supplier ? (
+            <>
+              <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">Win orders from businesses that are ready to buy.</h2>
+              <p className="mt-5 max-w-md text-base leading-relaxed text-navy-muted xl:text-lg">
+                List your products, answer quote requests and track purchase orders from the buyers you work with, all in one supplier workspace.
+              </p>
+              <SupplierPreview />
+            </>
+          ) : (
+            <>
+              <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">
+                Take <span className="grad-rupee" style={{ animation: "gradient-pan 6s ease infinite" }}>control</span> of your procurement.
+              </h2>
+              <p className="mt-5 max-w-md text-base leading-relaxed text-navy-muted xl:text-lg">
+                Vendora brings requests, suppliers, approvals and purchase orders into one place, so you compare real landed costs and see where every rupee goes.
+              </p>
+              <Preview />
+            </>
+          )}
         </div>
       </aside>
 
@@ -225,8 +281,11 @@ export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { op
                   <Logo className="mx-auto h-16" />
                 </div>
               </div>
-              <h3 className="text-4xl font-semibold text-foreground">{mode === "signup" ? "Get Started" : "Welcome back"}</h3>
-              <p className="mt-2 text-lg text-muted-foreground">{mode === "signup" ? "Create your Vendora account in under a minute." : "Sign in to pick up where you left off."}</p>
+              {mode === "signup" ? (
+                <span className={`mb-4 inline-block rounded-full px-3 py-1 text-sm font-semibold ${supplier ? "tint-emerald" : "tint-violet"}`}>{supplier ? "Supplier account" : "Buyer account"}</span>
+              ) : null}
+              <h3 className="text-4xl font-semibold text-foreground">{mode === "signup" ? (supplier ? "Create your supplier account" : "Create your buyer account") : "Welcome back"}</h3>
+              <p className="mt-2 text-lg text-muted-foreground">{mode === "signup" ? "Takes under a minute. You'll set up your business next." : "Sign in to your business workspace."}</p>
 
               <div className="mt-7 grid grid-cols-2 rounded-2xl bg-muted p-1.5" role="tablist">
                 {(["signup", "signin"] as const).map((m) => (
@@ -278,8 +337,8 @@ export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { op
                   </div>
                 ) : null}
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">Work email</span>
-                  <input className={input} type="email" value={vals.email} onChange={set("email")} placeholder="you@company.in" autoComplete="email" />
+                  <span className="mb-1.5 block text-sm font-medium text-foreground">{supplier && mode === "signup" ? "Business email" : "Work email"}</span>
+                  <input className={input} type="email" value={vals.email} onChange={set("email")} placeholder={supplier && mode === "signup" ? "you@yourbusiness.in" : "you@company.in"} autoComplete="email" />
                   {err.email ? <span className="mt-1 block text-sm text-destructive">{err.email}</span> : null}
                 </label>
                 <label className="block">
@@ -311,7 +370,7 @@ export function AuthScreen({ open, mode, onModeChange, onClose, onAuthed }: { op
 
                 {err.form ? <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{err.form}</p> : null}
 
-                <button type="submit" disabled={state === "sending"} className="btn-shine group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-cta py-4 text-lg font-semibold text-white shadow-glow transition hover:scale-[1.01] disabled:opacity-70">
+                <button type="submit" disabled={state === "sending"} className={`btn-shine group flex w-full items-center justify-center gap-2 rounded-xl ${supplier && mode === "signup" ? "bg-gradient-emerald" : "bg-gradient-cta"} py-4 text-lg font-semibold text-white shadow-glow transition hover:scale-[1.01] disabled:opacity-70`}>
                   {state === "sending" ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
                   {mode === "signup" ? "Create account" : "Sign in"}
                   {state === "sending" ? null : <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />}

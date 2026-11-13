@@ -129,7 +129,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function AuthRoute() {
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const mode = path === "/signup" ? "signup" : path === "/signin" ? "signin" : null;
+  const mode = path === "/signup" || path === "/supplier/signup" ? "signup" : path === "/signin" ? "signin" : null;
+  const variant = path === "/supplier/signup" ? "supplier" : "buyer";
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const { data } = getSupabase().auth.onAuthStateChange((event) => {
@@ -144,9 +145,14 @@ function AuthRoute() {
     <AuthScreen
       open={mode !== null}
       mode={mode ?? "signup"}
-      onModeChange={(m) => void nav({ to: m === "signup" ? "/signup" : "/signin", replace: true })}
+      variant={variant}
+      // One shared sign-in. "Sign up" from there goes back to the Buyer / Supplier choice.
+      onModeChange={(m) => {
+        if (m === mode) return;
+        void nav({ to: m === "signup" ? "/get-started" : "/signin", replace: true });
+      }}
       onClose={() => void nav({ to: "/" })}
-      onAuthed={() => void nav({ to: "/app" })}
+      onAuthed={() => void nav({ to: variant === "supplier" ? "/supplier/onboarding" : "/app" })}
     />
   );
 }

@@ -105,13 +105,10 @@ export function SiteHeader() {
             </nav>
 
             <div className="hidden items-center gap-3 lg:flex">
-              <Link to="/signin" className="rounded-full px-6 py-3.5 text-[20px] font-semibold text-white/85 transition hover:text-white">
-                Log in
-              </Link>
-              <a href="#demo" className="btn-shine inline-flex items-center gap-3 rounded-full bg-gradient-cta px-10 py-[18px] text-[20px] font-semibold text-white shadow-glow transition hover:scale-105">
-                Book a Demo
+              <Link to="/get-started" className="btn-shine inline-flex items-center gap-3 rounded-full bg-gradient-cta px-10 py-[18px] text-[20px] font-semibold text-white shadow-glow transition hover:scale-105">
+                Get started
                 <ArrowRight className="h-5 w-5" />
-              </a>
+              </Link>
             </div>
 
             <button type="button" aria-label={mobile ? "Close menu" : "Open menu"} onClick={() => setMobile((v) => !v)} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white lg:hidden">
@@ -140,14 +137,9 @@ export function SiteHeader() {
           <a href="#plans" onClick={go} className="mb-8 block text-lg font-semibold text-white">
             Plans
           </a>
-          <div className="flex gap-3">
-            <Link to="/signin" onClick={go} className="flex-1 rounded-full border border-white/20 py-3.5 text-center font-semibold text-white">
-              Log in
-            </Link>
-            <a href="#demo" onClick={go} className="flex-1 rounded-full bg-gradient-cta py-3.5 text-center font-semibold text-white">
-              Book a Demo
-            </a>
-          </div>
+          <Link to="/get-started" onClick={go} className="block rounded-full bg-gradient-cta py-3.5 text-center font-semibold text-white">
+            Get started
+          </Link>
         </div>
       ) : null}
     </>

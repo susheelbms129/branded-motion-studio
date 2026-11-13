@@ -5,8 +5,7 @@ import { persist } from "zustand/middleware";
 import { createSeed } from "@/mocks/seed";
 import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
-import { sendAnnouncement, sendInvite, sendNotification } from "@/lib/mail.functions";
-import type { Role } from "@/types/domain";
+import { sendAnnouncement, sendNotification } from "@/lib/mail.functions";
 
 /**
  * Client-side email helpers. They only ever call server functions (the Resend key never reaches the
@@ -132,43 +131,6 @@ export async function notify(
     }
   } catch (e) {
     useMailLog.getState().add({ kind, to: to.email, status: "failed", error: e instanceof Error ? e.message : "Request failed" });
-  }
-}
-
-export interface InviteArgs {
-  id: string;
-  email: string;
-  role: Role;
-  invitedById: string;
-}
-
-export async function deliverInvite(inv: InviteArgs, attempt = 0): Promise<boolean> {
-  const ws = useWs.getState();
-  const ui = useUi.getState();
-  const inviter = ws.members.find((m) => m.id === inv.invitedById);
-  const inviterName = inviter?.name ?? ui.user?.name ?? "A teammate";
-  // Confirmation email back to the inviter only if we have a real address for them.
-  const inviterEmail = isDeliverable(ui.user?.email) ? ui.user!.email.toLowerCase() : undefined;
-  try {
-    const r = await sendInvite({
-      data: {
-        invitationId: inv.id,
-        email: inv.email.trim().toLowerCase(),
-        role: inv.role,
-        orgName: orgName(),
-        inviterName,
-        ...(inviterEmail ? { inviterEmail } : {}),
-        attempt,
-      },
-    });
-    useMailLog.getState().add({ kind: "invite", to: inv.email, status: r.ok ? "sent" : "failed", ...(r.ok ? {} : { error: r.error }) });
-    if (r.ok) toast.success(`Invitation email sent to ${inv.email}`);
-    else toast.error(notConfigured(r.error) ? "Invitation saved, but email isn't configured yet." : `Invitation saved, but the email failed: ${r.error}`);
-    return r.ok;
-  } catch (e) {
-    useMailLog.getState().add({ kind: "invite", to: inv.email, status: "failed", error: e instanceof Error ? e.message : "Request failed" });
-    toast.error("Invitation saved, but the email could not be sent. Use Resend to try again.");
-    return false;
   }
 }
 

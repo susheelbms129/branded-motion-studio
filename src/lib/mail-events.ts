@@ -1,5 +1,5 @@
 import { ROLE_LABEL } from "@/lib/permissions";
-import { deliverInvite, notify, resolveRecipients } from "@/lib/mail";
+import { notify, resolveRecipients } from "@/lib/mail";
 import { useWs } from "@/lib/ws-store";
 
 /**
@@ -20,10 +20,8 @@ function diff(next: S, prev: S) {
   const nameOf = (id?: string) => next.members.find((m) => m.id === id)?.name;
   const stamp = Math.floor(Date.now() / 60_000);
 
-  // Employee invitations -> real invitation email
-  for (const inv of next.invitations) {
-    if (!prev.invitations.some((p) => p.id === inv.id)) void deliverInvite(inv);
-  }
+  // Invitations are NOT emailed from here any more: real invitations are created and emailed
+  // through the database + server (see team-api.ts). Demo invitations never send email.
 
   // Team: role changed / access suspended
   for (const m of next.members) {

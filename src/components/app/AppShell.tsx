@@ -138,6 +138,7 @@ export function AppShell() {
     setDemo,
     role,
     setRole,
+    realRole,
     user,
   } = useUi();
   const org = useWs((s) => s.organizations[0]);
@@ -254,25 +255,32 @@ export function AppShell() {
                 aria-label="Toggle demo data"
               />
             </label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="hidden sm:inline-flex">
-                  {ROLE_LABEL[role]}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>View as role</DropdownMenuLabel>
-                {ROLES.map((r) => (
-                  <DropdownMenuItem
-                    key={r}
-                    onSelect={() => setRole(r)}
-                    className={cn(r === role && "font-semibold")}
-                  >
-                    {ROLE_LABEL[r]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {realRole ? (
+              // A real company member: the role comes from the database and can't be switched here.
+              <span className="hidden rounded-full border px-3 py-1.5 text-sm text-muted-foreground sm:inline-flex">
+                {ROLE_LABEL[realRole]}
+              </span>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="hidden sm:inline-flex">
+                    {ROLE_LABEL[role]}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>View as role</DropdownMenuLabel>
+                  {ROLES.map((r) => (
+                    <DropdownMenuItem
+                      key={r}
+                      onSelect={() => setRole(r)}
+                      className={cn(r === role && "font-semibold")}
+                    >
+                      {ROLE_LABEL[r]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button asChild className="hidden sm:inline-flex">
               <AppLink to="requests/new">
                 <Plus />

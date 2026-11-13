@@ -1,4 +1,5 @@
-import { Mail, Megaphone, Send, ShieldCheck, UserPlus } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Mail, Megaphone, Plus, Send, ShieldCheck, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Can, PageHeader, Panel, Person, StatusBadge, useCan } from "@/components/vendora/kit";
 import { formatRelative } from "@/lib/format";
-import { deliverAnnouncement, deliverInvite, resolveRecipients } from "@/lib/mail";
+import { deliverAnnouncement, resolveRecipients } from "@/lib/mail";
 import {
   PERMISSION_LABEL,
   ROLE_LABEL,
@@ -32,22 +33,112 @@ import {
   type Permission,
 } from "@/lib/permissions";
 import { nameOf } from "@/lib/selectors";
+import {
+  inviteMembers,
+  listInvitations,
+  listMembers,
+  revokeInvitation,
+  setMemberRole,
+  setMemberStatus,
+  teamError,
+} from "@/lib/team-api";
+import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
-import type { Role } from "@/types/domain";
+import type { Accent, Role } from "@/types/domain";
+
+const ACCENTS: Accent[] = ["blue", "cyan", "violet", "magenta", "emerald", "amber", "coral", "pink", "indigo"];
+const accentFor = (key: string): Accent => ACCENTS[[...key].reduce((n, c) => n + c.charCodeAt(0), 0) % ACCENTS.length]!;
+const EMAIL = /^\S+@\S+\.\S+$/;
+// An invitation can never grant Owner (the database refuses it). Promote someone after they have joined.
+const INVITE_ROLES: Role[] = ROLES.filter((r) => r !== "owner");
+
+/** One row of the members list, whether it came from the database or from the demo workspace. */
+interface Row {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  status: "active" | "invited" | "suspended";
+  department: string;
+  activity: string;
+  accent: Accent;
+  isMe: boolean;
+}
+interface Pending {
+  id: string;
+  email: string;
+  role: Role;
+  by: string;
+  when: string;
+}
 
 export function TeamPage() {
   const ws = useWs();
   const actor = useActor();
   const can = useCan();
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("employee");
+  const [invRows, setInvRows] = useState<{ email: string; role: Role }[]>([{ email: "", role: "employee" }]);
+  const [sending, setSending] = useState(false);
   const [annOpen, setAnnOpen] = useState(false);
   const [annSubject, setAnnSubject] = useState("");
   const [annBody, setAnnBody] = useState("");
   const [annBusy, setAnnBusy] = useState(false);
   const perms = Object.keys(PERMISSION_LABEL) as Permission[];
-  const valid = /^\S+@\S+\.\S+$/.test(email);
+  const mails = invRows.map((r) => r.email.trim().toLowerCase());
+  const valid = mails.every((m) => EMAIL.test(m)) && new Set(mails).size === mails.length;
+
+  // Signed in to a real company -> everything comes from the database. Otherwise it's the demo workspace.
+  const orgId = useUi((s) => s.orgId);
+  const myEmail = useUi((s) => s.user?.email?.toLowerCase() ?? "");
+  const real = !!orgId;
+  const qc = useQueryClient();
+  const membersQ = useQuery({ queryKey: ["team", "members", orgId], queryFn: () => listMembers(orgId!), enabled: real });
+  const invitesQ = useQuery({ queryKey: ["team", "invites", orgId], queryFn: () => listInvitations(orgId!), enabled: real && can("team.manage") });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["team"] });
+
+  const rows: Row[] = real
+    ? (membersQ.data ?? []).map((m) => ({
+        id: m.userId, name: m.name, email: m.email, role: m.role, status: m.status, department: m.department,
+        activity: m.lastSignInAt ? `Active ${formatRelative(m.lastSignInAt)}` : `Joined ${formatRelative(m.joinedAt)}`,
+        accent: accentFor(m.userId), isMe: m.email.toLowerCase() === myEmail,
+      }))
+    : ws.members.map((m) => ({
+        id: m.id, name: m.name, email: m.email, role: m.role, status: m.status, department: m.department,
+        activity: `Active ${formatRelative(m.lastActiveAt)}`, accent: m.accent, isMe: m.id === actor,
+      }));
+  const pending: Pending[] = real
+    ? (invitesQ.data ?? []).map((i) => ({ id: i.id, email: i.email, role: i.role, by: i.invitedBy, when: i.expired ? "expired" : formatRelative(i.createdAt) }))
+    : ws.invitations.map((i) => ({ id: i.id, email: i.email, role: i.role, by: nameOf(ws.members, i.invitedById), when: i.status === "expired" ? "expired" : formatRelative(i.sentAt) }));
+
+  const changeRole = (m: Row, r: Role) => {
+    if (!real) { ws.setMemberRole(m.id, r); return void toast.success("Role updated"); }
+    setMemberRole(orgId, m.id, r).then(() => toast.success("Role updated")).catch((e) => toast.error(teamError(e))).finally(refresh);
+  };
+  const toggleAccess = (m: Row) => {
+    const next = m.status === "suspended" ? "active" : "suspended";
+    if (!real) return ws.setMemberStatus(m.id, next);
+    setMemberStatus(orgId, m.id, next).then(() => toast.success(next === "active" ? "Access restored" : "Access suspended")).catch((e) => toast.error(teamError(e))).finally(refresh);
+  };
+  const revoke = (i: Pending) => {
+    if (!real) return ws.revokeInvite(i.id);
+    revokeInvitation(i.id).then(() => toast.success("Invitation cancelled")).catch((e) => toast.error(teamError(e))).finally(refresh);
+  };
+  const send = async (list: { email: string; role: Role }[]) => {
+    if (!real) {
+      list.forEach((r) => ws.inviteMember(r.email.trim(), r.role, { actorId: actor }));
+      toast.info("Demo workspace: invitations are shown here but no email is sent.");
+      return true;
+    }
+    setSending(true);
+    const r = await inviteMembers(orgId, list.map((x) => ({ email: x.email.trim().toLowerCase(), role: x.role })));
+    setSending(false);
+    void refresh();
+    if (r.error && r.results.length === 0) { toast.error(r.error); return false; }
+    const good = r.results.filter((x) => x.ok).length;
+    if (good) toast.success(`${good} invitation${good === 1 ? "" : "s"} sent`);
+    r.results.filter((x) => !x.ok).forEach((x) => toast.error(`${x.email}: ${x.error ?? "failed"}`));
+    return r.results.every((x) => x.ok);
+  };
   return (
     <>
       <PageHeader
@@ -72,32 +163,29 @@ export function TeamPage() {
       />
       <div className="grid gap-4 xl:grid-cols-3">
         <Panel
-          title={`Members (${ws.members.length})`}
+          title={`Members (${rows.length})`}
           className="xl:col-span-2"
           bodyClassName="p-0"
         >
           <ul className="divide-y">
-            {ws.members.map((m) => (
+            {rows.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                 <Person name={m.name} accent={m.accent} size={36} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{m.name}</div>
                   <div className="truncate text-xs text-muted-foreground">
-                    {m.email} · {m.department}
+                    {m.email}{m.department ? ` · ${m.department}` : ""}
                   </div>
                 </div>
                 <span className="hidden text-xs text-muted-foreground sm:block">
-                  Active {formatRelative(m.lastActiveAt)}
+                  {m.activity}
                 </span>
                 <StatusBadge kind="member" value={m.status} />
-                {can("team.manage") && m.id !== actor ? (
+                {can("team.manage") && !m.isMe ? (
                   <>
                     <Select
                       value={m.role}
-                      onValueChange={(v) => {
-                        ws.setMemberRole(m.id, v as Role);
-                        toast.success("Role updated");
-                      }}
+                      onValueChange={(v) => changeRole(m, v as Role)}
                     >
                       <SelectTrigger className="h-8 w-48 text-xs">
                         <SelectValue />
@@ -113,9 +201,7 @@ export function TeamPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() =>
-                        ws.setMemberStatus(m.id, m.status === "suspended" ? "active" : "suspended")
-                      }
+                      onClick={() => toggleAccess(m)}
                     >
                       {m.status === "suspended" ? "Reactivate" : "Suspend"}
                     </Button>
@@ -130,32 +216,32 @@ export function TeamPage() {
           </ul>
         </Panel>
         <Panel title="Pending invitations">
-          {ws.invitations.length === 0 ? (
+          {pending.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               No pending invitations.
             </p>
           ) : (
             <ul className="space-y-3">
-              {ws.invitations.map((i) => (
+              {pending.map((i) => (
                 <li key={i.id} className="flex items-center gap-3 text-sm">
                   <Mail className="size-4 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate">{i.email}</div>
                     <div className="text-xs text-muted-foreground">
-                      {ROLE_LABEL[i.role]} · invited by {nameOf(ws.members, i.invitedById)} ·{" "}
-                      {i.status === "expired" ? "expired" : formatRelative(i.sentAt)}
+                      {ROLE_LABEL[i.role]} · invited by {i.by} · {i.when}
                     </div>
                   </div>
                   <Can permission="team.manage">
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => void deliverInvite(i, Date.now())}
+                      disabled={sending}
+                      onClick={() => void send([{ email: i.email, role: i.role }])}
                     >
                       Resend
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => ws.revokeInvite(i.id)}>
-                      Revoke
+                    <Button size="sm" variant="ghost" onClick={() => revoke(i)}>
+                      Cancel
                     </Button>
                   </Can>
                 </li>
@@ -211,49 +297,69 @@ export function TeamPage() {
           <DialogHeader>
             <DialogTitle>Invite a team member</DialogTitle>
             <DialogDescription>
-              They'll get an email with a secure link that expires in 7 days.
+              They'll get an email with a secure link that expires in 7 days. To add another owner, invite them first and change their role once they've joined.
             </DialogDescription>
           </DialogHeader>
-          <div>
-            <Label htmlFor="em">Work email</Label>
-            <Input
-              id="em"
-              type="email"
-              className="mt-1.5"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.in"
-            />
-          </div>
-          <div>
-            <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {ROLE_LABEL[r]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-3">
+            {invRows.map((r, idx) => (
+              <div key={idx} className="flex items-end gap-2">
+                <div className="min-w-0 flex-1">
+                  {idx === 0 ? <Label htmlFor="em0">Work email</Label> : null}
+                  <Input
+                    id={`em${idx}`}
+                    type="email"
+                    className="mt-1.5"
+                    value={r.email}
+                    onChange={(e) => setInvRows(invRows.map((x, j) => (j === idx ? { ...x, email: e.target.value } : x)))}
+                    placeholder="name@company.in"
+                  />
+                </div>
+                <div className="w-44 shrink-0">
+                  {idx === 0 ? <Label>Role</Label> : null}
+                  <Select value={r.role} onValueChange={(v) => setInvRows(invRows.map((x, j) => (j === idx ? { ...x, role: v as Role } : x)))}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INVITE_ROLES.map((x) => (
+                        <SelectItem key={x} value={x}>
+                          {ROLE_LABEL[x]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {invRows.length > 1 ? (
+                  <Button type="button" size="icon" variant="ghost" aria-label="Remove" onClick={() => setInvRows(invRows.filter((_, j) => j !== idx))}>
+                    <X />
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+            {invRows.length < 10 ? (
+              <Button type="button" size="sm" variant="ghost" onClick={() => setInvRows([...invRows, { email: "", role: "employee" }])}>
+                <Plus />
+                Add another person
+              </Button>
+            ) : null}
+            <p className="text-xs text-muted-foreground">
+              Each person gets their own link, tied to their email and the role you pick. They can't change it.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button
-              disabled={!valid}
-              onClick={() => {
-                // The email itself is sent by the mail listener; it reports success or failure.
-                ws.inviteMember(email, role, { actorId: actor });
-                setEmail("");
-                setOpen(false);
+              disabled={!valid || sending}
+              onClick={async () => {
+                if (await send(invRows)) {
+                  setInvRows([{ email: "", role: "employee" }]);
+                  setOpen(false);
+                }
               }}
             >
-              Send invitation
+              {sending ? "Sending…" : invRows.length > 1 ? "Send invitations" : "Send invitation"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -294,9 +400,9 @@ export function TeamPage() {
             <Button
               disabled={annBusy || annSubject.trim().length < 3 || annBody.trim().length < 5}
               onClick={async () => {
-                const targets = resolveRecipients(
-                  ws.members.filter((m) => m.status === "active").map((m) => m.id),
-                );
+                const targets = real
+                  ? rows.filter((m) => m.status === "active").map((m) => ({ email: m.email, name: m.name.split(" ")[0] ?? m.name }))
+                  : resolveRecipients(ws.members.filter((m) => m.status === "active").map((m) => m.id));
                 if (targets.length === 0) {
                   toast.error("No deliverable email addresses. Sign in with your real email first.");
                   return;

@@ -7,7 +7,7 @@ import type { Role } from "@/types/domain";
 
 import { mailEnv, rateLimit, sendEmail } from "@/server/mail/resend.server";
 import { announcementEmail, inviteEmail, notifyEmail } from "@/server/mail/templates.server";
-import { signInvite, verifyInvite } from "@/server/mail/token.server";
+import { userClient } from "@/server/supabase.server";
 
 /**
  * All email sending happens here, on the server. The browser never sees RESEND_API_KEY or the signing
@@ -15,10 +15,10 @@ import { signInvite, verifyInvite } from "@/server/mail/token.server";
  * break the business action that triggered it.
  */
 
-const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export type MailResult = { ok: true; id?: string } | { ok: false; error: string };
 
-const roleEnum = z.enum(ROLES as [Role, ...Role[]]);
+// Invitations can never grant Owner; the database enforces it too.
+const inviteRoleEnum = z.enum(ROLES.filter((r) => r !== "owner") as [Role, ...Role[]]);
 const email = z.string().trim().toLowerCase().email().max(254);
 const text = (max: number) => z.string().trim().min(1).max(max);
 
@@ -46,113 +46,74 @@ const safePath = z
 
 // -------------------------------------------------------------------------------------------
 // Invitations
+//
+// The invitation itself lives in the database (hashed token, single use, 7-day expiry, tied to one
+// email and one role). The database checks that the caller is the owner of that company. This
+// function only turns a freshly created invitation into an email. The raw link token goes from the
+// database to this server to the invitee's inbox, and is never returned to the browser.
 // -------------------------------------------------------------------------------------------
 
-export const sendInvite = createServerFn({ method: "POST" })
+export type InviteResult = { email: string; ok: boolean; error?: string };
+
+const INVITE_ERRORS: Record<string, string> = {
+  not_authenticated: "Please sign in again.",
+  not_allowed: "Only the company owner can send invitations.",
+  already_member: "This person is already on your team.",
+  invalid_email: "That email address isn't valid.",
+  invalid_role: "That role isn't valid.",
+  rate_limited: "Too many invitations. Please try again in an hour.",
+};
+const inviteError = (msg: string) => INVITE_ERRORS[Object.keys(INVITE_ERRORS).find((k) => msg.includes(k)) ?? ""] ?? "The invitation could not be created.";
+
+export const sendInvites = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
-      invitationId: text(60),
-      email,
-      role: roleEnum,
-      orgName: text(100),
-      inviterName: text(80),
-      inviterEmail: email.optional(),
-      attempt: z.number().int().min(0).max(1_000_000_000_000_000),
+      accessToken: z.string().min(20).max(4000),
+      orgId: z.string().uuid(),
+      invites: z.array(z.object({ email, role: inviteRoleEnum })).min(1).max(10),
     }),
   )
-  .handler(async ({ data }): Promise<MailResult & { expiresAt?: number }> => {
-    const ip = clientIp();
-    if (!rateLimit(`inv:${ip}`, 10, 10 * 60_000) || !rateLimit(`inv-to:${data.email}`, 3, 60 * 60_000)) {
-      return { ok: false, error: "Too many invitations. Please wait a few minutes and try again." };
+  .handler(async ({ data }): Promise<{ ok: boolean; results: InviteResult[]; error?: string }> => {
+    if (!rateLimit(`inv:${clientIp()}`, 20, 10 * 60_000)) {
+      return { ok: false, results: [], error: "Too many invitations. Please wait a few minutes and try again." };
     }
+    const results: InviteResult[] = [];
     try {
-      const expiresAt = Date.now() + INVITE_TTL_MS;
-      const token = await signInvite({
-        jti: data.invitationId,
-        e: data.email,
-        r: data.role,
-        o: data.orgName,
-        n: data.inviterName,
-        ie: data.inviterEmail,
-        exp: expiresAt,
-      });
+      const db = userClient(data.accessToken);
       const env = mailEnv();
-      const msg = inviteEmail({
-        orgName: data.orgName,
-        inviterName: data.inviterName,
-        roleLabel: ROLE_LABEL[data.role],
-        url: `${baseUrl()}/accept-invite?token=${encodeURIComponent(token)}`,
-        expiresAt,
-        support: env.support,
-      });
-      const r = await sendEmail({
-        to: data.email,
-        ...msg,
-        idempotencyKey: `invite:${data.invitationId}:${data.attempt}`,
-        fromName: data.inviterName,
-        tags: [{ name: "type", value: "invite" }],
-      });
-      return r.ok ? { ok: true, id: r.id, expiresAt } : { ok: false, error: r.error };
-    } catch (e) {
-      console.error("[mail] sendInvite", e instanceof Error ? e.message : e);
-      return { ok: false, error: "Could not create the invitation email" };
-    }
-  });
-
-export const checkInvite = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ token: z.string().max(2000) }))
-  .handler(async ({ data }) => {
-    if (!rateLimit(`chk:${clientIp()}`, 40, 60_000)) return { valid: false as const, reason: "rate_limited" as const };
-    try {
-      const v = await verifyInvite(data.token);
-      if (!v.ok) return { valid: false as const, reason: v.reason };
-      const p = v.payload;
-      const role = (ROLES as string[]).includes(p.r) ? (p.r as Role) : null;
-      if (!role) return { valid: false as const, reason: "invalid" as const };
-      return {
-        valid: true as const,
-        invitationId: p.jti,
-        email: p.e,
-        role,
-        roleLabel: ROLE_LABEL[role],
-        orgName: p.o,
-        inviterName: p.n,
-        expiresAt: p.exp,
-      };
-    } catch {
-      return { valid: false as const, reason: "invalid" as const };
-    }
-  });
-
-/** Re-verifies the token on the server, then tells the inviter. Idempotent per invitation. */
-export const acceptInvite = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ token: z.string().max(2000), name: text(80) }))
-  .handler(async ({ data }): Promise<MailResult & { role?: Role; orgName?: string; email?: string }> => {
-    if (!rateLimit(`acc:${clientIp()}`, 15, 10 * 60_000)) return { ok: false, error: "Too many attempts. Try again shortly." };
-    try {
-      const v = await verifyInvite(data.token);
-      if (!v.ok) return { ok: false, error: v.reason === "expired" ? "This invitation has expired." : "This invitation is not valid." };
-      const p = v.payload;
-      const role = (ROLES as string[]).includes(p.r) ? (p.r as Role) : null;
-      if (!role) return { ok: false, error: "This invitation is not valid." };
-      // The role, email and organization always come from the signed token, never from the browser.
-      if (p.ie) {
-        const env = mailEnv();
-        const msg = notifyEmail({
-          kind: "invite_accepted",
-          orgName: p.o,
-          title: data.name,
-          detail: ROLE_LABEL[role],
-          link: `${baseUrl()}/app/team`,
-          recipientName: p.n,
+      for (const inv of data.invites) {
+        if (!rateLimit(`inv-to:${inv.email}`, 3, 60 * 60_000)) {
+          results.push({ email: inv.email, ok: false, error: "Too many invitations to this address. Try again later." });
+          continue;
+        }
+        // The database decides whether this caller may invite into this company.
+        const { data: row, error } = await db.rpc("create_invitation", { p_org: data.orgId, p_email: inv.email, p_role: inv.role });
+        if (error || !row) {
+          results.push({ email: inv.email, ok: false, error: inviteError(error?.message ?? "") });
+          continue;
+        }
+        const made = row as { id: string; token: string; expiresAt: string; orgName: string; inviterName: string; role: Role };
+        const msg = inviteEmail({
+          orgName: made.orgName,
+          inviterName: made.inviterName,
+          roleLabel: ROLE_LABEL[made.role],
+          url: `${baseUrl()}/accept-invite?token=${encodeURIComponent(made.token)}`,
+          expiresAt: new Date(made.expiresAt).getTime(),
           support: env.support,
         });
-        await sendEmail({ to: p.ie, ...msg, idempotencyKey: `accepted:${p.jti}`, tags: [{ name: "type", value: "invite_accepted" }] });
+        const r = await sendEmail({
+          to: inv.email,
+          ...msg,
+          idempotencyKey: `invite:${made.id}`,
+          fromName: made.inviterName,
+          tags: [{ name: "type", value: "invite" }],
+        });
+        results.push(r.ok ? { email: inv.email, ok: true } : { email: inv.email, ok: false, error: `Invitation saved, but the email failed: ${r.error}` });
       }
-      return { ok: true, role, orgName: p.o, email: p.e };
+      return { ok: results.every((r) => r.ok), results };
     } catch (e) {
-      console.error("[mail] acceptInvite", e instanceof Error ? e.message : e);
-      return { ok: false, error: "Could not accept the invitation" };
+      console.error("[mail] sendInvites", e instanceof Error ? e.message : e);
+      return { ok: false, results, error: "Could not send invitations" };
     }
   });
 

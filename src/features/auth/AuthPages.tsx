@@ -1,10 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { authInputClass } from "@/components/landing/AuthScreen";
 import { createWorkspace } from "@/lib/auth";
+import { forgetInvite, pendingInvite } from "@/lib/invites";
 import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
@@ -32,6 +33,12 @@ export function OnboardingPage() {
   const [demo, setDemo] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Someone who confirmed their email after opening an invitation goes back to it, so they join the
+  // company they were invited to instead of creating a new empty one.
+  useEffect(() => {
+    const t = pendingInvite();
+    if (t) window.location.assign(`/accept-invite?token=${t}`);
+  }, []);
   const finish = async () => {
     setBusy(true);
     setError(null);
@@ -42,6 +49,7 @@ export function OnboardingPage() {
       setBusy(false);
       return;
     }
+    forgetInvite();
     finishOnboarding(demo);
     reset(demo);
     if (!demo) updateOrg({ name: co.name || "My Workspace", industry: co.industry, city: co.city });
@@ -93,6 +101,9 @@ export function OnboardingPage() {
             <>
               <h1 className="text-3xl font-semibold text-foreground">Tell us about your company</h1>
               <p className="mt-1.5 text-base text-muted-foreground">This appears on your purchase orders.</p>
+              <p className="mt-3 rounded-xl bg-primary/5 px-4 py-3 text-sm text-foreground">
+                Setting up a new company? Continue. Joining your team? Use the invitation link your administrator sent.
+              </p>
               <div className="mt-6 space-y-4">
                 <label className="block">
                   <span className={label}>Company name</span>

@@ -280,7 +280,7 @@ export function AppShell() {
                 <DropdownMenuItem
                   onSelect={() => {
                     signOut();
-                    void nav({ to: "/login" });
+                    void nav({ to: "/signin" });
                   }}
                 >
                   <LogOut className="size-4" />

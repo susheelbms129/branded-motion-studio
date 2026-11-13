@@ -4,12 +4,15 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useNavigate,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { AuthScreen } from "../components/landing/AuthScreen";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -120,6 +123,21 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+// Sign up / sign in is one full-screen panel whose mode lives in the URL (/signup, /signin).
+function AuthRoute() {
+  const nav = useNavigate();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const mode = path === "/signup" ? "signup" : path === "/signin" ? "signin" : null;
+  return (
+    <AuthScreen
+      open={mode !== null}
+      mode={mode ?? "signup"}
+      onModeChange={(m) => void nav({ to: m === "signup" ? "/signup" : "/signin", replace: true })}
+      onClose={() => void nav({ to: "/" })}
+    />
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -127,6 +145,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <AuthRoute />
     </QueryClientProvider>
   );
 }

@@ -103,7 +103,7 @@ export function AcceptInvitePage() {
             <h1 className="mt-4 text-xl font-semibold">{BAD_COPY[view.reason]![0]}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{BAD_COPY[view.reason]![1]}</p>
             <Button asChild className="mt-6" variant="outline">
-              <Link to="/login">Go to sign in</Link>
+              <Link to="/signin">Go to sign in</Link>
             </Button>
           </div>
         ) : null}

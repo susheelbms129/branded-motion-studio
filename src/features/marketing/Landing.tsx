@@ -64,7 +64,7 @@ function Nav() {
         </nav>
         <div className="hidden items-center gap-2 md:flex">
           <Button variant="ghost-dark" asChild>
-            <Link to="/login">Sign in</Link>
+            <Link to="/signin">Sign in</Link>
           </Button>
           <Button variant="hero" asChild>
             <Link to="/signup">Start free</Link>
@@ -93,7 +93,7 @@ function Nav() {
           ))}
           <div className="flex gap-2 pt-2">
             <Button variant="glass" asChild className="flex-1">
-              <Link to="/login">Sign in</Link>
+              <Link to="/signin">Sign in</Link>
             </Button>
             <Button variant="hero" asChild className="flex-1">
               <Link to="/signup">Start free</Link>
@@ -385,7 +385,7 @@ export function Landing() {
               </Link>
             </Button>
             <Button variant="glass" size="xl" asChild>
-              <Link to="/login">Explore demo workspace</Link>
+              <Link to="/signin">Explore demo workspace</Link>
             </Button>
           </motion.div>
         </div>
@@ -581,7 +581,7 @@ export function Landing() {
               </Link>
             </Button>
             <Button variant="glass" size="xl" asChild>
-              <Link to="/login">Try the demo</Link>
+              <Link to="/signin">Try the demo</Link>
             </Button>
           </div>
         </motion.div>
@@ -616,8 +616,8 @@ export function Landing() {
               "Get started",
               [
                 ["Sign up", "/signup"],
-                ["Sign in", "/login"],
-                ["Demo workspace", "/login"],
+                ["Sign in", "/signin"],
+                ["Demo workspace", "/signin"],
               ],
             ],
           ].map(([h, ls]) => (

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   beforeLoad: () => {
     const s = useUi.getState();
-    if (!s.user) throw redirect({ to: "/login" });
+    if (!s.user) throw redirect({ to: "/signin" });
     if (!s.onboarded) throw redirect({ to: "/onboarding" });
   },
   head: () => ({ meta: [{ title: "Vendora — Procurement workspace" }] }),

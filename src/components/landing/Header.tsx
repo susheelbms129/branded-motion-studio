@@ -1,7 +1,7 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { AuthScreen } from "./AuthScreen";
 import { MENUS } from "./content";
 import { Logo } from "./Logo";
 import { useScrollY } from "./motion";
@@ -10,7 +10,6 @@ export function SiteHeader() {
   const y = useScrollY();
   const [open, setOpen] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const wrap = useRef<HTMLElement>(null);
   const scrolled = y > 24;
@@ -106,9 +105,9 @@ export function SiteHeader() {
             </nav>
 
             <div className="hidden items-center gap-3 lg:flex">
-              <button type="button" onClick={() => setLoginOpen(true)} className="rounded-full px-6 py-3.5 text-[20px] font-semibold text-white/85 transition hover:text-white">
+              <Link to="/signin" className="rounded-full px-6 py-3.5 text-[20px] font-semibold text-white/85 transition hover:text-white">
                 Log in
-              </button>
+              </Link>
               <a href="#demo" className="btn-shine inline-flex items-center gap-3 rounded-full bg-gradient-cta px-10 py-[18px] text-[20px] font-semibold text-white shadow-glow transition hover:scale-105">
                 Book a Demo
                 <ArrowRight className="h-5 w-5" />
@@ -142,17 +141,15 @@ export function SiteHeader() {
             Plans
           </a>
           <div className="flex gap-3">
-            <button type="button" onClick={() => { go(); setLoginOpen(true); }} className="flex-1 rounded-full border border-white/20 py-3.5 font-semibold text-white">
+            <Link to="/signin" onClick={go} className="flex-1 rounded-full border border-white/20 py-3.5 text-center font-semibold text-white">
               Log in
-            </button>
+            </Link>
             <a href="#demo" onClick={go} className="flex-1 rounded-full bg-gradient-cta py-3.5 text-center font-semibold text-white">
               Book a Demo
             </a>
           </div>
         </div>
       ) : null}
-
-      <AuthScreen open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   );
 }

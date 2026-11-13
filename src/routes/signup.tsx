@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SignupPage } from "@/features/auth/AuthPages";
+import { LandingPage } from "@/components/landing/LandingPage";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Signup — Vendora" }] }),
-  component: SignupPage,
+  head: () => ({ meta: [{ title: "Sign up — Vendora" }] }),
+  component: LandingPage,
 });

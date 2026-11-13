@@ -1,11 +1,11 @@
 import { ArrowRight, Check, Eye, EyeOff, Loader2, Sparkles, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { formatMoneyCompact } from "@/lib/format";
 
 import { Logo } from "./Logo";
 
-type Mode = "signup" | "signin";
+export type AuthMode = "signup" | "signin";
 
 const BARS = [38, 52, 44, 66, 58, 78, 70, 92];
 const APPROVALS = [
@@ -77,8 +77,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 const input = "w-full rounded-xl border border-input bg-white px-4 py-3.5 text-base text-foreground outline-none transition placeholder:text-subtle-foreground focus:border-primary focus:ring-4 focus:ring-primary/15";
 
-export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolean; onClose: () => void; initial?: Mode }) {
-  const [mode, setMode] = useState<Mode>(initial);
+export function AuthScreen({ open, mode, onModeChange, onClose }: { open: boolean; mode: AuthMode; onModeChange: (m: AuthMode) => void; onClose: () => void }) {
   const [show, setShow] = useState(false);
   const [vals, setVals] = useState({ first: "", last: "", email: "", password: "" });
   const [err, setErr] = useState<Record<string, string>>({});
@@ -87,12 +86,32 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
 
   useEffect(() => {
     if (open) {
-      setMode(initial);
       setState("idle");
       setVia(null);
       setErr({});
     }
-  }, [open, initial]);
+  }, [open]);
+
+  // Desktop: the form never scrolls. If it is taller than the window it is scaled down to fit.
+  const box = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState(1);
+  useEffect(() => {
+    if (!open) return;
+    const el = box.current;
+    if (!el) return;
+    const measure = () => {
+      const h = el.offsetHeight;
+      setFit(window.innerWidth >= 1024 && h > 0 ? Math.min(1, window.innerHeight / h) : 1);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
+  }, [open, mode, state]);
 
   useEffect(() => {
     if (!open) return;
@@ -159,11 +178,11 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
       </aside>
 
       {/* right: form */}
-      <main className="relative flex w-full flex-1 flex-col overflow-y-auto bg-white lg:w-1/2 lg:flex-none xl:px-16">
+      <main className="relative flex w-full flex-1 flex-col overflow-y-auto bg-white lg:w-1/2 lg:flex-none lg:items-center lg:justify-center lg:overflow-hidden xl:px-16">
         <button type="button" onClick={onClose} aria-label="Close" className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-muted text-foreground transition hover:rotate-90 hover:bg-accent">
           <X className="h-5 w-5" />
         </button>
-        <div className="mx-auto my-auto w-full max-w-[480px] px-6 py-14 sm:px-0">
+        <div ref={box} className="mx-auto my-auto w-full max-w-[480px] px-6 py-10 sm:px-0 lg:my-0" style={{ transform: fit < 1 ? `scale(${fit})` : undefined, transformOrigin: "center" }}>
           {state === "done" ? (
             <div className="pop-in text-center">
               <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-emerald text-white shadow-glow">
@@ -193,7 +212,7 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
 
               <div className="mt-7 grid grid-cols-2 rounded-2xl bg-muted p-1.5" role="tablist">
                 {(["signup", "signin"] as const).map((m) => (
-                  <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setErr({}); }} className={`rounded-xl py-3 text-base font-semibold transition ${mode === m ? "bg-white text-foreground shadow-card" : "text-muted-foreground hover:text-foreground"}`}>
+                  <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { onModeChange(m); setErr({}); }} className={`rounded-xl py-3 text-base font-semibold transition ${mode === m ? "bg-white text-foreground shadow-card" : "text-muted-foreground hover:text-foreground"}`}>
                     {m === "signup" ? "Sign up" : "Sign in"}
                   </button>
                 ))}
@@ -281,7 +300,7 @@ export function AuthScreen({ open, onClose, initial = "signup" }: { open: boolea
 
               <p className="mt-6 text-center text-muted-foreground">
                 {mode === "signup" ? "Already have an account? " : "New to Vendora? "}
-                <button type="button" onClick={() => { setMode(mode === "signup" ? "signin" : "signup"); setErr({}); }} className="font-semibold text-primary hover:underline">
+                <button type="button" onClick={() => { onModeChange(mode === "signup" ? "signin" : "signup"); setErr({}); }} className="font-semibold text-primary hover:underline">
                   {mode === "signup" ? "Sign in" : "Create one"}
                 </button>
               </p>

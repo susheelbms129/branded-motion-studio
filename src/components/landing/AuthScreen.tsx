@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, Boxes, Check, Eye, EyeOff, FileText, Loader2, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -199,7 +200,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
             { name: `${vals.first.trim()} ${vals.last.trim()}`.trim(), email, password: vals.password, accountType: variant },
             supplier ? { redirectPath: "/supplier/onboarding" } : undefined,
           )
-        : await signInWithEmail(email, vals.password);
+        : await signInWithEmail(email, vals.password, variant);
     if (!res.ok) {
       setState("idle");
       setErr({ form: res.message });
@@ -217,7 +218,12 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
     setErr({});
     setVia(provider);
     setState("sending");
-    const res = await signInWithProvider(provider === "Apple" ? "apple" : "google", supplier && mode === "signup" ? "/supplier/onboarding" : "/app");
+    const res = await signInWithProvider(
+      provider === "Apple" ? "apple" : "google",
+      supplier ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : "/app",
+      // Only a brand-new sign-up records which kind of account this is.
+      mode === "signup" ? variant : undefined,
+    );
     if (!res.ok) {
       setState("idle");
       setVia(null);
@@ -233,7 +239,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
         <div className="glow-blue animate-orb-slow pointer-events-none absolute -bottom-40 -left-40 h-[560px] w-[560px] opacity-60" />
         <div className="relative z-10 mx-auto flex w-full max-w-[480px] flex-col items-start text-left">
           <Logo className="-ml-1 h-20 xl:h-24" />
-          {mode === "signup" && supplier ? (
+          {supplier ? (
             <>
               <h2 className="mt-8 text-4xl font-semibold leading-[1.08] text-white xl:text-5xl">Win orders from businesses that are ready to buy.</h2>
               <p className="mt-5 max-w-md text-base leading-relaxed text-navy-muted xl:text-lg">
@@ -281,11 +287,9 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
                   <Logo className="mx-auto h-16" />
                 </div>
               </div>
-              {mode === "signup" ? (
-                <span className={`mb-4 inline-block rounded-full px-3 py-1 text-sm font-semibold ${supplier ? "tint-emerald" : "tint-violet"}`}>{supplier ? "Supplier account" : "Buyer account"}</span>
-              ) : null}
-              <h3 className="text-4xl font-semibold text-foreground">{mode === "signup" ? (supplier ? "Create your supplier account" : "Create your buyer account") : "Welcome back"}</h3>
-              <p className="mt-2 text-lg text-muted-foreground">{mode === "signup" ? "Takes under a minute. You'll set up your business next." : "Sign in to your business workspace."}</p>
+              <span className={`mb-4 inline-block rounded-full px-3 py-1 text-sm font-semibold ${supplier ? "tint-emerald" : "tint-violet"}`}>{supplier ? "Supplier account" : "Buyer account"}</span>
+              <h3 className="text-4xl font-semibold text-foreground">{mode === "signup" ? (supplier ? "Create your supplier account" : "Create your buyer account") : (supplier ? "Welcome back, supplier" : "Welcome back")}</h3>
+              <p className="mt-2 text-lg text-muted-foreground">{mode === "signup" ? "Takes under a minute. You'll set up your business next." : (supplier ? "Sign in to your supplier workspace." : "Sign in to your business workspace.")}</p>
 
               <div className="mt-7 grid grid-cols-2 rounded-2xl bg-muted p-1.5" role="tablist">
                 {(["signup", "signin"] as const).map((m) => (
@@ -337,8 +341,8 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
                   </div>
                 ) : null}
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-foreground">{supplier && mode === "signup" ? "Business email" : "Work email"}</span>
-                  <input className={input} type="email" value={vals.email} onChange={set("email")} placeholder={supplier && mode === "signup" ? "you@yourbusiness.in" : "you@company.in"} autoComplete="email" />
+                  <span className="mb-1.5 block text-sm font-medium text-foreground">{supplier ? "Business email" : "Work email"}</span>
+                  <input className={input} type="email" value={vals.email} onChange={set("email")} placeholder={supplier ? "you@yourbusiness.in" : "you@company.in"} autoComplete="email" />
                   {err.email ? <span className="mt-1 block text-sm text-destructive">{err.email}</span> : null}
                 </label>
                 <label className="block">
@@ -370,7 +374,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
 
                 {err.form ? <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{err.form}</p> : null}
 
-                <button type="submit" disabled={state === "sending"} className={`btn-shine group flex w-full items-center justify-center gap-2 rounded-xl ${supplier && mode === "signup" ? "bg-gradient-emerald" : "bg-gradient-cta"} py-4 text-lg font-semibold text-white shadow-glow transition hover:scale-[1.01] disabled:opacity-70`}>
+                <button type="submit" disabled={state === "sending"} className={`btn-shine group flex w-full items-center justify-center gap-2 rounded-xl ${supplier ? "bg-gradient-emerald" : "bg-gradient-cta"} py-4 text-lg font-semibold text-white shadow-glow transition hover:scale-[1.01] disabled:opacity-70`}>
                   {state === "sending" ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
                   {mode === "signup" ? "Create account" : "Sign in"}
                   {state === "sending" ? null : <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />}
@@ -382,6 +386,12 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
                 <button type="button" onClick={() => { onModeChange(mode === "signup" ? "signin" : "signup"); setErr({}); }} className="font-semibold text-primary hover:underline">
                   {mode === "signup" ? "Sign in" : "Create one"}
                 </button>
+              </p>
+              <p className="mt-3 text-center text-sm text-muted-foreground">
+                {supplier ? "Looking to buy? " : "Selling to businesses? "}
+                <Link to={supplier ? (mode === "signup" ? "/signup" : "/signin") : mode === "signup" ? "/supplier/signup" : "/supplier/signin"} replace className="font-semibold text-primary hover:underline">
+                  {supplier ? (mode === "signup" ? "Create a buyer account" : "Buyer sign in") : mode === "signup" ? "Create a supplier account" : "Supplier sign in"}
+                </Link>
               </p>
             </>
           )}

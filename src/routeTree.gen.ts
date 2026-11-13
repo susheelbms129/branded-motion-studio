@@ -26,6 +26,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTeamRouteImport } from './routes/app.team'
 import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
+import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
 import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api.public.resend-webhook'
 import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
@@ -123,6 +124,11 @@ const SupplierOnboardingRoute = SupplierOnboardingRouteImport.update({
   path: '/supplier/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupplierSigninRoute = SupplierSigninRouteImport.update({
+  id: '/supplier/signin',
+  path: '/supplier/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupplierSignupRoute = SupplierSignupRouteImport.update({
   id: '/supplier/signup',
   path: '/supplier/signup',
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AppTeamRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AppTeamRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/app': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/app/team': typeof AppTeamRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
+    | '/supplier/signin'
     | '/supplier/signup'
     | '/app/'
     | '/api/public/resend-webhook'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
+    | '/supplier/signin'
     | '/supplier/signup'
     | '/app'
     | '/api/public/resend-webhook'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
+    | '/supplier/signin'
     | '/supplier/signup'
     | '/app/'
     | '/api/public/resend-webhook'
@@ -372,6 +384,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SupplierDashboardRoute: typeof SupplierDashboardRoute
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
+  SupplierSigninRoute: typeof SupplierSigninRoute
   SupplierSignupRoute: typeof SupplierSignupRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
 }
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/onboarding'
       fullPath: '/supplier/onboarding'
       preLoaderRoute: typeof SupplierOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/signin': {
+      id: '/supplier/signin'
+      path: '/supplier/signin'
+      fullPath: '/supplier/signin'
+      preLoaderRoute: typeof SupplierSigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/supplier/signup': {
@@ -628,6 +648,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SupplierDashboardRoute: SupplierDashboardRoute,
   SupplierOnboardingRoute: SupplierOnboardingRoute,
+  SupplierSigninRoute: SupplierSigninRoute,
   SupplierSignupRoute: SupplierSignupRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
 }

@@ -42,21 +42,79 @@ export async function signUpWithEmail(
   }
 }
 
-export async function signInWithEmail(email: string, password: string): Promise<AuthResult> {
+/** Reads the account type recorded at sign-up. Anyone without it recorded is a buyer. */
+function accountTypeOf(meta: unknown): AccountType {
+  return (meta as { account_type?: string } | undefined)?.account_type === "supplier" ? "supplier" : "buyer";
+}
+
+/** Where each kind of account lives. Buyers and suppliers never share a workspace or a sign-in page. */
+export const homePathFor = (t: AccountType) => (t === "supplier" ? "/supplier/dashboard" : "/app");
+export const signInPathFor = (t: AccountType) => (t === "supplier" ? "/supplier/signin" : "/signin");
+
+/**
+ * `expected` is the side of the site the person is signing in on. If the account is the other kind,
+ * we sign them straight back out and say which sign-in to use, so the two sides stay separate.
+ */
+export async function signInWithEmail(email: string, password: string, expected?: AccountType): Promise<AuthResult> {
   if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED };
   try {
-    const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+    const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });
     if (error) return { ok: false, message: friendly(error.message, "We couldn't sign you in. Please try again.") };
+    const actual = accountTypeOf(data.user?.user_metadata);
+    if (expected && actual !== expected) {
+      await getSupabase().auth.signOut();
+      cache = null;
+      return {
+        ok: false,
+        message:
+          actual === "supplier"
+            ? "This email is registered as a supplier account. Please use the supplier sign-in."
+            : "This email is registered as a buyer account. Please use the buyer sign-in.",
+      };
+    }
     return { ok: true, needsConfirm: false };
   } catch {
     return { ok: false, message: "Network problem. Check your connection and try again." };
   }
 }
 
-// Redirects the browser to Google / Apple; the session is picked up when the user returns to /app.
-export async function signInWithProvider(provider: "google" | "apple", redirectPath = "/app"): Promise<AuthResult> {
+const INTENT_KEY = "vendora-signup-intent";
+
+// Google / Apple can't carry our "buyer or supplier" choice, so for a brand-new sign-up we remember it
+// here and record it on the account when the person returns (see claimSignupIntent).
+function rememberSignupIntent(t: AccountType | null) {
+  try {
+    if (t) window.sessionStorage.setItem(INTENT_KEY, t);
+    else window.sessionStorage.removeItem(INTENT_KEY);
+  } catch {
+    /* private mode: the account stays a buyer account */
+  }
+}
+
+async function claimSignupIntent(user: { user_metadata?: unknown }): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const intent = window.sessionStorage.getItem(INTENT_KEY);
+    if (!intent) return;
+    window.sessionStorage.removeItem(INTENT_KEY);
+    // Only ever fills in a missing choice. An account that already has a type is never converted.
+    if ((user.user_metadata as { account_type?: string } | undefined)?.account_type) return;
+    if (intent !== "buyer" && intent !== "supplier") return;
+    await getSupabase().auth.updateUser({ data: { account_type: intent } });
+  } catch {
+    /* fall back to a buyer account */
+  }
+}
+
+// Redirects the browser to Google / Apple; the session is picked up when the user returns.
+export async function signInWithProvider(
+  provider: "google" | "apple",
+  redirectPath = "/app",
+  signup?: AccountType,
+): Promise<AuthResult> {
   if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED };
   try {
+    rememberSignupIntent(signup ?? null);
     const { error } = await getSupabase().auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${origin()}${redirectPath}` },
@@ -158,15 +216,22 @@ export async function requireWorkspace(): Promise<"signin" | "onboarding" | "ok"
 export async function signedInAccountType(): Promise<AccountType> {
   if (!isSupabaseConfigured) return "buyer";
   const { data } = await getSupabase().auth.getSession();
-  const meta = data.session?.user.user_metadata as { account_type?: string } | undefined;
-  return meta?.account_type === "supplier" ? "supplier" : "buyer";
+  const user = data.session?.user;
+  if (!user) return "buyer";
+  await claimSignupIntent(user);
+  const fresh = await getSupabase().auth.getUser();
+  return accountTypeOf((fresh.data.user ?? user).user_metadata);
 }
 
-/** Guard for the supplier area: only needs a session for now (supplier workspaces arrive with the database step). */
-export async function requireSession(): Promise<boolean> {
-  if (!isSupabaseConfigured) return false;
+/**
+ * Guard for the supplier area. "signin" = no session, "buyer" = signed in but with a buyer account
+ * (they belong in /app, never here), "ok" = a supplier.
+ */
+export async function requireSupplier(): Promise<"signin" | "buyer" | "ok"> {
+  if (!isSupabaseConfigured) return "signin";
   const { data } = await getSupabase().auth.getSession();
-  return !!data.session?.user;
+  if (!data.session?.user) return "signin";
+  return (await signedInAccountType()) === "supplier" ? "ok" : "buyer";
 }
 
 function slugify(name: string): string {

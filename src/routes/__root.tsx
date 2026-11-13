@@ -125,34 +125,54 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-// Sign up / sign in is one full-screen panel whose mode lives in the URL (/signup, /signin).
+// Sign up / sign in is one full-screen panel whose side and mode live in the URL:
+//   buyers:    /signup  /signin
+//   suppliers: /supplier/signup  /supplier/signin
+// The two sides are fully separate: each tab and link stays on its own side.
+const AUTH_PATHS: Record<string, { mode: "signup" | "signin"; variant: "buyer" | "supplier" }> = {
+  "/signup": { mode: "signup", variant: "buyer" },
+  "/signin": { mode: "signin", variant: "buyer" },
+  "/supplier/signup": { mode: "signup", variant: "supplier" },
+  "/supplier/signin": { mode: "signin", variant: "supplier" },
+};
+
 function AuthRoute() {
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const mode = path === "/signup" || path === "/supplier/signup" ? "signup" : path === "/signin" ? "signin" : null;
-  const variant = path === "/supplier/signup" ? "supplier" : "buyer";
+  const current = AUTH_PATHS[path] ?? null;
+  const mode = current?.mode ?? "signup";
+  const variant = current?.variant ?? "buyer";
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const { data } = getSupabase().auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         clearAuthCache();
-        if (window.location.pathname.startsWith("/app")) void nav({ to: "/signin" });
+        // Signed out inside a workspace: go to that side's own sign-in.
+        const p = window.location.pathname;
+        if (p.startsWith("/app")) void nav({ to: "/signin" });
+        else if (p === "/supplier/dashboard" || p === "/supplier/onboarding") void nav({ to: "/supplier/signin" });
       }
     });
     return () => data.subscription.unsubscribe();
   }, [nav]);
   return (
     <AuthScreen
-      open={mode !== null}
-      mode={mode ?? "signup"}
+      open={current !== null}
+      mode={mode}
       variant={variant}
-      // One shared sign-in. "Sign up" from there goes back to the Buyer / Supplier choice.
       onModeChange={(m) => {
         if (m === mode) return;
-        void nav({ to: m === "signup" ? "/get-started" : "/signin", replace: true });
+        const to = variant === "supplier" ? (m === "signup" ? "/supplier/signup" : "/supplier/signin") : m === "signup" ? "/signup" : "/signin";
+        void nav({ to, replace: true });
       }}
       onClose={() => void nav({ to: "/" })}
-      onAuthed={() => void nav({ to: variant === "supplier" ? "/supplier/onboarding" : "/app" })}
+      onAuthed={() =>
+        void nav({
+          // A brand-new supplier sets up their business; a returning supplier goes to their dashboard
+          // (which sends them to setup if it isn't finished). Buyers go to their own workspace.
+          to: variant === "supplier" ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : "/app",
+        })
+      }
     />
   );
 }

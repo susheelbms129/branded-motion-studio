@@ -8,8 +8,9 @@ export const Route = createFileRoute("/onboarding")({
   beforeLoad: async () => {
     const r = await requireWorkspace();
     if (r === "signin") throw redirect({ to: "/signin" });
+    // Supplier accounts never use the buyer workspace.
+    if ((await signedInAccountType()) === "supplier") throw redirect({ to: "/supplier/dashboard" });
     if (r === "ok") throw redirect({ to: "/app" });
-    if ((await signedInAccountType()) === "supplier") throw redirect({ to: "/supplier/onboarding" });
   },
   head: () => ({ meta: [{ title: "Onboarding — Vendora" }] }),
   component: OnboardingPage,

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Boxes, Check, FileText, LayoutDashboard, LogOut, Package, Receipt, ShieldCheck, Users } from "lucide-react";
 
 import { signOutUser } from "@/lib/auth";
@@ -47,7 +47,7 @@ export function SupplierDashboardPage() {
             </span>
           ))}
         </nav>
-        <button type="button" onClick={() => void signOutUser().then(() => nav({ to: "/signin" }))} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-navy-muted transition hover:bg-white/10 hover:text-white">
+        <button type="button" onClick={() => void signOutUser().then(() => nav({ to: "/supplier/signin" }))} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-navy-muted transition hover:bg-white/10 hover:text-white">
           <LogOut className="h-4 w-4" /> Sign out
         </button>
       </aside>
@@ -87,10 +87,6 @@ export function SupplierDashboardPage() {
               ))}
             </ul>
           </section>
-
-          <p className="mt-6 text-sm text-muted-foreground">
-            Buyer account instead? <Link to="/app" className="font-semibold text-primary hover:underline">Open the buyer workspace</Link>
-          </p>
         </div>
       </main>
     </div>

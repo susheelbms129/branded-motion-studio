@@ -256,8 +256,8 @@ check("saves are gone with the supplier", sh("select count(*) from saved_supplie
 # the per-company limit (500), last because it fills the database with filler suppliers
 sh(f"""insert into businesses(id,slug,name,kind) select gen_random_uuid(), 'filler-'||g, 'Filler '||g, 'supplier' from generate_series(1,500) g;
        insert into supplier_profiles(org_id) select id from businesses where slug like 'filler-%';
-       insert into saved_suppliers(buyer_org,supplier_org) select '{orgB}', id from businesses where slug like 'filler-%' limit 499;""")
-fill = sh("select id from businesses where slug like 'filler-%' order by slug offset 499 limit 1")[1]
+       insert into saved_suppliers(buyer_org,supplier_org) select '{orgB}', id from businesses where slug like 'filler-%' order by slug limit 498;   -- plus the one already saved above = 499""")
+fill = sh("select id from businesses where slug like 'filler-%' order by slug offset 498 limit 1")[1]
 ok("the 500th supplier fits", SV("B", orgB, fill))
 extra = sh(f"insert into businesses(id,slug,name,kind) values (gen_random_uuid(),'filler-extra','Filler extra','supplier'); insert into supplier_profiles(org_id) select id from businesses where slug='filler-extra'; select id from businesses where slug='filler-extra'")[1]
 denied("the 501st is refused", SV("B", orgB, extra), "too_many_saved")

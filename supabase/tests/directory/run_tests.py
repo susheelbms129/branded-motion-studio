@@ -59,8 +59,10 @@ M7 = os.path.join(MIG, "20261118000007_supplier_directory.sql")
 apply(M7); apply(M7)   # safe to run twice
 M8 = os.path.join(MIG, "20261119000008_supplier_profile_view.sql")
 apply(M8); apply(M8)   # safe to run twice
+M9 = os.path.join(MIG, "20261120000009_saved_suppliers.sql")
+apply(M9); apply(M9)   # safe to run twice
 
-ids = {k: str(uuid.uuid4()) for k in "SFXBMAZ"}  # S owner, F finance, X other supplier owner, B buyer, M member-employee, A admin, Z stranger
+ids = {k: str(uuid.uuid4()) for k in "SFXBMAZEYW"}  # S owner, F finance, X other supplier owner, B buyer, M member-employee, A admin, Z stranger
 def add_user(k, email, typ):
     sh(f"insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values ('{ids[k]}','{email}',now(),'{json.dumps({'name': k + ' user', 'account_type': typ})}')")
 for k, t in [("S", "supplier"), ("F", "supplier"), ("X", "supplier"), ("B", "buyer"), ("M", "supplier"), ("A", "supplier"), ("Z", "supplier")]:
@@ -187,6 +189,79 @@ check("an expired proof stops counting on the profile too", prof("B", org1)["pas
 sh(f"update verification_checks set expires_at = current_date + 300 where org_id='{org1}' and type <> 'bank'"); sh(f"update verification_checks set expires_at = current_date + 100 where org_id='{org1}' and type = 'bank'")
 check("reading a profile never changes anything", sh("select count(*) from audit_log where action like 'directory%' or action like 'supplier_profile%'")[1] == "0")
 check("only buyers and reviewers hold execute on the function", sh("select count(*) from information_schema.routine_privileges where routine_name='get_supplier_profile' and grantee in ('anon','public')")[1] == "0")
+
+# ───────── saved suppliers (migration 9) ─────────
+# E = employee of buyer company B, Y = owner of ANOTHER buyer company, W = procurement manager of buyer company B
+for k, t in [("E", "buyer"), ("Y", "buyer"), ("W", "buyer")]:
+    add_user(k, f"{k.lower()}@t.in", t)
+orgB2 = str(uuid.uuid4())
+sh(f"insert into businesses(id,slug,name,kind,state) values ('{orgB2}','buyer-two','Buyer Two','buyer','Kerala')")
+for k, o, role in [("E", orgB, "employee"), ("W", orgB, "procurement_manager"), ("Y", orgB2, "owner")]:
+    sh(f"insert into memberships(org_id,user_id,role) values ('{o}','{ids[k]}','{role}')")
+SV = lambda k, b, s_: U(k, f"select save_supplier('{b}','{s_}')::text")
+UN = lambda k, b, s_: U(k, f"select unsave_supplier('{b}','{s_}')::text")
+IDS = lambda k, b: json.loads(U(k, f"select saved_supplier_ids('{b}')::text")[1])
+LST = lambda k, b, *a: json.loads(U(k, f"select list_saved_suppliers('{b}'" + "".join("," + x for x in a) + ")::text")[1])
+
+denied("anonymous cannot save", sh(f"select save_supplier('{orgB}','{org1}')", "anon"))
+denied("anonymous cannot list saved", sh(f"select list_saved_suppliers('{orgB}')", "anon"))
+denied("a supplier cannot save (not a buyer member)", SV("S", orgB, org1), "not_allowed")
+denied("a supplier cannot save using its own company as the buyer", SV("S", org1, org2), "not_allowed")
+denied("a stranger buyer cannot save into someone else's list", SV("Y", orgB, org1), "not_allowed")
+denied("a reviewer is not a member, so cannot save", SV("A", orgB, org1), "not_allowed")
+denied("an employee can see but not change the list", SV("E", orgB, org1), "not_allowed")
+denied("an employee cannot remove either", UN("E", orgB, org1), "not_allowed")
+denied("a null company is refused", U("B", f"select save_supplier(null,'{org1}')"), "not_allowed")
+ok("the owner can save a supplier", SV("B", orgB, org1))
+ok("saving twice is harmless", SV("B", orgB, org1))
+ok("a procurement manager can save too", SV("W", orgB, org2))
+check("one row per supplier, total counted", sh(f"select count(*) from saved_suppliers where buyer_org='{orgB}'")[1] == "2")
+denied("a buyer company cannot be saved as a supplier", SV("B", orgB, orgB2), "not_found")
+denied("an unfinished supplier cannot be saved", SV("B", orgB, org3), "not_found")
+denied("a made-up supplier id cannot be saved", SV("B", orgB, str(uuid.uuid4())), "not_found")
+denied("a null supplier id is refused", U("B", f"select save_supplier('{orgB}', null)"), "not_found")
+check("saved ids list", sorted(IDS("E", orgB)) == sorted([org1, org2]), str(IDS("E", orgB)))
+check("any team member can read the shortlist", LST("E", orgB)["total"] == 2)
+denied("another company cannot read this list", U("Y", f"select list_saved_suppliers('{orgB}')"), "not_allowed")
+denied("another company cannot read these ids", U("Y", f"select saved_supplier_ids('{orgB}')"), "not_allowed")
+denied("a supplier cannot read any list", U("S", f"select list_saved_suppliers('{orgB}')"), "not_allowed")
+denied("a supplier cannot read a list with its own company id", U("S", f"select list_saved_suppliers('{org1}')"), "not_allowed")
+check("the other company has an empty list of its own", LST("Y", orgB2)["total"] == 0 and IDS("Y", orgB2) == [])
+l = LST("B", orgB)
+check("newest saved first, directory-shaped cards", [i["name"] for i in l["items"]] == ["Other Supplies", "Kaveri Industrial"] and l["items"][1]["level"] == 2 and l["items"][1]["government_checked"] is True, str([i["name"] for i in l["items"]]))
+raw = U("B", f"select list_saved_suppliers('{orgB}')::text")[1]
+for secret in ["private@kaveri.in", "9880011223", "Ravi Kumar", "kaveri.example.in", "HDFC0001234", "secret.pdf", "Account ending", "No. 14, 3rd Cross"]:
+    check(f"private detail never returned in the shortlist: {secret}", secret not in raw)
+check("saved_by is never returned", "saved_by" not in raw)
+sh(f"update verification_checks set expires_at = current_date - 1 where org_id='{org1}'")
+check("an expired proof stops counting in the shortlist", [i["level"] for i in LST("B", orgB)["items"]] == [0, 0])
+sh(f"update verification_checks set expires_at = current_date + 300 where org_id='{org1}' and type <> 'bank'"); sh(f"update verification_checks set expires_at = current_date + 100 where org_id='{org1}' and type = 'bank'")
+p1 = LST("B", orgB, "1", "0"); p2 = LST("B", orgB, "1", "1")
+check("paging works and the total stays", p1["total"] == 2 and len(p1["items"]) == 1 and len(p2["items"]) == 1 and p1["items"][0]["org_id"] != p2["items"][0]["org_id"])
+check("bad paging numbers are tamed", len(LST("B", orgB, "100000", "-5")["items"]) == 2 and len(LST("B", orgB, "0", "0")["items"]) == 1)
+# the browser can never touch the table
+for who, label in [("authenticated", "a signed-in user"), ("anon", "an anonymous visitor")]:
+    for q in ["select * from saved_suppliers", f"insert into saved_suppliers(buyer_org,supplier_org) values ('{orgB2}','{org1}')", "delete from saved_suppliers", "update saved_suppliers set saved_at = now()"]:
+        r = sh(q, who, ids["B"] if who == "authenticated" else None)
+        check(f"{label} cannot run: {q.split(' ')[0]} on the table", not r[0] and "permission denied" in r[2], r[2])
+check("no function is open to anonymous or public visitors", sh("select count(*) from information_schema.routine_privileges where routine_name in ('save_supplier','unsave_supplier','saved_supplier_ids','list_saved_suppliers','_saved_guard') and grantee in ('anon','public')")[1] == "0")
+check("the guard helper is not callable from the browser", not sh(f"select _saved_guard('{orgB}', false)", "authenticated", ids["B"])[0])
+check("saves are audited with ids only", sh(f"select count(*) from audit_log where org_id='{orgB}' and action='supplier_saved'")[1] == "2" and sh("select count(*) from audit_log where action like 'supplier_%saved' and detail <> '{}'::jsonb")[1] == "0")
+ok("the owner can remove a supplier", UN("B", orgB, org2))
+ok("removing twice is harmless", UN("B", orgB, org2))
+check("removal is audited once", sh(f"select count(*) from audit_log where org_id='{orgB}' and action='supplier_unsaved'")[1] == "1")
+check("the list shrinks and the other company is unaffected", IDS("B", orgB) == [org1])
+ok("a supplier who leaves takes their saves with them", sh(f"delete from businesses where id='{org2}'"))
+check("saves are gone with the supplier", sh("select count(*) from saved_suppliers where supplier_org not in (select id from businesses)")[1] == "0")
+# the per-company limit (500), last because it fills the database with filler suppliers
+sh(f"""insert into businesses(id,slug,name,kind) select gen_random_uuid(), 'filler-'||g, 'Filler '||g, 'supplier' from generate_series(1,500) g;
+       insert into supplier_profiles(org_id) select id from businesses where slug like 'filler-%';
+       insert into saved_suppliers(buyer_org,supplier_org) select '{orgB}', id from businesses where slug like 'filler-%' limit 499;""")
+fill = sh("select id from businesses where slug like 'filler-%' order by slug offset 499 limit 1")[1]
+ok("the 500th supplier fits", SV("B", orgB, fill))
+extra = sh(f"insert into businesses(id,slug,name,kind) values (gen_random_uuid(),'filler-extra','Filler extra','supplier'); insert into supplier_profiles(org_id) select id from businesses where slug='filler-extra'; select id from businesses where slug='filler-extra'")[1]
+denied("the 501st is refused", SV("B", orgB, extra), "too_many_saved")
+ok("saving one that is already saved still works at the limit", SV("B", orgB, fill))
 
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

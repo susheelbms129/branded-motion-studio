@@ -2,6 +2,7 @@ import { useParams } from "@tanstack/react-router";
 import { ArrowLeft, Building2, CalendarClock, Check, Clock, MapPin, PackageSearch, ShieldAlert, ShieldCheck, Truck, Users } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
+import { SaveButton } from "@/components/directory/SaveButton";
 import { Button } from "@/components/ui/button";
 import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
 import { EmptyState, ErrorState } from "@/components/vendora/kit";
@@ -118,9 +119,12 @@ export function SupplierProfilePage() {
           {place ? <p className="mt-1 flex items-center gap-1.5 text-muted-foreground"><MapPin className="size-4 shrink-0" aria-hidden /> {place}</p> : null}
           {facts.length > 0 ? <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"><Users className="size-4 shrink-0" aria-hidden /> {facts.join(" · ")}</p> : null}
         </div>
-        <span className={cn("rounded-full px-3 py-1.5 text-sm font-semibold", verified ? "tint-emerald" : "tint-slate")}>
-          {verified ? p.passport.level_name : "Not verified"}
-        </span>
+        <div className="flex flex-col items-end gap-3">
+          <span className={cn("rounded-full px-3 py-1.5 text-sm font-semibold", verified ? "tint-emerald" : "tint-slate")}>
+            {verified ? p.passport.level_name : "Not verified"}
+          </span>
+          <SaveButton supplierId={p.org_id} name={p.name} full />
+        </div>
       </header>
 
       <TrustCoverage p={p} />

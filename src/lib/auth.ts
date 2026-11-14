@@ -1,3 +1,4 @@
+import { useSaved } from "@/lib/saved-store";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useUi } from "@/lib/ui-store";
 import type { Role } from "@/types/domain";
@@ -331,6 +332,7 @@ export async function signOutUser(): Promise<void> {
     if (isSupabaseConfigured) await getSupabase().auth.signOut();
   } finally {
     clearAuthCache();
+    useSaved.getState().reset();
     useUi.getState().signOut();
     useUi.setState({ onboarded: false });
   }

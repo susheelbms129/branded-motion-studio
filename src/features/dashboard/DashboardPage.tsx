@@ -5,6 +5,7 @@ import {
   FileSpreadsheet,
   IndianRupee,
   Plus,
+  SearchCheck,
   Sparkles,
   Timer,
   Truck,
@@ -51,7 +52,7 @@ export function DashboardPage() {
     .slice(0, 6);
   const empty = ws.purchaseOrders.length === 0 && ws.requests.length === 0;
   const checklist = [
-    { label: "Add your suppliers", done: ws.suppliers.length > 0, to: "suppliers" },
+    { label: "Find verified suppliers", done: ws.suppliers.length > 0, to: "find-suppliers" },
     { label: "Add products & materials", done: ws.materials.length > 0, to: "materials" },
     {
       label: "Raise your first purchase request",
@@ -94,6 +95,12 @@ export function DashboardPage() {
                 <AppLink to="requests/new">
                   <Plus />
                   New request
+                </AppLink>
+              </Button>
+              <Button asChild variant="glass" size="lg">
+                <AppLink to="find-suppliers">
+                  <SearchCheck />
+                  Find suppliers
                 </AppLink>
               </Button>
               <Button asChild variant="glass" size="lg">

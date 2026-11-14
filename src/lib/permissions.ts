@@ -47,7 +47,7 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   "quotation.manage": "Enter and compare quotations",
   "po.create": "Create purchase orders",
   "po.approve": "Approve purchase orders",
-  "supplier.manage": "Manage suppliers",
+  "supplier.manage": "Manage saved suppliers",
   "material.manage": "Manage products & materials",
   "analytics.view": "View spend analytics",
   "insights.manage": "Act on AI insights",

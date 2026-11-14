@@ -24,6 +24,8 @@ export interface DirectorySupplier {
   proofs: number;
   /** True when the GST registration was matched against the live government record, not just a document. */
   government_checked: boolean;
+  /** Only on the saved list: when this company saved the supplier. */
+  saved_at?: string;
 }
 
 export interface DirectoryFilters {
@@ -46,6 +48,11 @@ function friendly(err: { message?: string } | null): string {
   const m = err?.message ?? "";
   if (m.includes("not_authenticated")) return "Please sign in again to browse suppliers.";
   if (m.includes("not_allowed")) return "Only buyer accounts can browse the supplier directory.";
+  if (m.includes("too_many_saved")) return "You've reached the limit of 500 saved suppliers. Remove one to save another.";
+  if (m.includes("not_found")) return "This supplier isn't available any more.";
+  if (m.includes("Could not find the function") && /saved_supplier|save_supplier/.test(m)) {
+    return "Saved suppliers aren't set up yet. Run migration 9 (20261120000009_saved_suppliers.sql) in Supabase.";
+  }
   if (m.includes("Could not find the function") || m.includes("list_suppliers")) {
     return "The supplier directory isn't set up yet. Run migration 7 (20261118000007_supplier_directory.sql) in Supabase.";
   }
@@ -131,4 +138,31 @@ export async function getSupplierProfile(orgId: string): Promise<SupplierProfile
     throw new Error(friendly(error));
   }
   return data as SupplierProfile;
+}
+
+
+// ───────── saved suppliers (a shortlist shared by the buyer's whole team) ─────────
+// WHO may read or change the list is decided by the database (migration 9), never by this file.
+
+export async function loadSavedIds(buyerOrg: string): Promise<string[]> {
+  const { data, error } = await getSupabase().rpc("saved_supplier_ids", { p_buyer_org: buyerOrg });
+  if (error) throw new Error(friendly(error));
+  return Array.isArray(data) ? (data as string[]) : [];
+}
+
+export async function saveSupplier(buyerOrg: string, supplierId: string): Promise<void> {
+  const { error } = await getSupabase().rpc("save_supplier", { p_buyer_org: buyerOrg, p_supplier: supplierId });
+  if (error) throw new Error(friendly(error));
+}
+
+export async function unsaveSupplier(buyerOrg: string, supplierId: string): Promise<void> {
+  const { error } = await getSupabase().rpc("unsave_supplier", { p_buyer_org: buyerOrg, p_supplier: supplierId });
+  if (error) throw new Error(friendly(error));
+}
+
+export async function listSavedSuppliers(buyerOrg: string, offset = 0): Promise<{ total: number; items: DirectorySupplier[] }> {
+  const { data, error } = await getSupabase().rpc("list_saved_suppliers", { p_buyer_org: buyerOrg, p_limit: PAGE_SIZE, p_offset: offset });
+  if (error) throw new Error(friendly(error));
+  const d = (data ?? {}) as { total?: number; items?: DirectorySupplier[] };
+  return { total: Number(d.total ?? 0), items: d.items ?? [] };
 }

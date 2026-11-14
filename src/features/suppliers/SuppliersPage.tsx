@@ -1,28 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Plus, SearchCheck, Truck } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { SearchCheck, Truck } from "lucide-react";
+
+import { SavedSuppliersList } from "@/features/directory/SavedSuppliersList";
+import { useUi } from "@/lib/ui-store";
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Can,
   type Column,
   DataTable,
   EmptyState,
@@ -35,11 +18,38 @@ import { usePerf } from "@/lib/use-perf";
 import { useWs } from "@/lib/ws-store";
 import type { Supplier } from "@/types/domain";
 
+/** Real company workspace: the saved shortlist. The demo workspace keeps its sample vendor table. */
 export function SuppliersPage() {
+  const demo = useUi((s) => s.demo);
+  return demo ? <DemoSuppliers /> : <SavedSuppliers />;
+}
+
+function SavedSuppliers() {
+  return (
+    <>
+      <PageHeader
+        title="Saved suppliers"
+        accent="amber"
+        crumbs={[{ label: "Saved suppliers" }]}
+        description="Your shortlist of verified suppliers, shared with your whole team."
+        actions={
+          <Button asChild>
+            <AppLink to="find-suppliers">
+              <SearchCheck />
+              Find suppliers on Vendora
+            </AppLink>
+          </Button>
+        }
+      />
+      <SavedSuppliersList />
+    </>
+  );
+}
+
+function DemoSuppliers() {
   const ws = useWs();
   const perf = usePerf();
   const nav = useNavigate();
-  const [open, setOpen] = useState(false);
   const columns: Column<Supplier>[] = [
     {
       key: "n",
@@ -98,22 +108,14 @@ export function SuppliersPage() {
         title="My Suppliers"
         accent="amber"
         crumbs={[{ label: "My Suppliers" }]}
-        description="Your vendor directory with performance scored purely from real orders and quotes."
+        description="The suppliers you buy from, with performance scored purely from real orders and quotes."
         actions={
-          <>
-            <Button variant="outline" asChild>
-              <AppLink to="find-suppliers">
-                <SearchCheck />
-                Find suppliers on Vendora
-              </AppLink>
-            </Button>
-            <Can permission="supplier.manage">
-              <Button onClick={() => setOpen(true)}>
-                <Plus />
-                Add supplier
-              </Button>
-            </Can>
-          </>
+          <Button asChild>
+            <AppLink to="find-suppliers">
+              <SearchCheck />
+              Find suppliers on Vendora
+            </AppLink>
+          </Button>
         }
       />
       <DataTable
@@ -127,120 +129,20 @@ export function SuppliersPage() {
           <EmptyState
             icon={Truck}
             accent="amber"
-            title="No suppliers yet"
-            body="Add the vendors you buy from. Scores appear after a few deliveries."
+            title="No suppliers here yet"
+            body="Browse verified suppliers on Vendora. Scores appear after a few deliveries."
             action={
-              <Can permission="supplier.manage">
-                <Button onClick={() => setOpen(true)}>
-                  <Plus />
-                  Add your first supplier
-                </Button>
-              </Can>
+              <Button asChild>
+                <AppLink to="find-suppliers">
+                  <SearchCheck />
+                  Find suppliers
+                </AppLink>
+              </Button>
             }
             className="border-0"
           />
         }
       />
-      <AddSupplier open={open} onClose={() => setOpen(false)} />
     </>
-  );
-}
-
-function AddSupplier({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const ws = useWs();
-  const [f, setF] = useState({
-    name: "",
-    city: "",
-    state: "",
-    email: "",
-    gstin: "",
-    categoryId: "",
-    terms: "30",
-  });
-  const ok = f.name.trim().length > 2 && f.categoryId;
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setF({ ...f, [k]: e.target.value });
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add supplier</DialogTitle>
-          <DialogDescription>You can add contacts later.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Label>Company name</Label>
-            <Input className="mt-1.5" value={f.name} onChange={set("name")} />
-          </div>
-          <div>
-            <Label>City</Label>
-            <Input className="mt-1.5" value={f.city} onChange={set("city")} />
-          </div>
-          <div>
-            <Label>State</Label>
-            <Input className="mt-1.5" value={f.state} onChange={set("state")} />
-          </div>
-          <div>
-            <Label>Email</Label>
-            <Input type="email" className="mt-1.5" value={f.email} onChange={set("email")} />
-          </div>
-          <div>
-            <Label>GSTIN</Label>
-            <Input className="mt-1.5" value={f.gstin} onChange={set("gstin")} />
-          </div>
-          <div>
-            <Label>Category</Label>
-            <Select value={f.categoryId} onValueChange={(v) => setF({ ...f, categoryId: v })}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Choose" />
-              </SelectTrigger>
-              <SelectContent>
-                {ws.categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Payment terms (days)</Label>
-            <Input type="number" className="mt-1.5" value={f.terms} onChange={set("terms")} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={!ok}
-            onClick={() => {
-              ws.upsertSupplier({
-                name: f.name.trim(),
-                city: f.city,
-                state: f.state,
-                email: f.email,
-                gstin: f.gstin,
-                categoryIds: [f.categoryId],
-                paymentTermsDays: Number(f.terms) || 30,
-              });
-              toast.success("Supplier added");
-              setF({
-                name: "",
-                city: "",
-                state: "",
-                email: "",
-                gstin: "",
-                categoryId: "",
-                terms: "30",
-              });
-              onClose();
-            }}
-          >
-            Add supplier
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

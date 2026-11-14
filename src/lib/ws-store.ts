@@ -89,7 +89,6 @@ interface Ws extends SeedData {
   addQuotation: (q: Omit<Quotation, "id" | "receivedAt">) => void;
   awardRfq: (rfqId: string, quotationId: string, c: Ctx) => PurchaseOrder | null;
   advancePo: (id: string, status: PoStatus, c: Ctx) => void;
-  upsertSupplier: (s: Partial<Supplier> & { name: string }) => void;
   setSupplierStatus: (id: string, status: Supplier["status"]) => void;
   upsertMaterial: (m: Partial<Material> & { name: string; categoryId: string }) => void;
   deleteMaterial: (id: string) => void;
@@ -377,28 +376,6 @@ export const useWs = create<Ws>()((set, get) => ({
       }),
     })),
 
-  upsertSupplier: (sup) =>
-    set((s) => {
-      if (sup.id)
-        return { suppliers: s.suppliers.map((x) => (x.id === sup.id ? { ...x, ...sup } : x)) };
-      const id = uid("s");
-      const n: Supplier = {
-        id,
-        city: "",
-        state: "",
-        gstin: "",
-        categoryIds: [],
-        paymentTermsDays: 30,
-        since: now(),
-        status: "active",
-        email: "",
-        phone: "",
-        website: "",
-        contacts: [],
-        ...sup,
-      };
-      return { suppliers: [n, ...s.suppliers] };
-    }),
   setSupplierStatus: (id, status) =>
     set((s) => ({ suppliers: s.suppliers.map((x) => (x.id === id ? { ...x, status } : x)) })),
   upsertMaterial: (m) =>

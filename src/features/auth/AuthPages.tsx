@@ -171,7 +171,7 @@ export function OnboardingPage() {
                   {
                     v: false,
                     t: "Start with an empty workspace",
-                    d: "Add your own suppliers, materials and requests from scratch.",
+                    d: "Add your own materials and purchase requests from scratch.",
                   },
                 ].map((o) => (
                   <button

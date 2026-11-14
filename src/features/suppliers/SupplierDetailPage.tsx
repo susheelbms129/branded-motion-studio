@@ -96,7 +96,7 @@ export function SupplierDetailPage() {
         meta={<StatusBadge kind="supplier" value={s.status} />}
         description={`${s.city}, ${s.state} · GSTIN ${s.gstin || "—"}`}
         accent="amber"
-        crumbs={[{ label: "Suppliers", to: "suppliers" }, { label: s.name }]}
+        crumbs={[{ label: "Saved Suppliers", to: "suppliers" }, { label: s.name }]}
         actions={
           <Can permission="supplier.manage">
             <Select

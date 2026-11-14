@@ -27,7 +27,13 @@ describe("buyer and supplier menus stay separate", () => {
   });
 
   it("the supplier menu is exactly what a supplier needs", () => {
-    expect(SUPPLIER_NAV.map((i) => i.label)).toEqual(["Dashboard", "Trust Passport", "Products", "Company profile"]);
+    expect(SUPPLIER_NAV.map((i) => i.label)).toEqual([
+      "Dashboard",
+      "Quote requests",
+      "Trust Passport",
+      "Products",
+      "Company profile",
+    ]);
   });
 
   it("every buyer page lives under /buyer/dashboard, never under /supplier", () => {

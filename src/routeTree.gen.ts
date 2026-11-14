@@ -53,6 +53,8 @@ import { Route as BuyerDashboardMaterialsRouteImport } from './routes/buyer.dash
 import { Route as BuyerDashboardNotificationsRouteImport } from './routes/buyer.dashboard.notifications'
 import { Route as BuyerDashboardSettingsRouteImport } from './routes/buyer.dashboard.settings'
 import { Route as BuyerDashboardTeamRouteImport } from './routes/buyer.dashboard.team'
+import { Route as SupplierQuoteRequestsIndexRouteImport } from './routes/supplier.quote-requests.index'
+import { Route as SupplierQuoteRequestsIdRouteImport } from './routes/supplier.quote-requests.$id'
 import { Route as BuyerDashboardFindSuppliersIndexRouteImport } from './routes/buyer.dashboard.find-suppliers.index'
 import { Route as BuyerDashboardFindSuppliersIdRouteImport } from './routes/buyer.dashboard.find-suppliers.$id'
 import { Route as BuyerDashboardPurchaseOrdersIndexRouteImport } from './routes/buyer.dashboard.purchase-orders.index'
@@ -286,6 +288,17 @@ const BuyerDashboardTeamRoute = BuyerDashboardTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => BuyerDashboardRoute,
 } as any)
+const SupplierQuoteRequestsIndexRoute =
+  SupplierQuoteRequestsIndexRouteImport.update({
+    id: '/supplier/quote-requests/',
+    path: '/supplier/quote-requests/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SupplierQuoteRequestsIdRoute = SupplierQuoteRequestsIdRouteImport.update({
+  id: '/supplier/quote-requests/$id',
+  path: '/supplier/quote-requests/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerDashboardFindSuppliersIndexRoute =
   BuyerDashboardFindSuppliersIndexRouteImport.update({
     id: '/find-suppliers/',
@@ -391,11 +404,13 @@ export interface FileRoutesByFullPath {
   '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
   '/buyer/dashboard/settings': typeof BuyerDashboardSettingsRoute
   '/buyer/dashboard/team': typeof BuyerDashboardTeamRoute
+  '/supplier/quote-requests/$id': typeof SupplierQuoteRequestsIdRoute
   '/app/purchase-orders/': typeof AppPurchaseOrdersIndexRoute
   '/app/requests/': typeof AppRequestsIndexRoute
   '/app/rfqs/': typeof AppRfqsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/buyer/dashboard/': typeof BuyerDashboardIndexRoute
+  '/supplier/quote-requests/': typeof SupplierQuoteRequestsIndexRoute
   '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
   '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
   '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
@@ -446,11 +461,13 @@ export interface FileRoutesByTo {
   '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
   '/buyer/dashboard/settings': typeof BuyerDashboardSettingsRoute
   '/buyer/dashboard/team': typeof BuyerDashboardTeamRoute
+  '/supplier/quote-requests/$id': typeof SupplierQuoteRequestsIdRoute
   '/app/purchase-orders': typeof AppPurchaseOrdersIndexRoute
   '/app/requests': typeof AppRequestsIndexRoute
   '/app/rfqs': typeof AppRfqsIndexRoute
   '/app/suppliers': typeof AppSuppliersIndexRoute
   '/buyer/dashboard': typeof BuyerDashboardIndexRoute
+  '/supplier/quote-requests': typeof SupplierQuoteRequestsIndexRoute
   '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
   '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
   '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
@@ -504,11 +521,13 @@ export interface FileRoutesById {
   '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
   '/buyer/dashboard/settings': typeof BuyerDashboardSettingsRoute
   '/buyer/dashboard/team': typeof BuyerDashboardTeamRoute
+  '/supplier/quote-requests/$id': typeof SupplierQuoteRequestsIdRoute
   '/app/purchase-orders/': typeof AppPurchaseOrdersIndexRoute
   '/app/requests/': typeof AppRequestsIndexRoute
   '/app/rfqs/': typeof AppRfqsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/buyer/dashboard/': typeof BuyerDashboardIndexRoute
+  '/supplier/quote-requests/': typeof SupplierQuoteRequestsIndexRoute
   '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
   '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
   '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
@@ -563,11 +582,13 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/notifications'
     | '/buyer/dashboard/settings'
     | '/buyer/dashboard/team'
+    | '/supplier/quote-requests/$id'
     | '/app/purchase-orders/'
     | '/app/requests/'
     | '/app/rfqs/'
     | '/app/suppliers/'
     | '/buyer/dashboard/'
+    | '/supplier/quote-requests/'
     | '/buyer/dashboard/find-suppliers/$id'
     | '/buyer/dashboard/purchase-orders/$id'
     | '/buyer/dashboard/requests/$id'
@@ -618,11 +639,13 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/notifications'
     | '/buyer/dashboard/settings'
     | '/buyer/dashboard/team'
+    | '/supplier/quote-requests/$id'
     | '/app/purchase-orders'
     | '/app/requests'
     | '/app/rfqs'
     | '/app/suppliers'
     | '/buyer/dashboard'
+    | '/supplier/quote-requests'
     | '/buyer/dashboard/find-suppliers/$id'
     | '/buyer/dashboard/purchase-orders/$id'
     | '/buyer/dashboard/requests/$id'
@@ -675,11 +698,13 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/notifications'
     | '/buyer/dashboard/settings'
     | '/buyer/dashboard/team'
+    | '/supplier/quote-requests/$id'
     | '/app/purchase-orders/'
     | '/app/requests/'
     | '/app/rfqs/'
     | '/app/suppliers/'
     | '/buyer/dashboard/'
+    | '/supplier/quote-requests/'
     | '/buyer/dashboard/find-suppliers/$id'
     | '/buyer/dashboard/purchase-orders/$id'
     | '/buyer/dashboard/requests/$id'
@@ -714,6 +739,8 @@ export interface RootRouteChildren {
   SupplierSignupRoute: typeof SupplierSignupRoute
   SupplierVerificationRoute: typeof SupplierVerificationRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
+  SupplierQuoteRequestsIdRoute: typeof SupplierQuoteRequestsIdRoute
+  SupplierQuoteRequestsIndexRoute: typeof SupplierQuoteRequestsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1026,6 +1053,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerDashboardTeamRouteImport
       parentRoute: typeof BuyerDashboardRoute
     }
+    '/supplier/quote-requests/': {
+      id: '/supplier/quote-requests/'
+      path: '/supplier/quote-requests'
+      fullPath: '/supplier/quote-requests/'
+      preLoaderRoute: typeof SupplierQuoteRequestsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/quote-requests/$id': {
+      id: '/supplier/quote-requests/$id'
+      path: '/supplier/quote-requests/$id'
+      fullPath: '/supplier/quote-requests/$id'
+      preLoaderRoute: typeof SupplierQuoteRequestsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/dashboard/find-suppliers/': {
       id: '/buyer/dashboard/find-suppliers/'
       path: '/find-suppliers'
@@ -1216,6 +1257,8 @@ const rootRouteChildren: RootRouteChildren = {
   SupplierSignupRoute: SupplierSignupRoute,
   SupplierVerificationRoute: SupplierVerificationRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
+  SupplierQuoteRequestsIdRoute: SupplierQuoteRequestsIdRoute,
+  SupplierQuoteRequestsIndexRoute: SupplierQuoteRequestsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

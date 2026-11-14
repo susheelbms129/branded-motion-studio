@@ -7,9 +7,13 @@
  */
 export const SUPPLIER_NAV = [
   { key: "dashboard", label: "Dashboard", to: "/supplier/dashboard" },
+  { key: "quotes", label: "Quote requests", to: "/supplier/quote-requests" },
   { key: "passport", label: "Trust Passport", to: "/supplier/verification" },
   { key: "products", label: "Products", to: "/supplier/products" },
   { key: "profile", label: "Company profile", to: null },
 ] as const;
 
 export type SupplierNavKey = (typeof SUPPLIER_NAV)[number]["key"];
+
+/** The browser event a page fires after the supplier answers a quote request, so the menu badge refreshes. */
+export const QUOTES_CHANGED = "vendora:quotes-changed";

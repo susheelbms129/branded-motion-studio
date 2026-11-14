@@ -65,7 +65,7 @@ function DashboardContent() {
               inReview={data.strength.proofsInReview}
               needsFix={data.strength.proofsNeedingFix}
             />
-            <QuoteInbox level={level} />
+            <QuoteInbox level={level} orgId={summary?.id ?? null} />
           </div>
         </div>
       ) : (

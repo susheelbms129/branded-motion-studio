@@ -91,6 +91,8 @@ describe("every page is public on purpose or guarded", () => {
       expect.arrayContaining([
         "/supplier/dashboard",
         "/supplier/products",
+        "/supplier/quote-requests/",
+        "/supplier/quote-requests/$id",
         "/supplier/verification",
       ]),
     );
@@ -112,7 +114,7 @@ describe("every page is public on purpose or guarded", () => {
   it("no route is left unclassified", () => {
     const known = (r: AnyRoute) =>
       PUBLIC.has(r.id) ||
-      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|verification|onboarding)|buyer\/onboarding)/.test(
+      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|verification|onboarding)|buyer\/onboarding)/.test(
         r.id,
       );
     const loose = routes.filter((r) => !known(r)).map((r) => r.id);
@@ -136,7 +138,7 @@ describe("menus only link to pages that exist and are guarded for that side", ()
   it("every supplier menu link is a real supplier-guarded page", () => {
     for (const item of SUPPLIER_NAV) {
       if (item.to === null) continue;
-      const r = routes.find((x) => x.id === item.to);
+      const r = routes.find((x) => x.id === item.to || x.id === `${item.to}/`);
       expect(r, item.to).toBeDefined();
       expect(guardsOf(r!), item.to).toContain(supplierPageGuard);
     }

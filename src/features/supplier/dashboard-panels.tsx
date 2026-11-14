@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -13,6 +14,8 @@ import {
 } from "lucide-react";
 
 import type { StorefrontPreview } from "@/lib/supplier-dashboard-api";
+import { deadline } from "@/lib/quote-form";
+import { listQuoteRequests, type QuoteRequestList } from "@/lib/quote-requests-api";
 import { TRUST_LADDER, type Step, type Strength, type TrustLevel } from "@/lib/supplier-strength";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -418,8 +421,26 @@ export function ProductsPanel({
   );
 }
 
-/** Honest placeholder: no invented numbers. It tells the supplier what is coming and what to do now to be ready. */
-export function QuoteInbox({ level }: { level: TrustLevel }) {
+/**
+ * The real quote inbox, in short: how many buyers are waiting and the three most urgent, read from the database for this
+ * supplier only. No invented numbers: when nothing is waiting it says so and what raises the chance of getting requests.
+ */
+export function QuoteInbox({ level, orgId }: { level: TrustLevel; orgId: string | null }) {
+  const [list, setList] = useState<QuoteRequestList | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!orgId) return;
+    let live = true;
+    listQuoteRequests(orgId, "open", 3)
+      .then((d) => live && setList(d))
+      .catch(() => live && setFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [orgId]);
+
+  const open = list?.counts.open ?? 0;
   return (
     <section className={cn(card, "relative overflow-hidden")}>
       <div
@@ -430,25 +451,56 @@ export function QuoteInbox({ level }: { level: TrustLevel }) {
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Inbox className="size-5 text-blue" aria-hidden /> Quote requests
         </h2>
-        <span className="tint-violet rounded-full px-2.5 py-1 text-xs font-semibold">
-          Coming soon
-        </span>
+        {open > 0 ? (
+          <span className="tint-violet rounded-full px-2.5 py-1 text-xs font-semibold">
+            {open} waiting
+          </span>
+        ) : null}
       </div>
-      <p className="relative mt-3 text-sm text-muted-foreground">
-        When a buyer asks for a quote, it will land here with the items, quantity and delivery date,
-        and you reply from this page.
+      {failed ? (
+        <p className="relative mt-3 text-sm text-muted-foreground">
+          We couldn't load your requests just now. Open the inbox to try again.
+        </p>
+      ) : !list ? (
+        <div className="relative mt-3 h-16 animate-pulse rounded-lg bg-muted" aria-busy />
+      ) : open > 0 ? (
+        <ul className="relative mt-3 space-y-2">
+          {list.items.map((r) => {
+            const d = deadline(r.due_date);
+            return (
+              <li key={r.rfq_id}>
+                <Link
+                  to="/supplier/quote-requests/$id"
+                  params={{ id: r.rfq_id }}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm transition hover:border-primary/40"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{r.title}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{r.buyer_name}</span>
+                  </span>
+                  <span className="shrink-0 text-xs font-semibold text-muted-foreground">{d.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="relative mt-3 text-sm text-muted-foreground">
+          Nothing is waiting for you. When a buyer sends you an RFQ it lands here, and you quote in under a minute
+          with prices from your product list.
+        </p>
+      )}
+      <p className="relative mt-3 text-sm font-medium">
+        {level >= 2
+          ? "You are ready: verified suppliers are the first to get requests."
+          : "Get ready now: verified suppliers are the first to get requests."}
       </p>
-      <p className="relative mt-3 text-sm">
-        {level >= 2 ? (
-          <span className="font-medium">
-            You are ready: verified suppliers are the first to get requests.
-          </span>
-        ) : (
-          <span className="font-medium">
-            Get ready now: verified suppliers are the first to get requests.
-          </span>
-        )}
-      </p>
+      <Link
+        to="/supplier/quote-requests"
+        className="relative mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:gap-2.5"
+      >
+        Open inbox <ArrowRight className="size-4" aria-hidden />
+      </Link>
     </section>
   );
 }

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Building2, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, type LucideIcon } from "lucide-react";
+import { ArrowRight, Building2, Inbox, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, type LucideIcon } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ import { signOutUser } from "@/lib/auth";
 import { initials } from "@/lib/format";
 import { loadSupplierSummary, type SupplierSummary, type VerificationStatus } from "@/lib/onboarding-api";
 import { getSupabase } from "@/lib/supabase";
-import { SUPPLIER_NAV, type SupplierNavKey } from "@/lib/supplier-nav";
+import { countOpenQuoteRequests } from "@/lib/quote-requests-api";
+import { QUOTES_CHANGED, SUPPLIER_NAV, type SupplierNavKey } from "@/lib/supplier-nav";
 import { cn } from "@/lib/utils";
 import type { Accent } from "@/types/domain";
 
@@ -50,12 +51,13 @@ export function useSupplier(): SupplierContextValue {
 
 const NAV_LOOK: Record<SupplierNavKey, { icon: LucideIcon; accent: Accent }> = {
   dashboard: { icon: LayoutDashboard, accent: "blue" },
+  quotes: { icon: Inbox, accent: "violet" },
   passport: { icon: ShieldCheck, accent: "emerald" },
   products: { icon: Package, accent: "pink" },
   profile: { icon: Building2, accent: "cyan" },
 };
 
-function NavList({ onNavigate, needsAction }: { onNavigate?: () => void; needsAction: boolean }) {
+function NavList({ onNavigate, needsAction, openQuotes }: { onNavigate?: () => void; needsAction: boolean; openQuotes: number }) {
   const loc = useLocation();
   return (
     <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-5" aria-label="Supplier menu">
@@ -79,6 +81,13 @@ function NavList({ onNavigate, needsAction }: { onNavigate?: () => void; needsAc
               <span className="flex-1 truncate">{item.label}</span>
               {item.to === null ? (
                 <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-navy-muted">Soon</span>
+              ) : item.key === "quotes" && openQuotes > 0 ? (
+                <span
+                  className="min-w-5 rounded-full bg-gradient-cta px-1.5 py-0.5 text-center text-[11px] font-semibold text-on-brand shadow-glow"
+                  aria-label={`${openQuotes} waiting for your quote`}
+                >
+                  {openQuotes > 99 ? "99+" : openQuotes}
+                </span>
               ) : item.key === "passport" && needsAction && !active ? (
                 <span className="rounded-full bg-gradient-cta px-2 py-0.5 text-[11px] font-semibold text-on-brand shadow-glow">Do this</span>
               ) : null}
@@ -192,6 +201,21 @@ export function SupplierShell({ children }: { children: ReactNode }) {
     window.scrollTo(0, 0);
   }, []);
 
+  // How many quote requests are waiting. Read from the database, refreshed whenever the supplier answers one.
+  const [openQuotes, setOpenQuotes] = useState(0);
+  const orgId = state.summary?.id ?? null;
+  useEffect(() => {
+    if (!orgId) return;
+    let live = true;
+    const refresh = () => void countOpenQuoteRequests(orgId).then((n) => live && setOpenQuotes(n));
+    refresh();
+    window.addEventListener(QUOTES_CHANGED, refresh);
+    return () => {
+      live = false;
+      window.removeEventListener(QUOTES_CHANGED, refresh);
+    };
+  }, [orgId]);
+
   const status = state.summary?.verification ?? null;
   const needsAction = status === "not_submitted" || status === "rejected";
   const name = state.account?.name ?? "";
@@ -210,7 +234,7 @@ export function SupplierShell({ children }: { children: ReactNode }) {
               <BrandLogo />
             </Link>
           </div>
-          <NavList needsAction={needsAction} />
+          <NavList needsAction={needsAction} openQuotes={openQuotes} />
           <PassportCard status={status} />
         </aside>
 
@@ -220,7 +244,7 @@ export function SupplierShell({ children }: { children: ReactNode }) {
             <div className="flex h-20 items-center border-b border-sidebar-border px-5">
               <BrandLogo />
             </div>
-            <NavList needsAction={needsAction} onNavigate={() => setMobile(false)} />
+            <NavList needsAction={needsAction} openQuotes={openQuotes} onNavigate={() => setMobile(false)} />
             <PassportCard status={status} onNavigate={() => setMobile(false)} />
           </SheetContent>
         </Sheet>

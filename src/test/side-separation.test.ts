@@ -30,6 +30,7 @@ describe("buyer and supplier menus stay separate", () => {
     expect(SUPPLIER_NAV.map((i) => i.label)).toEqual([
       "Dashboard",
       "Quote requests",
+      "Orders received",
       "Trust Passport",
       "Products",
       "Company profile",

@@ -17,7 +17,9 @@ import {
 import { formatDate, formatMoney } from "@/lib/format";
 import { AppLink, appPath } from "@/lib/nav";
 import { downloadCsv, nameOf, poTotals } from "@/lib/selectors";
+import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
+import { PurchaseOrdersReal } from "./PurchaseOrdersReal";
 import type { PurchaseOrder } from "@/types/domain";
 
 const TABS = [
@@ -30,7 +32,7 @@ const TABS = [
   "cancelled",
 ] as const;
 
-export function PurchaseOrdersPage() {
+function PurchaseOrdersDemo() {
   const ws = useWs();
   const nav = useNavigate();
   const [tab, setTab] = useState("all");
@@ -135,4 +137,9 @@ export function PurchaseOrdersPage() {
       />
     </>
   );
+}
+
+export function PurchaseOrdersPage() {
+  const orgId = useUi((s) => s.orgId);
+  return orgId ? <PurchaseOrdersReal orgId={orgId} /> : <PurchaseOrdersDemo />;
 }

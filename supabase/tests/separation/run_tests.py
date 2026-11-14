@@ -73,7 +73,7 @@ SHARED_ORG_TABLES = ["audit_log", "notifications"]   # written by both sides on 
 # "row-level security" = the side lock; anything else = the side lock let it through (and a normal rule stopped the empty row).
 # Each insert is made as valid as the table's own rules need (a purchase request needs the caller as requester), so the
 # ONLY thing that can stop the supplier is the side lock, and the error must name it.
-REQUEST_TABLES = ["purchase_requests", "request_items", "approval_steps", "rfqs", "rfq_items", "rfq_invites"]   # closed to direct writes by migrations 12 and 13
+REQUEST_TABLES = ["purchase_requests", "request_items", "approval_steps", "rfqs", "rfq_items", "rfq_invites", "quotations", "quotation_lines", "purchase_orders", "po_lines"]   # closed to direct writes by migrations 12, 13, 14 and 16
 extra = {"purchase_requests": lambda who, o: f"insert into purchase_requests(org_id,requester_id) values ('{o}','{ids[who]}')"}
 for t in BUYER_TABLES:
     q = lambda who, o: extra[t](who, o) if t in extra else f"insert into {t}(org_id) values ('{o}')"

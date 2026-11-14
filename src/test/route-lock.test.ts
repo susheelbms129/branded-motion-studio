@@ -90,6 +90,8 @@ describe("every page is public on purpose or guarded", () => {
     expect(pages.map((r) => r.id).sort()).toEqual(
       expect.arrayContaining([
         "/supplier/dashboard",
+        "/supplier/orders/",
+        "/supplier/orders/$id",
         "/supplier/products",
         "/supplier/quote-requests/",
         "/supplier/quote-requests/$id",
@@ -114,7 +116,7 @@ describe("every page is public on purpose or guarded", () => {
   it("no route is left unclassified", () => {
     const known = (r: AnyRoute) =>
       PUBLIC.has(r.id) ||
-      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|verification|onboarding)|buyer\/onboarding)/.test(
+      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|orders|verification|onboarding)|buyer\/onboarding)/.test(
         r.id,
       );
     const loose = routes.filter((r) => !known(r)).map((r) => r.id);

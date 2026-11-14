@@ -34,6 +34,7 @@ function quote(id: string, over: Partial<RfqQuote> = {}): RfqQuote {
     payment_terms_days: 30,
     valid_until: "2026-12-30",
     notes: "",
+    declined_order: false,
     lines: [{ item_id: "i1", qty: 100, unit_price: 100 }],
     amounts: null,
     ...over,

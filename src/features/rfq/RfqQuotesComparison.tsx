@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  CheckCircle2,
   Clock,
   Download,
   Hourglass,
@@ -22,7 +23,9 @@ import {
 } from "@/lib/quote-compare";
 import { getRfqQuotes } from "@/lib/rfq-quotes-api";
 import { LEVEL_NAMES, RFQ_KEY, type RfqItem } from "@/lib/rfqs-api";
+import { AppLink } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { AwardDialog } from "./AwardDialog";
 
 const CURRENCIES: CurrencyCode[] = ["INR", "USD", "EUR", "AED"];
 const GOOD = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
@@ -45,6 +48,7 @@ export function RfqQuotesComparison({
   waiting: number;
 }) {
   const [priority, setPriority] = useState<Priority>("balanced");
+  const [awarding, setAwarding] = useState<QuoteView | null>(null);
   const q = useQuery({
     queryKey: [RFQ_KEY, "quotes", rfqId],
     queryFn: () => getRfqQuotes(rfqId),
@@ -94,8 +98,10 @@ export function RfqQuotesComparison({
     );
 
   const { views, pick, insights, stats, bestLinePrice } = cmp;
+  const canAward = q.data?.can_award === true;
+  const po = q.data?.po ?? null;
   const best = (f: (v: QuoteView) => number, lower: boolean) => {
-    const vals = views.filter((v) => !v.expired).map(f);
+    const vals = views.filter((v) => v.rank !== null).map(f);
     return vals.length > 1 ? (lower ? Math.min(...vals) : Math.max(...vals)) : null;
   };
   const bestTotal = best((v) => v.landed.total, true);
@@ -117,9 +123,9 @@ export function RfqQuotesComparison({
       key={v.quote.quote_id}
       className={cn(
         "px-4 py-2.5 text-right tabular align-top",
-        v.expired && "opacity-50",
+        v.rank === null && "opacity-50",
         strong && "font-semibold",
-        good && !v.expired && GOOD,
+        good && v.rank !== null && GOOD,
       )}
     >
       {content}
@@ -162,7 +168,26 @@ export function RfqQuotesComparison({
           ))}
         </div>
 
-        {pick ? (
+        {po ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <div>
+                <p className="text-sm font-semibold">
+                  Awarded to {po.supplier_name} · {po.number}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {po.status === "issued"
+                    ? "Waiting for the supplier to confirm."
+                    : "The supplier has confirmed this order."}
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <AppLink to={`purchase-orders/${po.id}`}>View order</AppLink>
+            </Button>
+          </div>
+        ) : pick ? (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
@@ -180,6 +205,11 @@ export function RfqQuotesComparison({
                 <p className="text-xs text-muted-foreground">total landed cost</p>
               </div>
             </div>
+            {canAward ? (
+              <Button className="mt-3" size="sm" onClick={() => setAwarding(pick)}>
+                Award to {pick.quote.name}
+              </Button>
+            ) : null}
             {pick.reasons.length > 0 || stats.pickSavesVsAverage > 0 ? (
               <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
                 {stats.pickSavesVsAverage > 0 && views.length > 1 ? (
@@ -217,10 +247,10 @@ export function RfqQuotesComparison({
               {views.map((v) => (
                 <th
                   key={v.quote.quote_id}
-                  className={cn("min-w-44 px-4 py-3 text-right", v.expired && "opacity-60")}
+                  className={cn("min-w-44 px-4 py-3 text-right", v.rank === null && "opacity-60")}
                 >
                   <p className="text-xs font-medium text-muted-foreground">
-                    {v.expired ? "Expired" : `#${v.rank}`}
+                    {v.expired ? "Expired" : v.declined ? "Declined the order" : `#${v.rank}`}
                     {v.fit !== null ? ` · ${v.fit} fit` : ""}
                   </p>
                   <p className="font-semibold">{v.quote.name}</p>
@@ -294,7 +324,7 @@ export function RfqQuotesComparison({
                   bestTotal !== null && v.landed.total === bestTotal,
                   <>
                     {money(v.landed.total, 2)}
-                    {!v.expired && v.aboveLowest > 0 ? (
+                    {v.rank !== null && v.aboveLowest > 0 ? (
                       <span className="block text-xs font-normal text-muted-foreground">
                         +{money(v.aboveLowest)} ({v.aboveLowestPct}%) vs lowest
                       </span>
@@ -365,6 +395,28 @@ export function RfqQuotesComparison({
                 ),
               )}
             </tr>
+            {canAward ? (
+              <tr>
+                <th className={th}>Decision</th>
+                {views.map((v) => (
+                  <td key={v.quote.quote_id} className="px-4 py-3 text-right align-top">
+                    {v.rank === null ? (
+                      <span className="text-xs text-muted-foreground">
+                        {v.declined ? "Declined the order" : "Expired"}
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant={v.rank === 1 ? "default" : "outline"}
+                        onClick={() => setAwarding(v)}
+                      >
+                        Award
+                      </Button>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ) : null}
             {views.some((v) => v.quote.notes) ? (
               <tr>
                 <th className={th}>Supplier note</th>
@@ -385,6 +437,13 @@ export function RfqQuotesComparison({
         Ranked by cost, delivery, payment terms and Trust Passport level. No supplier can pay for a
         better position.
       </p>
+      <AwardDialog
+        open={awarding !== null}
+        onOpenChange={(v) => !v && setAwarding(null)}
+        rfqId={rfqId}
+        view={awarding}
+        currency={currency}
+      />
     </Panel>
   );
 }

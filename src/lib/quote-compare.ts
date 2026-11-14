@@ -39,12 +39,14 @@ export interface QuoteView {
   landed: LandedCost;
   /** Validity date has passed: shown, but never ranked or recommended. */
   expired: boolean;
+  /** The supplier already declined an order for this quote: shown, never ranked or recommended. */
+  declined: boolean;
   /** Days left (0 = last day). Null when the quote has no validity date. */
   daysLeft: number | null;
   expiresSoon: boolean;
   /** Verified when invited, but a proof has lapsed since. */
   lapsed: boolean;
-  /** 1 = best. Null for an expired quote. */
+  /** 1 = best. Null for an expired or declined quote. */
   rank: number | null;
   /** 0..100 on the chosen priority. Null for an expired quote. */
   fit: number | null;
@@ -122,10 +124,13 @@ export function compareQuotes(
   const base = quotes.map((quote) => {
     const daysLeft = quote.valid_until ? daysBetween(today, quote.valid_until) : null;
     const expired = daysLeft !== null && daysLeft < 0;
+    const declined = quote.declined_order === true;
     return {
       quote,
       landed: landedOf(quote),
       expired,
+      declined,
+      out: expired || declined,
       daysLeft,
       expiresSoon: !expired && daysLeft !== null && daysLeft <= EXPIRES_SOON_DAYS,
       lapsed: quote.level_at_send != null && quote.level_now < quote.level_at_send,
@@ -140,7 +145,7 @@ export function compareQuotes(
     };
   });
 
-  const valid = base.filter((b) => !b.expired);
+  const valid = base.filter((b) => !b.out);
   const costs = valid.map((b) => b.landed.total);
   const days = valid.map((b) => b.quote.delivery_days);
   const terms = valid.map((b) => b.quote.payment_terms_days);
@@ -148,7 +153,7 @@ export function compareQuotes(
   const lowest = costs.length ? Math.min(...costs) : null;
 
   const scored = base.map((b) => {
-    if (b.expired) return { ...b, fit: null as number | null };
+    if (b.out) return { ...b, fit: null as number | null };
     const s =
       norm(costs, b.landed.total, false) * w.cost +
       norm(days, b.quote.delivery_days, false) * w.delivery +
@@ -163,8 +168,8 @@ export function compareQuotes(
     a.quote.received_at.localeCompare(b.quote.received_at) ||
     a.quote.quote_id.localeCompare(b.quote.quote_id);
   const sorted = [
-    ...scored.filter((s) => !s.expired).sort(order),
-    ...scored.filter((s) => s.expired).sort(order),
+    ...scored.filter((s) => !s.out).sort(order),
+    ...scored.filter((s) => s.out).sort(order),
   ];
 
   const bestCost = onlyBest(costs, true);
@@ -175,7 +180,7 @@ export function compareQuotes(
 
   const views: QuoteView[] = sorted.map((s, i) => {
     const reasons: string[] = [];
-    if (!s.expired) {
+    if (!s.out) {
       if (bestCost !== null && s.landed.total === bestCost) {
         const second = [...costs].sort((a, b) => a - b)[1]!;
         reasons.push(
@@ -189,15 +194,16 @@ export function compareQuotes(
       if (bestTrust !== null && s.quote.level_now === bestTrust && bestTrust > 0)
         reasons.push("Highest verification level among bidders");
     }
-    const above = s.expired || lowest === null ? 0 : round2(s.landed.total - lowest);
+    const above = s.out || lowest === null ? 0 : round2(s.landed.total - lowest);
     return {
       quote: s.quote,
       landed: s.landed,
       expired: s.expired,
+      declined: s.declined,
       daysLeft: s.daysLeft,
       expiresSoon: s.expiresSoon,
       lapsed: s.lapsed,
-      rank: s.expired ? null : i + 1,
+      rank: s.out ? null : i + 1,
       fit: s.fit,
       aboveLowest: above,
       aboveLowestPct: lowest && lowest > 0 ? Math.round((above / lowest) * 1000) / 10 : 0,

@@ -14,7 +14,9 @@ import {
 import { formatDate, formatMoney } from "@/lib/format";
 import { AppLink } from "@/lib/nav";
 import { nameOf, poTotals } from "@/lib/selectors";
+import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
+import { PurchaseOrderDetailReal } from "./PurchaseOrderDetailReal";
 import type { PoStatus } from "@/types/domain";
 
 const NEXT: Partial<Record<PoStatus, { to: PoStatus; label: string }[]>> = {
@@ -31,8 +33,7 @@ const NEXT: Partial<Record<PoStatus, { to: PoStatus; label: string }[]>> = {
   received: [{ to: "closed", label: "Match invoice & close" }],
 };
 
-export function PurchaseOrderDetailPage() {
-  const { id } = useParams({ strict: false }) as { id: string };
+function PurchaseOrderDetailDemo({ id }: { id: string }) {
   const ws = useWs();
   const actor = useActor();
   const po = ws.purchaseOrders.find((p) => p.id === id);
@@ -179,4 +180,10 @@ export function PurchaseOrderDetailPage() {
       </div>
     </>
   );
+}
+
+export function PurchaseOrderDetailPage() {
+  const { id } = useParams({ strict: false }) as { id: string };
+  const orgId = useUi((s) => s.orgId);
+  return orgId ? <PurchaseOrderDetailReal id={id} /> : <PurchaseOrderDetailDemo id={id} />;
 }

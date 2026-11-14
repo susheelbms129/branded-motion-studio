@@ -31,6 +31,8 @@ export interface RfqQuote {
   /** yyyy-MM-dd */
   valid_until: string | null;
   notes: string;
+  /** The supplier already declined an order for this quote: it can't be awarded again. */
+  declined_order: boolean;
   lines: RfqQuoteLine[];
   /** The database's own money for this quote (same maths as quoting), used to double check the browser's. */
   amounts: {
@@ -48,6 +50,10 @@ export interface RfqQuotes {
   /** The database's today, yyyy-MM-dd. */
   today: string;
   quotes: RfqQuote[];
+  /** The live purchase order for this RFQ, once a quote has been awarded. */
+  po: { id: string; number: string; status: string; quotation_id: string; supplier_name: string } | null;
+  /** Only an owner or procurement manager, on an RFQ with no live order. Decided by the database. */
+  can_award: boolean;
 }
 
 const ERRORS: Record<string, string> = {
@@ -80,8 +86,11 @@ export async function getRfqQuotes(rfqId: string): Promise<RfqQuotes> {
     rfq_status: d.rfq_status ?? "",
     due_date: d.due_date ?? null,
     today: d.today ?? new Date().toISOString().slice(0, 10),
+    po: d.po ?? null,
+    can_award: d.can_award === true,
     quotes: (d.quotes ?? []).map((q) => ({
       ...q,
+      declined_order: q.declined_order === true,
       level_now: num(q.level_now),
       level_at_send: q.level_at_send == null ? null : num(q.level_at_send),
       revision: num(q.revision) || 1,

@@ -2,6 +2,7 @@ import { Check, Clock, FileUp, Loader2, ShieldAlert } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
+import { SharePassportPanel } from "./SharePassportPanel";
 import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
 import { fieldClass } from "@/components/onboarding/fields";
 import { checkGstin, gstinProblem } from "@/lib/gstin";
@@ -93,6 +94,7 @@ function PassportContent() {
           <>
             <p className="mt-8 text-sm font-semibold text-muted-foreground">This is what buyers see</p>
             <TrustPassport passport={passport} className="mt-2" />
+            <SharePassportPanel orgId={summary.id} name={summary.name} level={passport.level} />
 
             <div className="mt-8 space-y-5">
               {(["registration", "address", "bank", "certificate"] as CheckType[]).map((t) => (

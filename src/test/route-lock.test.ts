@@ -62,6 +62,8 @@ const PUBLIC = new Set([
   "/supplier/signin",
   "/supplier/signup",
   "/api/public/resend-webhook",
+  "/api/public/badge/$slug",
+  "/verified/$slug",
 ]);
 
 describe("every page is public on purpose or guarded", () => {

@@ -36,6 +36,7 @@ import { Route as SupplierProductsRouteImport } from './routes/supplier.products
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
 import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
 import { Route as SupplierVerificationRouteImport } from './routes/supplier.verification'
+import { Route as VerifiedSlugRouteImport } from './routes/verified.$slug'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api.public.resend-webhook'
 import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
 import { Route as AppPurchaseOrdersIdRouteImport } from './routes/app.purchase-orders.$id'
@@ -57,6 +58,7 @@ import { Route as SupplierOrdersIndexRouteImport } from './routes/supplier.order
 import { Route as SupplierOrdersIdRouteImport } from './routes/supplier.orders.$id'
 import { Route as SupplierQuoteRequestsIndexRouteImport } from './routes/supplier.quote-requests.index'
 import { Route as SupplierQuoteRequestsIdRouteImport } from './routes/supplier.quote-requests.$id'
+import { Route as ApiPublicBadgeSlugRouteImport } from './routes/api.public.badge.$slug'
 import { Route as BuyerDashboardFindSuppliersIndexRouteImport } from './routes/buyer.dashboard.find-suppliers.index'
 import { Route as BuyerDashboardFindSuppliersIdRouteImport } from './routes/buyer.dashboard.find-suppliers.$id'
 import { Route as BuyerDashboardPurchaseOrdersIndexRouteImport } from './routes/buyer.dashboard.purchase-orders.index'
@@ -204,6 +206,11 @@ const SupplierVerificationRoute = SupplierVerificationRouteImport.update({
   path: '/supplier/verification',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifiedSlugRoute = VerifiedSlugRouteImport.update({
+  id: '/verified/$slug',
+  path: '/verified/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -311,6 +318,11 @@ const SupplierQuoteRequestsIdRoute = SupplierQuoteRequestsIdRouteImport.update({
   path: '/supplier/quote-requests/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBadgeSlugRoute = ApiPublicBadgeSlugRouteImport.update({
+  id: '/api/public/badge/$slug',
+  path: '/api/public/badge/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerDashboardFindSuppliersIndexRoute =
   BuyerDashboardFindSuppliersIndexRouteImport.update({
     id: '/find-suppliers/',
@@ -403,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
+  '/verified/$slug': typeof VerifiedSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -425,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/buyer/dashboard/': typeof BuyerDashboardIndexRoute
   '/supplier/orders/': typeof SupplierOrdersIndexRoute
   '/supplier/quote-requests/': typeof SupplierQuoteRequestsIndexRoute
+  '/api/public/badge/$slug': typeof ApiPublicBadgeSlugRoute
   '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
   '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
   '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
@@ -462,6 +476,7 @@ export interface FileRoutesByTo {
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
+  '/verified/$slug': typeof VerifiedSlugRoute
   '/app': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -484,6 +499,7 @@ export interface FileRoutesByTo {
   '/buyer/dashboard': typeof BuyerDashboardIndexRoute
   '/supplier/orders': typeof SupplierOrdersIndexRoute
   '/supplier/quote-requests': typeof SupplierQuoteRequestsIndexRoute
+  '/api/public/badge/$slug': typeof ApiPublicBadgeSlugRoute
   '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
   '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
   '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
@@ -524,6 +540,7 @@ export interface FileRoutesById {
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
+  '/verified/$slug': typeof VerifiedSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -546,6 +563,7 @@ export interface FileRoutesById {
   '/buyer/dashboard/': typeof BuyerDashboardIndexRoute
   '/supplier/orders/': typeof SupplierOrdersIndexRoute
   '/supplier/quote-requests/': typeof SupplierQuoteRequestsIndexRoute
+  '/api/public/badge/$slug': typeof ApiPublicBadgeSlugRoute
   '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
   '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
   '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
@@ -587,6 +605,7 @@ export interface FileRouteTypes {
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
+    | '/verified/$slug'
     | '/app/'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -609,6 +628,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/'
     | '/supplier/orders/'
     | '/supplier/quote-requests/'
+    | '/api/public/badge/$slug'
     | '/buyer/dashboard/find-suppliers/$id'
     | '/buyer/dashboard/purchase-orders/$id'
     | '/buyer/dashboard/requests/$id'
@@ -646,6 +666,7 @@ export interface FileRouteTypes {
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
+    | '/verified/$slug'
     | '/app'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -668,6 +689,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard'
     | '/supplier/orders'
     | '/supplier/quote-requests'
+    | '/api/public/badge/$slug'
     | '/buyer/dashboard/find-suppliers/$id'
     | '/buyer/dashboard/purchase-orders/$id'
     | '/buyer/dashboard/requests/$id'
@@ -707,6 +729,7 @@ export interface FileRouteTypes {
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
+    | '/verified/$slug'
     | '/app/'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -729,6 +752,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/'
     | '/supplier/orders/'
     | '/supplier/quote-requests/'
+    | '/api/public/badge/$slug'
     | '/buyer/dashboard/find-suppliers/$id'
     | '/buyer/dashboard/purchase-orders/$id'
     | '/buyer/dashboard/requests/$id'
@@ -762,11 +786,13 @@ export interface RootRouteChildren {
   SupplierSigninRoute: typeof SupplierSigninRoute
   SupplierSignupRoute: typeof SupplierSignupRoute
   SupplierVerificationRoute: typeof SupplierVerificationRoute
+  VerifiedSlugRoute: typeof VerifiedSlugRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
   SupplierOrdersIdRoute: typeof SupplierOrdersIdRoute
   SupplierQuoteRequestsIdRoute: typeof SupplierQuoteRequestsIdRoute
   SupplierOrdersIndexRoute: typeof SupplierOrdersIndexRoute
   SupplierQuoteRequestsIndexRoute: typeof SupplierQuoteRequestsIndexRoute
+  ApiPublicBadgeSlugRoute: typeof ApiPublicBadgeSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -960,6 +986,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupplierVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verified/$slug': {
+      id: '/verified/$slug'
+      path: '/verified/$slug'
+      fullPath: '/verified/$slug'
+      preLoaderRoute: typeof VerifiedSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/resend-webhook': {
       id: '/api/public/resend-webhook'
       path: '/api/public/resend-webhook'
@@ -1105,6 +1138,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/quote-requests/$id'
       fullPath: '/supplier/quote-requests/$id'
       preLoaderRoute: typeof SupplierQuoteRequestsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/badge/$slug': {
+      id: '/api/public/badge/$slug'
+      path: '/api/public/badge/$slug'
+      fullPath: '/api/public/badge/$slug'
+      preLoaderRoute: typeof ApiPublicBadgeSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buyer/dashboard/find-suppliers/': {
@@ -1296,11 +1336,13 @@ const rootRouteChildren: RootRouteChildren = {
   SupplierSigninRoute: SupplierSigninRoute,
   SupplierSignupRoute: SupplierSignupRoute,
   SupplierVerificationRoute: SupplierVerificationRoute,
+  VerifiedSlugRoute: VerifiedSlugRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
   SupplierOrdersIdRoute: SupplierOrdersIdRoute,
   SupplierQuoteRequestsIdRoute: SupplierQuoteRequestsIdRoute,
   SupplierOrdersIndexRoute: SupplierOrdersIndexRoute,
   SupplierQuoteRequestsIndexRoute: SupplierQuoteRequestsIndexRoute,
+  ApiPublicBadgeSlugRoute: ApiPublicBadgeSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

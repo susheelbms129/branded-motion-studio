@@ -1,6 +1,6 @@
-// Buyer onboarding answers are kept in this browser only (front-end for now), the same way the
-// supplier draft is. Nothing here is sent to the database; only the company name, industry and
-// city go through the existing createWorkspace call when the buyer launches their workspace.
+// Buyer onboarding answers. They are saved to the database on every Continue (see lib/onboarding-api.ts)
+// and the company itself is created, in one checked step, when the buyer launches their workspace.
+// Nothing is kept in browser storage any more: a shared computer can never show one person's answers to another.
 
 export type NextAction = "suppliers" | "rfq" | "team";
 
@@ -104,31 +104,46 @@ export const EMPTY_DRAFT: BuyerDraft = {
   step: 0,
 };
 
-const KEY = "vendora-buyer-draft";
+const NEXT_ACTIONS: readonly string[] = ["suppliers", "rfq", "team"];
 
-export function loadBuyerDraft(): BuyerDraft | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const v = JSON.parse(window.localStorage.getItem(KEY) ?? "null") as Partial<BuyerDraft> | null;
-    if (!v || typeof v.companyName !== "string") return null;
-    // Merge over the defaults so a draft saved by an older version can't leave a field undefined.
-    return { ...EMPTY_DRAFT, ...v, step: Math.min(Math.max(Number(v.step) || 0, 0), 4) };
-  } catch {
-    return null;
-  }
+/**
+ * Turns whatever came back from the database into a complete, correctly typed draft. Anything missing or
+ * of the wrong type falls back to the default, so a half-filled or older save can never crash the form.
+ */
+export function restoreBuyerDraft(raw: unknown, step: number): BuyerDraft {
+  const r = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const str = (k: string, fallback: string) => (typeof r[k] === "string" ? (r[k] as string) : fallback);
+  const list = (k: string) => (Array.isArray(r[k]) ? (r[k] as unknown[]).filter((x): x is string => typeof x === "string") : []);
+  const next = r.nextAction;
+  return {
+    companyName: str("companyName", ""),
+    businessType: str("businessType", ""),
+    industry: str("industry", ""),
+    country: str("country", EMPTY_DRAFT.country),
+    state: str("state", ""),
+    city: str("city", ""),
+    website: str("website", ""),
+    companySize: str("companySize", ""),
+    categories: list("categories"),
+    frequency: str("frequency", ""),
+    budget: str("budget", ""),
+    budgetCurrency: str("budgetCurrency", EMPTY_DRAFT.budgetCurrency),
+    priorities: list("priorities"),
+    sourcing: list("sourcing"),
+    delivery: str("delivery", ""),
+    nextAction: typeof next === "string" && NEXT_ACTIONS.includes(next) ? (next as NextAction) : null,
+    step: Math.min(Math.max(Math.trunc(step) || 0, 0), 4),
+  };
 }
 
-export function saveBuyerDraft(d: BuyerDraft) {
+/**
+ * Earlier versions kept drafts in this browser. Remove them: they hold personal details, and they were
+ * shared by everyone who used the same browser. (The database now holds the answers.)
+ */
+export function forgetLocalDrafts() {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(d));
-  } catch {
-    /* private mode: the answers just won't be remembered if the page is closed */
-  }
-}
-
-export function clearBuyerDraft() {
-  try {
-    window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem("vendora-buyer-draft");
+    window.localStorage.removeItem("vendora-supplier-draft");
   } catch {
     /* nothing to clear */
   }

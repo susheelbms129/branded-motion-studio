@@ -1,6 +1,6 @@
-// Supplier onboarding answers are kept in this browser only (front-end for now), the same way the buyer
-// draft is. They move to the database (organizations / suppliers tables) in a later step.
-// `name` and `registrationNo` keep their original names because the supplier dashboard reads them.
+// Supplier onboarding answers. They are saved to the database on every Continue (see lib/onboarding-api.ts)
+// and the business, profile, products and capabilities are created, in one checked step, when the supplier
+// launches. Nothing is kept in browser storage any more: a shared computer can never show one person's answers to another.
 
 export interface Offering {
   id: string;
@@ -190,26 +190,87 @@ export const EMPTY_DRAFT: SupplierDraft = {
   step: 0,
 };
 
-const KEY = "vendora-supplier-draft";
+type YesNoValue = "" | "Yes" | "No";
 
-export function loadDraft(): SupplierDraft | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const v = JSON.parse(window.localStorage.getItem(KEY) ?? "null") as Partial<SupplierDraft> | null;
-    if (!v || typeof v.name !== "string") return null;
-    // Merge over the defaults so a draft saved by an older version can't leave a field undefined.
-    return { ...EMPTY_DRAFT, ...v, step: Math.min(Math.max(Number(v.step) || 0, 0), 5) };
-  } catch {
-    return null;
-  }
-}
+/**
+ * Turns whatever came back from the database into a complete, correctly typed draft. Anything missing or
+ * of the wrong type falls back to the default, so a half-filled or older save can never crash the form.
+ */
+export function restoreSupplierDraft(raw: unknown, step: number): SupplierDraft {
+  const r = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const str = (k: string, fallback = "") => (typeof r[k] === "string" ? (r[k] as string) : fallback);
+  const list = (k: string) => (Array.isArray(r[k]) ? (r[k] as unknown[]).filter((x): x is string => typeof x === "string") : []);
+  const yn = (k: string): YesNoValue => (r[k] === "Yes" || r[k] === "No" ? (r[k] as YesNoValue) : "");
 
-export function saveDraft(d: SupplierDraft) {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(d));
-  } catch {
-    /* private mode or full storage: the answers just won't be remembered if the page is closed */
-  }
+  const offerings: Offering[] = (Array.isArray(r.offerings) ? (r.offerings as unknown[]) : [])
+    .filter((o): o is Record<string, unknown> => !!o && typeof o === "object" && !Array.isArray(o))
+    .slice(0, 30)
+    .map((o) => {
+      const s2 = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : "");
+      return {
+        id: s2("id") || newOffering().id,
+        name: s2("name"),
+        category: s2("category"),
+        description: s2("description"),
+        images: Array.isArray(o.images) ? (o.images as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 4) : [],
+        unit: s2("unit"),
+        moq: s2("moq"),
+        price: s2("price"),
+        availability: s2("availability"),
+      };
+    });
+
+  const locations: ServiceLocation[] = (Array.isArray(r.locations) ? (r.locations as unknown[]) : [])
+    .filter((l): l is Record<string, unknown> => !!l && typeof l === "object" && !Array.isArray(l))
+    .slice(0, 100)
+    .map((l) => ({
+      country: typeof l.country === "string" ? l.country : "",
+      state: typeof l.state === "string" ? l.state : "",
+      city: typeof l.city === "string" ? l.city : "",
+    }))
+    .filter((l) => l.country);
+
+  return {
+    name: str("name"),
+    businessType: str("businessType"),
+    industry: str("industry"),
+    country: str("country", EMPTY_DRAFT.country),
+    state: str("state"),
+    city: str("city"),
+    website: str("website"),
+    companySize: str("companySize"),
+    yearEstablished: str("yearEstablished"),
+    description: str("description"),
+    logo: str("logo"),
+    contactName: str("contactName"),
+    designation: str("designation"),
+    email: str("email"),
+    phoneCode: str("phoneCode", EMPTY_DRAFT.phoneCode),
+    phone: str("phone"),
+    altPhone: str("altPhone"),
+    categories: list("categories"),
+    offerings,
+    coverage: list("coverage"),
+    locations,
+    deliveryTime: str("deliveryTime"),
+    minOrderValue: str("minOrderValue"),
+    deliveryOptions: list("deliveryOptions"),
+    pickup: yn("pickup"),
+    inHouse: yn("inHouse"),
+    monthlyCapacity: str("monthlyCapacity"),
+    mfgCapabilities: list("mfgCapabilities"),
+    customMfg: yn("customMfg"),
+    multiSource: yn("multiSource"),
+    readyStock: yn("readyStock"),
+    bulkOrders: yn("bulkOrders"),
+    servicesOffered: list("servicesOffered"),
+    serviceCoverage: str("serviceCoverage"),
+    largeProjects: yn("largeProjects"),
+    tradeCountries: str("tradeCountries"),
+    intlShipping: yn("intlShipping"),
+    registrationNo: str("registrationNo"),
+    step: Math.min(Math.max(Math.trunc(step) || 0, 0), 5),
+  };
 }
 
 export function websiteError(v: string): string | undefined {
@@ -235,9 +296,22 @@ export function imageToDataUrl(file: File, maxPx: number): Promise<string> {
       const c = document.createElement("canvas");
       c.width = Math.max(1, Math.round(img.width * scale));
       c.height = Math.max(1, Math.round(img.height * scale));
-      c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
+      const ctx = c.getContext("2d");
+      ctx?.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      resolve(c.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.82));
+      // The database accepts images up to 250,000 characters. A PNG can be far bigger than that, so when it is,
+      // keep the picture but store it as a compressed JPEG (on white, since JPEG has no transparency).
+      const LIMIT = 240_000;
+      let out = c.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.82);
+      if (out.length > LIMIT && ctx) {
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        out = c.toDataURL("image/jpeg", 0.8);
+        if (out.length > LIMIT) out = c.toDataURL("image/jpeg", 0.55);
+      }
+      if (out.length > LIMIT) reject(new Error("That image is too large. Please use a smaller one."));
+      else resolve(out);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);

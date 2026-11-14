@@ -16,6 +16,7 @@ import {
   ImagePlus,
   Inbox,
   Layers,
+  Loader2,
   Package,
   Paperclip,
   Pencil,
@@ -38,7 +39,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Field, OptionCard, SearchSelect, SectionTitle, SelectField, fieldClass } from "@/components/onboarding/fields";
 import { OnboardingShell, type OnboardingStep } from "@/components/onboarding/OnboardingShell";
+import { forgetLocalDrafts } from "@/features/buyer/draft";
 import { COUNTRIES, CURRENCY_BY_COUNTRY, INDIA_CITIES, INDIA_STATES } from "@/features/buyer/locations";
+import { launchOnboarding, saveOnboardingProgress, type SavedProgress } from "@/lib/onboarding-api";
 import { useUi } from "@/lib/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -63,9 +66,8 @@ import {
   capabilityGroup,
   establishedYears,
   imageToDataUrl,
-  loadDraft,
   newOffering,
-  saveDraft,
+  restoreSupplierDraft,
   websiteError,
   type Offering,
   type SupplierDraft,
@@ -173,28 +175,46 @@ function supplyErrors(d: SupplierDraft): Errors {
   return e;
 }
 
-export function SupplierOnboardingPage() {
+export function SupplierOnboardingPage({ initial }: { initial: SavedProgress | null }) {
   const nav = useNavigate();
   const { user } = useUi();
 
+  // Where the supplier left off comes from the database (loaded by the route), so resuming works on any device.
   const [d, setD] = useState<SupplierDraft>(() => {
-    const saved = loadDraft();
-    const base = saved ?? { ...EMPTY_DRAFT, name: user?.company ?? "" };
+    const base = initial ? restoreSupplierDraft(initial.data, initial.step) : { ...EMPTY_DRAFT, name: user?.company ?? "" };
     return { ...base, email: base.email || user?.email || "", offerings: base.offerings.length ? base.offerings : [newOffering()] };
   });
   const [step, setStep] = useState(() => d.step);
   const [tried, setTried] = useState(false);
   const [loc, setLoc] = useState({ country: "India", state: "", city: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Answers are remembered in this browser, so closing the tab or choosing "Save and finish later" loses nothing.
+  // Answers are saved to the database each time the supplier presses Continue, so closing the tab or choosing
+  // "Save and finish later" loses nothing. Drafts older versions kept in this browser are removed.
   useEffect(() => {
-    saveDraft({ ...d, step });
-  }, [d, step]);
+    forgetLocalDrafts();
+  }, []);
 
   const set = <K extends keyof SupplierDraft>(k: K, v: SupplierDraft[K]) => setD((x) => ({ ...x, [k]: v }));
   const go = (i: number) => {
     setTried(false);
+    setError(null);
     setStep(i);
+  };
+  // Saves the answers, then moves on. If saving fails the supplier stays put and is told, so nothing is lost silently.
+  const advance = async (to: number) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await saveOnboardingProgress("supplier", to, { ...d, step: to });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't save your progress. Please try again.");
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    go(to);
   };
 
   const validate = () => {
@@ -212,17 +232,34 @@ export function SupplierOnboardingPage() {
       setTried(true);
       return;
     }
-    go(step + 1);
+    void advance(step + 1);
   };
 
   const onCountry = (country: string) => setD((x) => ({ ...x, country, state: "", city: "" }));
 
-  const launch = () => {
-    saveDraft({ ...d, step: 5 });
+  // Launch: the database re-checks every answer and creates the business, profile, products and capabilities together.
+  const launch = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await launchOnboarding("supplier", 5, { ...d, step: 5 }, d.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't create your workspace. Please try again.");
+      setBusy(false);
+      return;
+    }
     void nav({ to: "/supplier/dashboard" });
   };
-  const saveForLater = () => {
-    saveDraft({ ...d, step });
+  const saveForLater = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await saveOnboardingProgress("supplier", step, { ...d, step });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't save your progress. Please try again.");
+      setBusy(false);
+      return;
+    }
     void nav({ to: "/" });
   };
 
@@ -270,31 +307,33 @@ export function SupplierOnboardingPage() {
       </>
     ) : step < 5 ? (
       <>
-        <button type="button" className={outlineBtn} onClick={() => go(step - 1)}>
+        <button type="button" className={outlineBtn} disabled={busy} onClick={() => go(step - 1)}>
           <ArrowLeft className="size-4" /> Previous
         </button>
         <div className="flex items-center gap-2">
-          <button type="button" className={linkBtn} onClick={saveForLater}>
+          <button type="button" className={linkBtn} disabled={busy} onClick={() => void saveForLater()}>
             Save and finish later
           </button>
-          <button type="button" className={ctaBtn} onClick={next}>
+          <button type="button" className={ctaBtn} disabled={busy} onClick={next}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null}
             Continue
-            <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+            {busy ? null : <ArrowRight className="size-4 transition group-hover:translate-x-1" />}
           </button>
         </div>
       </>
     ) : (
       <>
-        <button type="button" className={outlineBtn} onClick={() => go(4)}>
+        <button type="button" className={outlineBtn} disabled={busy} onClick={() => go(4)}>
           <ArrowLeft className="size-4" /> Previous
         </button>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button type="button" className={linkBtn} onClick={saveForLater}>
+          <button type="button" className={linkBtn} disabled={busy} onClick={() => void saveForLater()}>
             Save and finish later
           </button>
-          <button type="button" className={ctaBtn} onClick={launch}>
+          <button type="button" className={ctaBtn} disabled={busy} onClick={() => void launch()}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null}
             Launch Supplier Workspace
-            <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+            {busy ? null : <ArrowRight className="size-4 transition group-hover:translate-x-1" />}
           </button>
         </div>
       </>
@@ -696,6 +735,12 @@ export function SupplierOnboardingPage() {
             </div>
           </div>
         </>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="mt-4 rounded-md bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
+          {error}
+        </p>
       ) : null}
     </OnboardingShell>
   );

@@ -1,9 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Boxes, Check, FileText, LayoutDashboard, LogOut, Package, Receipt, ShieldCheck, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { signOutUser } from "@/lib/auth";
-
-import { loadDraft } from "./draft";
+import { loadSupplierSummary, type SupplierSummary, type VerificationStatus } from "@/lib/onboarding-api";
 
 const NAV = [
   { label: "Dashboard", icon: LayoutDashboard, on: true },
@@ -14,14 +14,38 @@ const NAV = [
   { label: "Buyers", icon: Users, on: false },
 ] as const;
 
+const VERIFICATION_LABEL: Record<VerificationStatus, string> = {
+  not_submitted: "Not yet verified",
+  submitted: "Verification submitted",
+  in_review: "Verification in review",
+  verified: "Verified",
+  rejected: "Verification needs changes",
+};
+
 export function SupplierDashboardPage() {
   const nav = useNavigate();
-  const draft = loadDraft();
-  const name = draft?.name || "Your business";
+  // The business name, products and verification status come from the database, not from the browser.
+  const [summary, setSummary] = useState<SupplierSummary | null>(null);
+  useEffect(() => {
+    let live = true;
+    loadSupplierSummary()
+      .then((s) => {
+        if (live) setSummary(s);
+      })
+      .catch(() => {
+        /* the page still works with its safe defaults */
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+  const name = summary?.name || "Your business";
+  const status: VerificationStatus = summary?.verification ?? "not_submitted";
   const steps = [
-    { t: "Business profile", d: "Name, address and contact details", done: !!draft },
-    { t: "Add your products", d: "List what you sell, with price and availability", done: false },
-    { t: "Verify your business", d: "Submit your registration so buyers can trust you", done: !!draft?.registrationNo },
+    // This page is only reachable after the supplier has launched their business, so the profile is done.
+    { t: "Business profile", d: "Name, address and contact details", done: true },
+    { t: "Add your products", d: "List what you sell, with price and availability", done: (summary?.products ?? 0) > 0 },
+    { t: "Verify your business", d: "Submit your registration so buyers can trust you", done: status === "submitted" || status === "in_review" || status === "verified" },
     { t: "Invite your team", d: "Add colleagues to this supplier workspace", done: false },
   ];
   const stats = [
@@ -59,8 +83,8 @@ export function SupplierDashboardPage() {
               <h1 className="text-3xl font-semibold">Welcome, {name}</h1>
               <p className="mt-1 text-muted-foreground">Here is what to do to start receiving orders.</p>
             </div>
-            <span className="tint-amber flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold">
-              <ShieldCheck className="h-4 w-4" /> Not yet verified
+            <span className={`${status === "verified" ? "tint-emerald" : "tint-amber"} flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold`}>
+              <ShieldCheck className="h-4 w-4" /> {VERIFICATION_LABEL[status]}
             </span>
           </div>
 

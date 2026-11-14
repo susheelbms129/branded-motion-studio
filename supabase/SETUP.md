@@ -4,14 +4,21 @@
 1. supabase.com -> New project. Pick region **Mumbai (ap-south-1)** so customer data stays in India.
 2. Save the database password in a password manager (not in git).
 
-## 2. Run the schema (two files, in this order)
+## 2. Run the schema (three files, in this order)
+The company table is called `businesses` (it was `organizations`). If this project already has the old tables, or a
+half-finished earlier run, first run `supabase/RESET_DEV_DATABASE.sql` -- **development projects only, it deletes all app data**.
+Sign-ups (auth.users) are kept and their profiles are rebuilt by file 3.
 Dashboard -> SQL Editor -> New query -> paste, then Run, each in turn:
 1. `supabase/migrations/20261113000001_core_schema.sql`
    Creates every table, turns on Row Level Security on all of them, and adds the roles and audit log.
 2. `supabase/migrations/20261113000002_invite_only_onboarding.sql`
    Makes onboarding invite-only (see section 9). Safe to run twice.
 
-Or, with the Supabase CLI, `supabase db push` runs both in order.
+3. `supabase/migrations/20261114000003_onboarding_profiles.sql`
+   Buyer / supplier account types, the onboarding save-and-resume table, and the buyer and supplier profile,
+   product, capability and verification tables. Safe to run twice.
+
+Or, with the Supabase CLI, `supabase db push` runs them in order.
 
 ## 3. Auth settings (Authentication -> Providers / Settings)
 - Email provider on, **Confirm email = ON**.

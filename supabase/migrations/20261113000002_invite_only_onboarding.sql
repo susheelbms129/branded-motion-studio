@@ -95,7 +95,7 @@ returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   if old.role = 'owner' and old.status = 'active'
      and (tg_op = 'DELETE' or new.role <> 'owner' or new.status <> 'active') then
-    if tg_op = 'DELETE' and not exists (select 1 from public.organizations o where o.id = old.org_id) then
+    if tg_op = 'DELETE' and not exists (select 1 from public.businesses o where o.id = old.org_id) then
       return old;   -- the whole company is being deleted
     end if;
     perform pg_advisory_xact_lock(hashtextextended(old.org_id::text, 0));
@@ -134,7 +134,7 @@ begin
   if (select count(*) from public.memberships where user_id = uid and role = 'owner') >= 5 then
     raise exception 'too_many_companies';
   end if;
-  insert into public.organizations (name, slug, industry, city)
+  insert into public.businesses (name, slug, industry, city)
     values (v_name, v_slug, left(btrim(coalesce(p_industry, '')), 80), left(btrim(coalesce(p_city, '')), 80))
     returning id into v_id;
   insert into public.memberships (org_id, user_id, role, status) values (v_id, uid, 'owner', 'active');
@@ -170,7 +170,7 @@ begin
   insert into public.invitations (org_id, email, role, token_hash, invited_by, expires_at)
     values (p_org, v_email, p_role, encode(sha256(convert_to(v_token, 'utf8')), 'hex'), uid, v_exp)
     returning id into v_id;
-  select name into v_org from public.organizations where id = p_org;
+  select name into v_org from public.businesses where id = p_org;
   perform public._audit(p_org, 'invitation_created', 'invitation', v_id, jsonb_build_object('email', v_email, 'role', p_role));
   return jsonb_build_object('id', v_id, 'token', v_token, 'expiresAt', v_exp, 'orgName', v_org,
                             'inviterName', public._display_name(uid), 'role', p_role, 'email', v_email);
@@ -274,7 +274,7 @@ begin
     return jsonb_build_object('state', 'wrong_email', 'maskedEmail', v_peek ->> 'maskedEmail');
   end if;
   return jsonb_build_object('state', 'ok', 'email', v.email, 'role', v.role,
-    'orgName', (select name from public.organizations where id = v.org_id),
+    'orgName', (select name from public.businesses where id = v.org_id),
     'inviterName', public._display_name(v.invited_by));
 end $$;
 
@@ -296,7 +296,7 @@ begin
     return jsonb_build_object('state', 'wrong_email',
       'maskedEmail', left(split_part(v.email, '@', 1), 1) || '***@' || split_part(v.email, '@', 2));
   end if;
-  select name into v_org from public.organizations where id = v.org_id;
+  select name into v_org from public.businesses where id = v.org_id;
   -- Already on the team (even suspended): burn the link, change nothing. A suspended person is not reactivated by a link.
   if exists (select 1 from public.memberships where org_id = v.org_id and user_id = uid) then
     update public.invitations set status = 'accepted', used_at = now(), used_by = uid where id = v.id;

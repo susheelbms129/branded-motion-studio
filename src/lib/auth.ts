@@ -28,6 +28,8 @@ export async function signUpWithEmail(
   if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED };
   const path = opts?.redirectPath && /^\/(accept-invite\?token=[0-9a-f]{64}|[A-Za-z0-9/_-]*)$/.test(opts.redirectPath) ? opts.redirectPath : "/app";
   try {
+    // `account_type` is only the choice made on the sign-up form. The database reads it ONCE, when the
+    // account is created, and stores it on the profile where the browser cannot change it afterwards.
     const { data, error } = await getSupabase().auth.signUp({
       email: input.email,
       password: input.password,
@@ -42,9 +44,34 @@ export async function signUpWithEmail(
   }
 }
 
-/** Reads the account type recorded at sign-up. Anyone without it recorded is a buyer. */
+/**
+ * Only used while the database has not had the account-type upgrade yet (see isMissingColumn).
+ * Sign-up metadata is editable by the signed-in user, so it is never trusted once the upgrade is in.
+ */
 function accountTypeOf(meta: unknown): AccountType {
   return (meta as { account_type?: string } | undefined)?.account_type === "supplier" ? "supplier" : "buyer";
+}
+
+type PgError = { code?: string; message?: string } | null;
+/** True when the database simply doesn't have the newer column / function yet (the SQL upgrade hasn't been run). */
+const isMissingColumn = (e: PgError) =>
+  !!e && (e.code === "42703" || e.code === "PGRST200" || e.code === "PGRST204" || /column .* does not exist|could not find .* column/i.test(e.message ?? ""));
+const isMissingFunction = (e: PgError) => !!e && (e.code === "PGRST202" || e.code === "42883");
+
+// Remembered per signed-in user so route changes don't re-query. A convenience only: the database decides what a person may do.
+let typeCache: { userId: string; type: AccountType } | null = null;
+
+/** The account type stored on the person's profile. The browser cannot edit it. */
+async function readAccountType(user: { id: string; user_metadata?: unknown }): Promise<AccountType> {
+  if (typeCache?.userId === user.id) return typeCache.type;
+  const { data, error } = await getSupabase().from("profiles").select("account_type").eq("user_id", user.id).maybeSingle();
+  // Database not upgraded yet: behave exactly as before, without remembering the answer.
+  if (error && isMissingColumn(error)) return accountTypeOf(user.user_metadata);
+  // Never guess on a failed lookup: a supplier must not be treated as a buyer because of a network blip.
+  if (error) throw new Error("We couldn't check your account. Please try again.");
+  const type: AccountType = (data as { account_type?: string } | null)?.account_type === "supplier" ? "supplier" : "buyer";
+  typeCache = { userId: user.id, type };
+  return type;
 }
 
 /** Where each kind of account lives. Buyers and suppliers never share a workspace or a sign-in page. */
@@ -60,10 +87,18 @@ export async function signInWithEmail(email: string, password: string, expected?
   try {
     const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });
     if (error) return { ok: false, message: friendly(error.message, "We couldn't sign you in. Please try again.") };
-    const actual = accountTypeOf(data.user?.user_metadata);
-    if (expected && actual !== expected) {
+    if (!expected || !data.user) return { ok: true, needsConfirm: false };
+    let actual: AccountType;
+    try {
+      actual = await readAccountType(data.user);
+    } catch {
       await getSupabase().auth.signOut();
-      cache = null;
+      clearAuthCache();
+      return { ok: false, message: "We couldn't check your account. Please try again." };
+    }
+    if (actual !== expected) {
+      await getSupabase().auth.signOut();
+      clearAuthCache();
       return {
         ok: false,
         message:
@@ -97,10 +132,15 @@ async function claimSignupIntent(user: { user_metadata?: unknown }): Promise<voi
     const intent = window.sessionStorage.getItem(INTENT_KEY);
     if (!intent) return;
     window.sessionStorage.removeItem(INTENT_KEY);
-    // Only ever fills in a missing choice. An account that already has a type is never converted.
-    if ((user.user_metadata as { account_type?: string } | undefined)?.account_type) return;
     if (intent !== "buyer" && intent !== "supplier") return;
-    await getSupabase().auth.updateUser({ data: { account_type: intent } });
+    // The database only ever FILLS IN a missing choice: an account that has chosen, started onboarding or
+    // joined a company is never converted, whatever this says.
+    const { error } = await getSupabase().rpc("claim_account_type", { p_type: intent });
+    typeCache = null;
+    if (error && isMissingFunction(error) && !(user.user_metadata as { account_type?: string } | undefined)?.account_type) {
+      // Database not upgraded yet: old behaviour.
+      await getSupabase().auth.updateUser({ data: { account_type: intent } });
+    }
   } catch {
     /* fall back to a buyer account */
   }
@@ -137,9 +177,12 @@ interface Workspace {
 // Remembers, per signed-in user, whether they already belong to a workspace, so route changes
 // inside /app don't query the database every time.
 let cache: { userId: string; hasOrg: boolean } | null = null;
+let supplierCache: { userId: string; has: boolean } | null = null;
 
 export function clearAuthCache() {
   cache = null;
+  supplierCache = null;
+  typeCache = null;
 }
 
 const ACTIVE_ORG_KEY = "vendora-active-org";
@@ -168,18 +211,31 @@ export function setActiveOrg(userId: string, orgId: string) {
   }
 }
 
-async function fetchWorkspace(userId: string): Promise<Workspace | null> {
+async function fetchWorkspace(userId: string, kind: AccountType = "buyer"): Promise<Workspace | null> {
   // Row Level Security already limits this to the caller's own active memberships.
-  const { data, error } = await getSupabase()
+  // `kind` keeps the two sides apart: the buyer app only ever opens a buyer company, the supplier area a supplier company.
+  const sb = getSupabase();
+  let { data, error } = await sb
     .from("memberships")
-    .select("role, organizations ( id, name )")
+    .select("role, businesses!inner ( id, name, kind )")
     .eq("user_id", userId)
     .eq("status", "active")
+    .eq("businesses.kind", kind)
     .order("joined_at", { ascending: true });
+  if (error && isMissingColumn(error)) {
+    // Database not upgraded yet: every company is a buyer company, as before.
+    if (kind === "supplier") return null;
+    ({ data, error } = await sb
+      .from("memberships")
+      .select("role, businesses ( id, name )")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("joined_at", { ascending: true }));
+  }
   if (error || !data || data.length === 0) return null;
   type Org = { id: string; name: string };
-  const rows = (data as unknown as { role: Role; organizations: Org | Org[] | null }[])
-    .map((r) => ({ role: r.role, org: Array.isArray(r.organizations) ? r.organizations[0] : r.organizations }))
+  const rows = (data as unknown as { role: Role; businesses: Org | Org[] | null }[])
+    .map((r) => ({ role: r.role, org: Array.isArray(r.businesses) ? r.businesses[0] : r.businesses }))
     .filter((r): r is { role: Role; org: Org } => !!r.org);
   if (rows.length === 0) return null;
   const wanted = readActiveOrgs()[userId];
@@ -219,8 +275,22 @@ export async function signedInAccountType(): Promise<AccountType> {
   const user = data.session?.user;
   if (!user) return "buyer";
   await claimSignupIntent(user);
-  const fresh = await getSupabase().auth.getUser();
-  return accountTypeOf((fresh.data.user ?? user).user_metadata);
+  return readAccountType(user);
+}
+
+/**
+ * True once the signed-in supplier has launched their business (they belong to a supplier company).
+ * The answer comes from the database, so a supplier cannot skip onboarding by opening the dashboard.
+ */
+export async function hasSupplierWorkspace(): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { data } = await getSupabase().auth.getSession();
+  const user = data.session?.user;
+  if (!user) return false;
+  if (!supplierCache || supplierCache.userId !== user.id) {
+    supplierCache = { userId: user.id, has: (await fetchWorkspace(user.id, "supplier")) !== null };
+  }
+  return supplierCache.has;
 }
 
 /**
@@ -260,7 +330,7 @@ export async function signOutUser(): Promise<void> {
   try {
     if (isSupabaseConfigured) await getSupabase().auth.signOut();
   } finally {
-    cache = null;
+    clearAuthCache();
     useUi.getState().signOut();
     useUi.setState({ onboarded: false });
   }

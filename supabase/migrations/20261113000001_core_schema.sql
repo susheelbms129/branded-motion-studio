@@ -5,7 +5,7 @@
 
 -- ───────────────────────── helpers ─────────────────────────
 
-create table public.organizations (
+create table public.businesses (
   id         uuid primary key default gen_random_uuid(),
   slug       text not null unique check (slug ~ '^[a-z0-9-]{2,60}$'),
   name       text not null check (char_length(name) between 2 and 120),
@@ -26,7 +26,7 @@ create table public.profiles (
 
 create table public.memberships (
   id             uuid primary key default gen_random_uuid(),
-  org_id         uuid not null references public.organizations(id) on delete cascade,
+  org_id         uuid not null references public.businesses(id) on delete cascade,
   user_id        uuid not null references auth.users(id) on delete cascade,
   role           text not null check (role in ('owner','procurement_manager','finance_manager','approver','employee')),
   department     text not null default '',
@@ -61,7 +61,7 @@ returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_org uuid;
 begin
   if (select auth.uid()) is null then raise exception 'not authenticated'; end if;
-  insert into public.organizations (name, slug, industry, city) values (p_name, p_slug, p_industry, p_city)
+  insert into public.businesses (name, slug, industry, city) values (p_name, p_slug, p_industry, p_city)
     returning id into v_org;
   insert into public.memberships (org_id, user_id, role) values (v_org, (select auth.uid()), 'owner');
   return v_org;
@@ -83,14 +83,14 @@ create trigger on_auth_user_created after insert on auth.users
 
 create table public.categories (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   name text not null, accent text not null default 'blue',
   monthly_budget numeric(14,2) not null default 0 check (monthly_budget >= 0)
 );
 
 create table public.suppliers (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   name text not null, city text not null default '', state text not null default '',
   gstin text not null default '' check (gstin = '' or gstin ~ '^[0-9]{2}[A-Z0-9]{13}$'),
   category_ids uuid[] not null default '{}',
@@ -102,7 +102,7 @@ create table public.suppliers (
 
 create table public.supplier_contacts (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   supplier_id uuid not null references public.suppliers(id) on delete cascade,
   name text not null, designation text not null default '', email text not null default '',
   phone text not null default '', is_primary boolean not null default false
@@ -110,7 +110,7 @@ create table public.supplier_contacts (
 
 create table public.materials (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   sku text not null, name text not null,
   category_id uuid references public.categories(id) on delete set null,
   unit text not null, gst_rate numeric(5,2) not null default 18 check (gst_rate between 0 and 40),
@@ -121,7 +121,7 @@ create table public.materials (
 
 create table public.purchase_requests (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   number text not null, title text not null,
   requester_id uuid not null references auth.users(id),
   department text not null default '',
@@ -135,7 +135,7 @@ create table public.purchase_requests (
 
 create table public.request_items (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   request_id uuid not null references public.purchase_requests(id) on delete cascade,
   material_id uuid references public.materials(id) on delete set null,
   description text not null default '', qty numeric(14,3) not null check (qty > 0),
@@ -144,7 +144,7 @@ create table public.request_items (
 
 create table public.approval_steps (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   request_id uuid not null references public.purchase_requests(id) on delete cascade,
   approver_id uuid not null references auth.users(id),
   level int not null check (level >= 1),
@@ -154,7 +154,7 @@ create table public.approval_steps (
 
 create table public.rfqs (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   number text not null, title text not null,
   request_id uuid references public.purchase_requests(id) on delete set null,
   category_id uuid references public.categories(id) on delete set null,
@@ -167,7 +167,7 @@ create table public.rfqs (
 
 create table public.rfq_items (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   rfq_id uuid not null references public.rfqs(id) on delete cascade,
   material_id uuid references public.materials(id) on delete set null,
   description text not null default '', qty numeric(14,3) not null check (qty > 0), unit text not null
@@ -175,7 +175,7 @@ create table public.rfq_items (
 
 create table public.rfq_invites (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   rfq_id uuid not null references public.rfqs(id) on delete cascade,
   supplier_id uuid not null references public.suppliers(id) on delete cascade,
   status text not null default 'sent' check (status in ('sent','viewed','quoted','declined')),
@@ -185,7 +185,7 @@ create table public.rfq_invites (
 
 create table public.quotations (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   rfq_id uuid not null references public.rfqs(id) on delete cascade,
   supplier_id uuid not null references public.suppliers(id) on delete cascade,
   received_at timestamptz not null default now(),
@@ -201,7 +201,7 @@ alter table public.rfqs add constraint rfqs_awarded_fk
 
 create table public.quotation_lines (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   quotation_id uuid not null references public.quotations(id) on delete cascade,
   material_id uuid references public.materials(id) on delete set null,
   qty numeric(14,3) not null check (qty > 0), unit_price numeric(14,2) not null check (unit_price >= 0)
@@ -209,7 +209,7 @@ create table public.quotation_lines (
 
 create table public.purchase_orders (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   number text not null,
   supplier_id uuid not null references public.suppliers(id),
   rfq_id uuid references public.rfqs(id) on delete set null,
@@ -229,7 +229,7 @@ create table public.purchase_orders (
 
 create table public.po_lines (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   po_id uuid not null references public.purchase_orders(id) on delete cascade,
   material_id uuid references public.materials(id) on delete set null,
   description text not null default '', qty numeric(14,3) not null check (qty > 0), unit text not null,
@@ -239,7 +239,7 @@ create table public.po_lines (
 
 create table public.approval_rules (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   name text not null,
   field text not null check (field in ('amount','category','department')),
   operator text not null check (operator in ('gt','lt','eq')),
@@ -249,7 +249,7 @@ create table public.approval_rules (
 
 create table public.invitations (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   email text not null, role text not null check (role in ('procurement_manager','finance_manager','approver','employee')),
   invited_by uuid not null references auth.users(id),
   sent_at timestamptz not null default now(), status text not null default 'pending' check (status in ('pending','expired','accepted'))
@@ -257,7 +257,7 @@ create table public.invitations (
 
 create table public.insights (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   type text not null, severity text not null check (severity in ('high','medium','low')),
   title text not null, what_happened text not null default '', why_flagged text not null default '',
   confidence numeric(4,3) not null default 0 check (confidence between 0 and 1),
@@ -268,7 +268,7 @@ create table public.insights (
 
 create table public.notifications (
   id uuid primary key default gen_random_uuid(),
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   kind text not null, title text not null, body text not null default '',
   link_to text, read boolean not null default false, created_at timestamptz not null default now()
@@ -277,7 +277,7 @@ create table public.notifications (
 -- Append-only record of who did what. No update/delete is ever granted.
 create table public.audit_log (
   id bigint generated always as identity primary key,
-  org_id uuid not null references public.organizations(id) on delete cascade,
+  org_id uuid not null references public.businesses(id) on delete cascade,
   actor_id uuid references auth.users(id),
   action text not null, entity text not null, entity_id uuid,
   detail jsonb not null default '{}', at timestamptz not null default now()
@@ -302,7 +302,7 @@ create index on public.purchase_orders (supplier_id);
 
 -- ───────────────────────── Row Level Security ─────────────────────────
 
-alter table public.organizations  enable row level security;
+alter table public.businesses  enable row level security;
 alter table public.profiles       enable row level security;
 alter table public.memberships    enable row level security;
 
@@ -311,8 +311,8 @@ revoke all on all tables in schema public from anon;
 revoke all on all functions in schema public from anon;
 grant execute on function public.create_organization(text, text, text, text) to authenticated;
 
-create policy org_select on public.organizations for select to authenticated using (public.is_member(id));
-create policy org_update on public.organizations for update to authenticated
+create policy org_select on public.businesses for select to authenticated using (public.is_member(id));
+create policy org_update on public.businesses for update to authenticated
   using (public.has_role(id, array['owner'])) with check (public.has_role(id, array['owner']));
 
 create policy profile_self on public.profiles for select to authenticated

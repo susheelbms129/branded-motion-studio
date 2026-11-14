@@ -32,8 +32,8 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { Field, OptionCard, SearchSelect, SectionTitle, SelectField, fieldClass } from "@/components/onboarding/fields";
 import { OnboardingShell, type OnboardingStep } from "@/components/onboarding/OnboardingShell";
-import { createWorkspace } from "@/lib/auth";
 import { forgetInvite, pendingInvite } from "@/lib/invites";
+import { launchOnboarding, saveOnboardingProgress, type SavedProgress } from "@/lib/onboarding-api";
 import { useUi } from "@/lib/ui-store";
 import { cn } from "@/lib/utils";
 import { useWs } from "@/lib/ws-store";
@@ -49,9 +49,9 @@ import {
   SOURCING_AREAS,
   SUPPLIER_PRIORITIES,
   budgetOptions,
+  forgetLocalDrafts,
   landingPathFor,
-  loadBuyerDraft,
-  saveBuyerDraft,
+  restoreBuyerDraft,
   websiteError,
   type BuyerDraft,
   type NextAction,
@@ -113,22 +113,24 @@ function needsErrors(d: BuyerDraft) {
   return e;
 }
 
-export function BuyerOnboardingPage() {
+export function BuyerOnboardingPage({ initial }: { initial: SavedProgress | null }) {
   const nav = useNavigate();
   const { user, finishOnboarding } = useUi();
   const reset = useWs((s) => s.reset);
   const updateOrg = useWs((s) => s.updateOrg);
 
-  const [d, setD] = useState<BuyerDraft>(() => loadBuyerDraft() ?? { ...EMPTY_DRAFT, companyName: user?.company ?? "" });
+  // Where the buyer left off comes from the database (loaded by the route), so resuming works on any device.
+  const [d, setD] = useState<BuyerDraft>(() => (initial ? restoreBuyerDraft(initial.data, initial.step) : { ...EMPTY_DRAFT, companyName: user?.company ?? "" }));
   const [step, setStep] = useState(() => d.step);
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Answers are remembered in this browser, so closing the tab or choosing "Save and finish later" loses nothing.
+  // Answers are saved to the database each time the buyer presses Continue, so closing the tab or choosing
+  // "Save and finish later" loses nothing. Drafts older versions kept in this browser are removed.
   useEffect(() => {
-    saveBuyerDraft({ ...d, step });
-  }, [d, step]);
+    forgetLocalDrafts();
+  }, []);
 
   // Someone who confirmed their email after opening an invitation goes back to it, so they join
   // the company they were invited to instead of creating a new empty one.
@@ -143,13 +145,27 @@ export function BuyerOnboardingPage() {
     setError(null);
     setStep(i);
   };
+  // Saves the answers, then moves on. If saving fails the buyer stays put and is told, so nothing is lost silently.
+  const advance = async (to: number) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await saveOnboardingProgress("buyer", to, { ...d, step: to });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't save your progress. Please try again.");
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    go(to);
+  };
   const next = () => {
     const bad = step === 1 ? businessErrors(d) : step === 2 ? needsErrors(d) : {};
     if (Object.keys(bad).length > 0) {
       setTried(true);
       return;
     }
-    go(step + 1);
+    void advance(step + 1);
   };
 
   const onCountry = (country: string) => {
@@ -161,7 +177,7 @@ export function BuyerOnboardingPage() {
     setBusy(true);
     setError(null);
     try {
-      await createWorkspace({ name: d.companyName, industry: d.industry, city: d.city.trim() });
+      await launchOnboarding("buyer", 4, { ...d, step: 4 }, d.companyName);
     } catch (e) {
       setError(e instanceof Error ? e.message : "We couldn't create your workspace. Please try again.");
       setBusy(false);
@@ -174,8 +190,16 @@ export function BuyerOnboardingPage() {
     void nav({ to: landingPathFor(d.nextAction) });
   };
 
-  const saveForLater = () => {
-    saveBuyerDraft({ ...d, step });
+  const saveForLater = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await saveOnboardingProgress("buyer", step, { ...d, step });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't save your progress. Please try again.");
+      setBusy(false);
+      return;
+    }
     void nav({ to: "/" });
   };
 
@@ -195,18 +219,19 @@ export function BuyerOnboardingPage() {
       </>
     ) : step < 4 ? (
       <>
-        <button type="button" className={outlineBtn} onClick={() => go(step - 1)}>
+        <button type="button" className={outlineBtn} disabled={busy} onClick={() => go(step - 1)}>
           <ArrowLeft className="size-4" /> Previous
         </button>
         <div className="flex items-center gap-2">
           {step === 3 ? (
-            <button type="button" className={linkBtn} onClick={() => go(4)}>
+            <button type="button" className={linkBtn} disabled={busy} onClick={() => void advance(4)}>
               Skip for now
             </button>
           ) : null}
-          <button type="button" className={ctaBtn} onClick={next}>
+          <button type="button" className={ctaBtn} disabled={busy} onClick={next}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null}
             Continue
-            <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+            {busy ? null : <ArrowRight className="size-4 transition group-hover:translate-x-1" />}
           </button>
         </div>
       </>
@@ -216,7 +241,7 @@ export function BuyerOnboardingPage() {
           <ArrowLeft className="size-4" /> Previous
         </button>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button type="button" className={linkBtn} disabled={busy} onClick={saveForLater}>
+          <button type="button" className={linkBtn} disabled={busy} onClick={() => void saveForLater()}>
             Save and finish later
           </button>
           <button type="button" className={ctaBtn} disabled={busy} onClick={() => void launch()}>
@@ -411,12 +436,13 @@ export function BuyerOnboardingPage() {
               Once you launch, we'll take you to <span className="font-semibold">{ACTIONS.find((a) => a.key === d.nextAction)?.title}</span>.
             </p>
           ) : null}
-          {error ? (
-            <p role="alert" className="mt-4 rounded-md bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
         </>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="mt-4 rounded-md bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
+          {error}
+        </p>
       ) : null}
     </OnboardingShell>
   );

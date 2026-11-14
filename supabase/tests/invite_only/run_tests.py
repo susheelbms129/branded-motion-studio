@@ -57,7 +57,7 @@ for k, (em, conf) in users.items():
 check("core trigger made profiles", sh("select count(*) from profiles")[1] == "8")
 
 # a pre-existing invitation from before link tokens existed (core shape only)
-orgL = sh("insert into organizations(slug,name) values ('legacy-co','Legacy Co') returning id")[1].splitlines()[0]
+orgL = sh("insert into businesses(slug,name) values ('legacy-co','Legacy Co') returning id")[1].splitlines()[0]
 sh(f"insert into memberships(org_id,user_id,role) values ('{orgL}','{ids['A']}','owner')")
 sh(f"insert into invitations(org_id,email,role,invited_by) values ('{orgL}','Old@X.com ','employee','{ids['A']}')")
 
@@ -65,7 +65,7 @@ apply(os.path.join(MIG, "20261113000002_invite_only_onboarding.sql"))
 apply(os.path.join(MIG, "20261113000002_invite_only_onboarding.sql"))   # must be safe to run twice
 check("legacy invitation closed + normalised", sh("select status||'|'||email from invitations where org_id='%s'" % orgL)[1] == "expired|old@x.com")
 sh(f"delete from memberships where org_id='{orgL}'")   # (superuser cleanup; trigger allows it only because we remove org next)
-sh(f"delete from organizations where id='{orgL}'")
+sh(f"delete from businesses where id='{orgL}'")
 
 def U(k, sql): return sh(sql, "authenticated", ids[k])
 A = lambda s: U("A", s); B = lambda s: U("B", s)
@@ -74,9 +74,9 @@ A = lambda s: U("A", s); B = lambda s: U("B", s)
 orgA = A("select create_organization('Acme','acme-1','Mfg','Pune')")[1]
 orgB = B("select create_organization('Beta','beta-1')")[1]       # 2-argument call must still work (core defaults kept)
 check("orgs created", len(orgA) == 36 and len(orgB) == 36)
-check("A sees only own org", A("select count(*) from organizations")[1] == "1")
+check("A sees only own org", A("select count(*) from businesses")[1] == "1")
 check("B cannot read Acme members", B(f"select count(*) from memberships where org_id='{orgA}'")[1] == "0")
-check("B cannot read Acme org row", B(f"select count(*) from organizations where id='{orgA}'")[1] == "0")
+check("B cannot read Acme org row", B(f"select count(*) from businesses where id='{orgA}'")[1] == "0")
 check("owner membership exists", sh(f"select role from memberships where org_id='{orgA}' and user_id='{ids['A']}'")[1] == "owner")
 denied("bad slug refused", A("select create_organization('Valid Name','Bad Slug!','','')"), "invalid_slug")
 denied("short name refused", A("select create_organization('x','ok-slug','','')"), "invalid_name")
@@ -87,7 +87,7 @@ denied("6th company refused", U("H", "select create_organization('H Co 5','h-co-
 check("audit: company creation recorded with entity", sh(f"select entity||'|'||action from audit_log where org_id='{orgA}'")[1] == "organization|organization_created")
 
 # ───────── the core policies are tightened ─────────
-denied("anon cannot read orgs", sh("select * from organizations", "anon"), "permission denied")
+denied("anon cannot read orgs", sh("select * from businesses", "anon"), "permission denied")
 denied("anon cannot read invitations", sh("select * from invitations", "anon"), "permission denied")
 denied("user cannot insert membership directly", B(f"insert into memberships(org_id,user_id,role) values ('{orgA}','{ids['B']}','owner')"), "permission denied")
 denied("OWNER cannot insert membership directly", A(f"insert into memberships(org_id,user_id,role) values ('{orgA}','{ids['C']}','employee')"), "permission denied")
@@ -146,7 +146,7 @@ check("peek shows used", J(sh(f"select peek_invitation('{tok}')", "anon"))["stat
 check("audit: acceptance recorded", sh("select count(*) from audit_log where action='invitation_accepted'")[1] == "1")
 
 # ───────── what the new employee can and cannot do ─────────
-check("C sees Acme only", U("C", "select count(*) from organizations")[1] == "1")
+check("C sees Acme only", U("C", "select count(*) from businesses")[1] == "1")
 denied("employee cannot invite", U("C", f"select create_invitation('{orgA}','q@x.com','employee')"), "not_allowed")
 denied("employee cannot change roles", U("C", f"select set_member_role('{orgA}','{ids['C']}','owner')"), "not_allowed")
 denied("employee cannot list invitations", U("C", f"select * from list_invitations('{orgA}')"), "not_allowed")
@@ -170,7 +170,7 @@ ok("owner changes C role", A(f"select set_member_role('{orgA}','{ids['C']}','app
 check("role changed in db", sh(f"select role from memberships where user_id='{ids['C']}'")[1] == "approver")
 check("audit: role change recorded", sh("select detail->>'from'||'>'||(detail->>'to') from audit_log where action='role_changed'")[1] == "employee>approver")
 ok("owner suspends C", A(f"select set_member_status('{orgA}','{ids['C']}','suspended')"))
-check("suspended C loses all access", U("C", "select count(*) from organizations")[1] == "0")
+check("suspended C loses all access", U("C", "select count(*) from businesses")[1] == "0")
 check("suspended C sees no suppliers", U("C", "select count(*) from suppliers")[1] == "0")
 denied("suspended C cannot list members", U("C", f"select * from list_members('{orgA}')"), "not_allowed")
 ok("owner reactivates C", A(f"select set_member_status('{orgA}','{ids['C']}','active')"))

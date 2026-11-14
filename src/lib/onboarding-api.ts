@@ -86,7 +86,10 @@ export async function completeOnboarding(kind: OnboardingKind, companyName?: str
 export type VerificationStatus = "not_submitted" | "submitted" | "in_review" | "verified" | "rejected";
 
 export interface SupplierSummary {
+  /** The supplier company's id (used to load its Trust Passport). */
+  id: string;
   name: string;
+  state: string;
   verification: VerificationStatus;
   products: number;
 }
@@ -101,14 +104,14 @@ export async function loadSupplierSummary(): Promise<SupplierSummary | null> {
   if (!uid) return null;
   const { data: rows, error } = await sb
     .from("memberships")
-    .select("businesses!inner ( id, name, kind )")
+    .select("businesses!inner ( id, name, kind, state )")
     .eq("user_id", uid)
     .eq("status", "active")
     .eq("businesses.kind", "supplier")
     .order("joined_at", { ascending: true })
     .limit(1);
   if (error || !rows || rows.length === 0) return null;
-  type Org = { id: string; name: string };
+  type Org = { id: string; name: string; state: string };
   const first = (rows[0] as unknown as { businesses: Org | Org[] | null }).businesses;
   const org = Array.isArray(first) ? first[0] : first;
   if (!org) return null;
@@ -119,7 +122,9 @@ export async function loadSupplierSummary(): Promise<SupplierSummary | null> {
   ]);
   const status = (ver.data as { status?: string } | null)?.status ?? "not_submitted";
   return {
+    id: org.id,
     name: org.name,
+    state: org.state ?? "",
     verification: (VERIFICATION.includes(status) ? status : "not_submitted") as VerificationStatus,
     products: prods.count ?? 0,
   };

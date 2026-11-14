@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AdminVerificationRouteImport } from './routes/admin.verification'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppInsightsRouteImport } from './routes/app.insights'
@@ -31,6 +32,7 @@ import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboa
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
 import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
+import { Route as SupplierVerificationRouteImport } from './routes/supplier.verification'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api.public.resend-webhook'
 import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
 import { Route as AppPurchaseOrdersIdRouteImport } from './routes/app.purchase-orders.$id'
@@ -80,6 +82,11 @@ const SigninRoute = SigninRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVerificationRoute = AdminVerificationRouteImport.update({
+  id: '/admin/verification',
+  path: '/admin/verification',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -152,6 +159,11 @@ const SupplierSignupRoute = SupplierSignupRouteImport.update({
   path: '/supplier/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupplierVerificationRoute = SupplierVerificationRouteImport.update({
+  id: '/supplier/verification',
+  path: '/supplier/verification',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   id: '/api/public/resend-webhook',
   path: '/api/public/resend-webhook',
@@ -212,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/admin/verification': typeof AdminVerificationRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -225,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
+  '/supplier/verification': typeof SupplierVerificationRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -245,6 +259,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/admin/verification': typeof AdminVerificationRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -258,6 +273,7 @@ export interface FileRoutesByTo {
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
+  '/supplier/verification': typeof SupplierVerificationRoute
   '/app': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -280,6 +296,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/admin/verification': typeof AdminVerificationRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -293,6 +310,7 @@ export interface FileRoutesById {
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
+  '/supplier/verification': typeof SupplierVerificationRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
@@ -316,6 +334,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signin'
     | '/signup'
+    | '/admin/verification'
     | '/app/analytics'
     | '/app/insights'
     | '/app/materials'
@@ -329,6 +348,7 @@ export interface FileRouteTypes {
     | '/supplier/onboarding'
     | '/supplier/signin'
     | '/supplier/signup'
+    | '/supplier/verification'
     | '/app/'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -349,6 +369,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signin'
     | '/signup'
+    | '/admin/verification'
     | '/app/analytics'
     | '/app/insights'
     | '/app/materials'
@@ -362,6 +383,7 @@ export interface FileRouteTypes {
     | '/supplier/onboarding'
     | '/supplier/signin'
     | '/supplier/signup'
+    | '/supplier/verification'
     | '/app'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -383,6 +405,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signin'
     | '/signup'
+    | '/admin/verification'
     | '/app/analytics'
     | '/app/insights'
     | '/app/materials'
@@ -396,6 +419,7 @@ export interface FileRouteTypes {
     | '/supplier/onboarding'
     | '/supplier/signin'
     | '/supplier/signup'
+    | '/supplier/verification'
     | '/app/'
     | '/api/public/resend-webhook'
     | '/app/purchase-orders/$id'
@@ -418,6 +442,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  AdminVerificationRoute: typeof AdminVerificationRoute
   BuyerOnboardingRoute: typeof BuyerOnboardingRoute
   BuyerSigninRoute: typeof BuyerSigninRoute
   BuyerSignupRoute: typeof BuyerSignupRoute
@@ -425,6 +450,7 @@ export interface RootRouteChildren {
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
   SupplierSigninRoute: typeof SupplierSigninRoute
   SupplierSignupRoute: typeof SupplierSignupRoute
+  SupplierVerificationRoute: typeof SupplierVerificationRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
 }
 
@@ -484,6 +510,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/verification': {
+      id: '/admin/verification'
+      path: '/admin/verification'
+      fullPath: '/admin/verification'
+      preLoaderRoute: typeof AdminVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -582,6 +615,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/signup'
       fullPath: '/supplier/signup'
       preLoaderRoute: typeof SupplierSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/verification': {
+      id: '/supplier/verification'
+      path: '/supplier/verification'
+      fullPath: '/supplier/verification'
+      preLoaderRoute: typeof SupplierVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/resend-webhook': {
@@ -706,6 +746,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  AdminVerificationRoute: AdminVerificationRoute,
   BuyerOnboardingRoute: BuyerOnboardingRoute,
   BuyerSigninRoute: BuyerSigninRoute,
   BuyerSignupRoute: BuyerSignupRoute,
@@ -713,6 +754,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupplierOnboardingRoute: SupplierOnboardingRoute,
   SupplierSigninRoute: SupplierSigninRoute,
   SupplierSignupRoute: SupplierSignupRoute,
+  SupplierVerificationRoute: SupplierVerificationRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Boxes, Check, FileText, LayoutDashboard, LogOut, Package, Receipt, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -83,9 +83,9 @@ export function SupplierDashboardPage() {
               <h1 className="text-3xl font-semibold">Welcome, {name}</h1>
               <p className="mt-1 text-muted-foreground">Here is what to do to start receiving orders.</p>
             </div>
-            <span className={`${status === "verified" ? "tint-emerald" : "tint-amber"} flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold`}>
+            <Link to="/supplier/verification" className={`${status === "verified" ? "tint-emerald" : "tint-amber"} flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition hover:opacity-80`}>
               <ShieldCheck className="h-4 w-4" /> {VERIFICATION_LABEL[status]}
-            </span>
+            </Link>
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,6 +107,11 @@ export function SupplierDashboardPage() {
                     <span className="block font-medium">{s.t}</span>
                     <span className="block text-sm text-muted-foreground">{s.d}</span>
                   </span>
+                  {s.t === "Verify your business" ? (
+                    <Link to="/supplier/verification" className="ml-auto rounded-md bg-gradient-cta px-3.5 py-2 text-sm font-semibold text-white">
+                      {s.done ? "View Trust Passport" : "Start"}
+                    </Link>
+                  ) : null}
                 </li>
               ))}
             </ul>

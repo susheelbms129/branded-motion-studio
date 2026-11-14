@@ -28,6 +28,7 @@ import {
 import { ACCENT } from "@/lib/accents";
 import { formatMoney, formatMoneyCompact, greeting } from "@/lib/format";
 import { AppLink } from "@/lib/nav";
+import { useRequestsSummary } from "@/features/requests/use-requests";
 import { useUi } from "@/lib/ui-store";
 import { nameOf, spendBy, spendByMonth } from "@/lib/selectors";
 import { isVerified } from "@/lib/sourcing-health";
@@ -50,7 +51,14 @@ export function DashboardPage() {
   const months = useMemo(() => spendByMonth(ws.purchaseOrders), [ws.purchaseOrders]);
   const cur = months.at(-1)?.spend ?? 0,
     prev = months.at(-2)?.spend ?? 0;
-  const pendingReq = ws.requests.filter((r) => r.status === "pending_approval");
+  // Requests: a real company reads them from the database; the demo workspace uses sample data.
+  const rq = useRequestsSummary();
+  const demoPending = ws.requests.filter((r) => r.status === "pending_approval");
+  const pendingCount = orgId ? rq.pendingCount : demoPending.length;
+  const requestsTotal = orgId ? rq.total : ws.requests.length;
+  const pendingItems = orgId
+    ? rq.pending.map((r) => ({ id: r.id, title: r.title, number: r.number, priority: r.priority, requester: r.requester_name }))
+    : demoPending.map((r) => ({ id: r.id, title: r.title, number: r.number, priority: r.priority, requester: nameOf(ws.members, r.requesterId) }));
   const openRfq = ws.rfqs.filter((r) => r.status === "sent" || r.status === "evaluating");
   const openPo = ws.purchaseOrders.filter((p) =>
     ["issued", "acknowledged", "partially_received"].includes(p.status),
@@ -62,14 +70,14 @@ export function DashboardPage() {
     .map(([id, v]) => ({ name: nameOf(ws.categories, id), spend: Math.round(v) }))
     .sort((a, b) => b.spend - a.spend)
     .slice(0, 6);
-  const empty = ws.purchaseOrders.length === 0 && ws.requests.length === 0;
+  const empty = ws.purchaseOrders.length === 0 && requestsTotal === 0;
   const hasSpend = ws.purchaseOrders.length > 0;
   const checklist = [
     { label: "Find verified suppliers", done: savedTotal > 0, to: "find-suppliers" },
     { label: "Add products & materials", done: ws.materials.length > 0, to: "materials" },
     {
       label: "Raise your first purchase request",
-      done: ws.requests.length > 0,
+      done: requestsTotal > 0,
       to: "requests/new",
     },
     {
@@ -134,7 +142,7 @@ export function DashboardPage() {
           </div>
           <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {[
-              { label: "Awaiting approval", value: pendingReq.length, to: "requests?status=pending_approval" },
+              { label: "Awaiting approval", value: pendingCount, to: "requests?status=pending_approval" },
               { label: "Open RFQs", value: openRfq.length, to: "rfqs" },
               { label: "Overdue", value: overdue.length, to: "purchase-orders" },
             ].map((c) => (
@@ -331,17 +339,17 @@ export function DashboardPage() {
               <ArrowRight className="size-5 text-muted-foreground" />
             </AppLink>
           ) : null}
-          {pendingReq.length === 0 && overdue.length === 0 ? (
+          {pendingCount === 0 && overdue.length === 0 ? (
             <p className="py-10 text-center text-base text-muted-foreground">You're all caught up.</p>
-          ) : pendingReq.length === 0 ? null : (
+          ) : pendingCount === 0 ? null : (
             <ul className="space-y-3">
-              {pendingReq.slice(0, 5).map((r) => (
+              {pendingItems.slice(0, 5).map((r) => (
                 <li key={r.id}>
                   <AppLink
                     to={`requests/${r.id}`}
                     className="card-lift flex items-center gap-4 rounded-lg border p-4"
                   >
-                    <Person name={nameOf(ws.members, r.requesterId)} accent="blue" size={42} />
+                    <Person name={r.requester} accent="blue" size={42} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-base font-semibold">{r.title}</div>
                       <div className="text-sm text-muted-foreground tabular">{r.number}</div>

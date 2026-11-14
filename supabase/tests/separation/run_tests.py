@@ -46,9 +46,10 @@ alter table storage.objects enable row level security;
 grant usage on schema storage to anon, authenticated, service_role;
 grant select, insert, update, delete on storage.objects to authenticated;"""); assert r.returncode == 0, r.stderr
 files = sorted(glob.glob(os.path.join(MIG, "*.sql")))
-assert files[-1].endswith("_database_lock.sql"), "the newest migration should be the database lock (11)"
+lock = [f for f in files if f.endswith("_database_lock.sql")]
+assert len(lock) == 1, "the database lock (migration 11) must exist"
 for f in files: apply(f)
-apply(files[-1])  # the lock must be safe to run twice
+apply(lock[0])  # the lock must be safe to run twice
 
 # people: B buyer owner, E buyer employee, Z buyer account with no company, S supplier owner, T supplier employee, X other supplier owner
 ids = {k: str(uuid.uuid4()) for k in "BEZSTX"}
@@ -72,12 +73,15 @@ SHARED_ORG_TABLES = ["audit_log", "notifications"]   # written by both sides on 
 # "row-level security" = the side lock; anything else = the side lock let it through (and a normal rule stopped the empty row).
 # Each insert is made as valid as the table's own rules need (a purchase request needs the caller as requester), so the
 # ONLY thing that can stop the supplier is the side lock, and the error must name it.
+REQUEST_TABLES = ["purchase_requests", "request_items", "approval_steps"]
 extra = {"purchase_requests": lambda who, o: f"insert into purchase_requests(org_id,requester_id) values ('{o}','{ids[who]}')"}
 for t in BUYER_TABLES:
     q = lambda who, o: extra[t](who, o) if t in extra else f"insert into {t}(org_id) values ('{o}')"
     r = U("S", q("S", oS))
     if t == "insights":   # nobody can insert insights from the browser at all; the policy count below proves the lock is there
         check("supplier owner cannot insert into insights", not r[0], r[2][:120])
+    elif t in REQUEST_TABLES:   # migration 12 closed these to direct writes for everyone (changes go through checked functions)
+        check(f"supplier owner cannot write {t} directly", not r[0] and "permission denied" in r[2], r[2][:120])
     else:
         check(f"supplier owner is stopped by the side lock on {t}", not r[0] and "buyer_side_only" in r[2], r[2][:120])
     r = U("B", q("B", oB))

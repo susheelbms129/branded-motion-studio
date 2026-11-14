@@ -19,7 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, PageHeader, Panel } from "@/components/vendora/kit";
 import { formatMoney } from "@/lib/format";
 import { AppLink, useAppNavigate } from "@/lib/nav";
+import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
+import { NewRequestReal } from "./NewRequestReal";
 
 const schema = z.object({
   title: z.string().min(3, "Give the request a short title"),
@@ -48,7 +50,8 @@ type FormValues = {
   items: { materialId: string; qty: number; unitPrice: number }[];
 };
 
-export function NewRequestPage() {
+/** Demo workspace only (nobody signed in to a real company): sample data held in memory. */
+function NewRequestDemo() {
   const ws = useWs();
   const actor = useActor();
   const go = useAppNavigate();
@@ -319,4 +322,9 @@ export function NewRequestPage() {
       </div>
     </form>
   );
+}
+
+export function NewRequestPage() {
+  const orgId = useUi((s) => s.orgId);
+  return orgId ? <NewRequestReal orgId={orgId} /> : <NewRequestDemo />;
 }

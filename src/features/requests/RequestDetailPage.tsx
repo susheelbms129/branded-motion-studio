@@ -30,10 +30,12 @@ import { formatDate, formatMoney } from "@/lib/format";
 import { AppLink, useAppNavigate } from "@/lib/nav";
 import { nameOf, requestTotal } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
+import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
+import { RequestDetailReal } from "./RequestDetailReal";
 
-export function RequestDetailPage() {
-  const { id } = useParams({ strict: false }) as { id: string };
+/** Demo workspace only (nobody signed in to a real company): sample data held in memory. */
+function RequestDetailDemo({ id }: { id: string }) {
   const ws = useWs();
   const actor = useActor();
   const go = useAppNavigate();
@@ -307,4 +309,10 @@ export function RequestDetailPage() {
       </Dialog>
     </>
   );
+}
+
+export function RequestDetailPage() {
+  const { id } = useParams({ strict: false }) as { id: string };
+  const orgId = useUi((s) => s.orgId);
+  return orgId ? <RequestDetailReal id={id} /> : <RequestDetailDemo id={id} />;
 }

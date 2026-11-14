@@ -19,6 +19,7 @@ import { Person } from "@/components/vendora/kit";
 import { ACCENT } from "@/lib/accents";
 import { setActiveCurrency } from "@/lib/format";
 import { startMailEvents } from "@/lib/mail-events";
+import { usePendingApprovals } from "@/features/requests/use-requests";
 import { MODULES, type ModuleKey } from "@/lib/modules";
 import { appPath, AppLink } from "@/lib/nav";
 import { ROLES, ROLE_LABEL } from "@/lib/permissions";
@@ -50,7 +51,11 @@ const GROUPS: { label: string; keys: ModuleKey[] }[] = [
 function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const loc = useLocation();
   const notifications = useWs((s) => s.notifications);
-  const pending = useWs((s) => s.requests.filter((r) => r.status === "pending_approval").length);
+  // A real company reads the count from the database (only requests waiting for THIS person); the demo workspace counts sample data.
+  const realOrg = useUi((s) => s.orgId);
+  const realPending = usePendingApprovals();
+  const demoPending = useWs((s) => s.requests.filter((r) => r.status === "pending_approval").length);
+  const pending = realOrg ? realPending : demoPending;
   const insights = useWs((s) => s.insights)().filter((i) => i.status === "open").length;
   const unread = notifications.filter((n) => !n.read).length;
   const badge: Partial<Record<ModuleKey, number>> = {

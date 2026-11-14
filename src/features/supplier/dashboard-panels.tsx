@@ -371,7 +371,12 @@ export function ProductsPanel({
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Package className="size-5 text-pink" aria-hidden /> Your products
         </h2>
-        <span className="text-sm text-muted-foreground tabular">{products.length}</span>
+        <Link
+          to="/supplier/products"
+          className="text-sm font-semibold text-primary hover:underline"
+        >
+          {products.length === 0 ? "Add products" : "Manage"}
+        </Link>
       </div>
       {products.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">

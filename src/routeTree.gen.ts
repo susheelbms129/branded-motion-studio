@@ -32,6 +32,7 @@ import { Route as BuyerSigninRouteImport } from './routes/buyer.signin'
 import { Route as BuyerSignupRouteImport } from './routes/buyer.signup'
 import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
+import { Route as SupplierProductsRouteImport } from './routes/supplier.products'
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
 import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
 import { Route as SupplierVerificationRouteImport } from './routes/supplier.verification'
@@ -177,6 +178,11 @@ const SupplierDashboardRoute = SupplierDashboardRouteImport.update({
 const SupplierOnboardingRoute = SupplierOnboardingRouteImport.update({
   id: '/supplier/onboarding',
   path: '/supplier/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupplierProductsRoute = SupplierProductsRouteImport.update({
+  id: '/supplier/products',
+  path: '/supplier/products',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupplierSigninRoute = SupplierSigninRouteImport.update({
@@ -368,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
@@ -422,6 +429,7 @@ export interface FileRoutesByTo {
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
@@ -479,6 +487,7 @@ export interface FileRoutesById {
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
+  '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
@@ -537,6 +546,7 @@ export interface FileRouteTypes {
     | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
+    | '/supplier/products'
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
@@ -591,6 +601,7 @@ export interface FileRouteTypes {
     | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
+    | '/supplier/products'
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
@@ -647,6 +658,7 @@ export interface FileRouteTypes {
     | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/onboarding'
+    | '/supplier/products'
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
@@ -697,6 +709,7 @@ export interface RootRouteChildren {
   BuyerSignupRoute: typeof BuyerSignupRoute
   SupplierDashboardRoute: typeof SupplierDashboardRoute
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
+  SupplierProductsRoute: typeof SupplierProductsRoute
   SupplierSigninRoute: typeof SupplierSigninRoute
   SupplierSignupRoute: typeof SupplierSignupRoute
   SupplierVerificationRoute: typeof SupplierVerificationRoute
@@ -864,6 +877,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/onboarding'
       fullPath: '/supplier/onboarding'
       preLoaderRoute: typeof SupplierOnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/products': {
+      id: '/supplier/products'
+      path: '/supplier/products'
+      fullPath: '/supplier/products'
+      preLoaderRoute: typeof SupplierProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/supplier/signin': {
@@ -1191,6 +1211,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerSignupRoute: BuyerSignupRoute,
   SupplierDashboardRoute: SupplierDashboardRoute,
   SupplierOnboardingRoute: SupplierOnboardingRoute,
+  SupplierProductsRoute: SupplierProductsRoute,
   SupplierSigninRoute: SupplierSigninRoute,
   SupplierSignupRoute: SupplierSignupRoute,
   SupplierVerificationRoute: SupplierVerificationRoute,

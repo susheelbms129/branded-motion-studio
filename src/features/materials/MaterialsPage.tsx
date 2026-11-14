@@ -89,10 +89,10 @@ export function MaterialsPage() {
   return (
     <>
       <PageHeader
-        title="Products & Materials"
+        title="Materials"
         accent="pink"
-        crumbs={[{ label: "Products & Materials" }]}
-        description="The catalogue every request, RFQ and order is built from — with units, HSN and GST rate."
+        crumbs={[{ label: "Materials" }]}
+        description="What your company buys: the list every request, RFQ and order is built from, with units, HSN and GST rate."
         actions={
           <Can permission="material.manage">
             <Button onClick={() => setOpen(true)}>

@@ -35,7 +35,7 @@ export interface Step {
   points: number;
   done: boolean;
   /** Where the supplier goes to do it. null = that page is not built yet. */
-  to: "/supplier/verification" | null;
+  to: "/supplier/verification" | "/supplier/products" | null;
   cta: string;
 }
 
@@ -99,8 +99,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.products,
       done: i.productCount >= 3,
       why: "Buyers search for what they need to buy. A supplier with no products cannot be found by that search.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/products",
+      cta: "Add products",
     },
     {
       key: "prices",
@@ -108,8 +108,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.prices,
       done: i.productCount > 0 && i.pricedProductCount / i.productCount >= 0.5,
       why: "Suppliers that show a price get compared. Suppliers that hide it get skipped.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/products",
+      cta: "Add prices",
     },
     {
       key: "description",

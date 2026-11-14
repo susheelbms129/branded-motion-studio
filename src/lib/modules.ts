@@ -40,7 +40,7 @@ export const MODULES: Record<ModuleKey, { label: string; icon: LucideIcon; accen
   purchaseOrders: { label: "Purchase Orders", icon: ReceiptText, accent: "emerald", path: "purchase-orders", shortcut: "P" },
   findSuppliers: { label: "Find Suppliers", icon: SearchCheck, accent: "emerald", path: "find-suppliers", shortcut: "F" },
   suppliers: { label: "Saved Suppliers", icon: Truck, accent: "amber", path: "suppliers", shortcut: "S" },
-  materials: { label: "Products & Materials", icon: Package, accent: "pink", path: "materials" },
+  materials: { label: "Materials", icon: Package, accent: "pink", path: "materials" },
   analytics: { label: "Spend Analytics", icon: BarChart3, accent: "indigo", path: "analytics" },
   insights: { label: "AI Insights", icon: Sparkles, accent: "ai", path: "insights" },
   team: { label: "Team & Permissions", icon: Users, accent: "cyan", path: "team" },

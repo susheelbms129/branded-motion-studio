@@ -8,7 +8,7 @@
 export const SUPPLIER_NAV = [
   { key: "dashboard", label: "Dashboard", to: "/supplier/dashboard" },
   { key: "passport", label: "Trust Passport", to: "/supplier/verification" },
-  { key: "products", label: "Products", to: null },
+  { key: "products", label: "Products", to: "/supplier/products" },
   { key: "profile", label: "Company profile", to: null },
 ] as const;
 

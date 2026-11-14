@@ -139,6 +139,7 @@ export function AppShell() {
     role,
     setRole,
     realRole,
+    orgId,
     user,
   } = useUi();
   const org = useWs((s) => s.organizations[0]);
@@ -239,22 +240,25 @@ export function AppShell() {
           <div className="min-w-0">
             <div className="truncate text-lg font-semibold tracking-tight">{org?.name}</div>
             <div className="text-[13px] capitalize text-muted-foreground">
-              {org?.plan} plan · {demo ? "Demo workspace" : "Your workspace"}
+              {org?.plan} plan · {demo && !orgId ? "Demo workspace" : "Your workspace"}
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2.5">
-            <label className="hidden items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm backdrop-blur light:border-border light:bg-card/70 sm:flex">
-              <span className="text-muted-foreground">Demo data</span>
-              <Switch
-                checked={demo}
-                onCheckedChange={(v) => {
-                  setDemo(v);
-                  reset(v);
-                  toast_reset();
-                }}
-                aria-label="Toggle demo data"
-              />
-            </label>
+            {orgId ? null : (
+              // Sample data is only for people who are not signed in to a real company. A real workspace never shows it.
+              <label className="hidden items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm backdrop-blur light:border-border light:bg-card/70 sm:flex">
+                <span className="text-muted-foreground">Demo data</span>
+                <Switch
+                  checked={demo}
+                  onCheckedChange={(v) => {
+                    setDemo(v);
+                    reset(v);
+                    toast_reset();
+                  }}
+                  aria-label="Toggle demo data"
+                />
+              </label>
+            )}
             {realRole ? (
               // A real company member: the role comes from the database and can't be switched here.
               <span className="hidden rounded-full border px-3 py-1.5 text-sm text-muted-foreground sm:inline-flex">

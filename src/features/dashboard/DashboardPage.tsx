@@ -1,11 +1,13 @@
 import {
   AlertTriangle,
   ArrowRight,
+  BookmarkCheck,
   ClipboardCheck,
   FileSpreadsheet,
   IndianRupee,
   Plus,
   SearchCheck,
+  ShieldCheck,
   Sparkles,
   Timer,
   Truck,
@@ -24,16 +26,26 @@ import {
   StatusBadge,
 } from "@/components/vendora/kit";
 import { ACCENT } from "@/lib/accents";
-import { formatMoney, formatMoneyCompact, formatRelative, greeting } from "@/lib/format";
+import { formatMoney, formatMoneyCompact, greeting } from "@/lib/format";
 import { AppLink } from "@/lib/nav";
 import { useUi } from "@/lib/ui-store";
 import { nameOf, spendBy, spendByMonth } from "@/lib/selectors";
+import { isVerified } from "@/lib/sourcing-health";
 import { useWs } from "@/lib/ws-store";
 import { CHART_COLORS } from "@/lib/accents";
+
+import { ShortlistPanel, TrustWatchPanel } from "./ShortlistPanels";
+import { useSavedPreview } from "./use-saved-preview";
 
 export function DashboardPage() {
   const ws = useWs();
   const user = useUi((s) => s.user);
+  const orgId = useUi((s) => s.orgId);
+  // The shortlist is real data from the database. Only a signed-in company has one.
+  const saved = useSavedPreview(orgId);
+  const savedTotal = orgId ? saved.total : ws.suppliers.length;
+  const verifiedSaved = saved.items.filter(isVerified).length;
+  const companyName = ws.organizations[0]?.name;
   const insights = useMemo(() => ws.insights().filter((i) => i.status === "open"), [ws]);
   const months = useMemo(() => spendByMonth(ws.purchaseOrders), [ws.purchaseOrders]);
   const cur = months.at(-1)?.spend ?? 0,
@@ -51,8 +63,9 @@ export function DashboardPage() {
     .sort((a, b) => b.spend - a.spend)
     .slice(0, 6);
   const empty = ws.purchaseOrders.length === 0 && ws.requests.length === 0;
+  const hasSpend = ws.purchaseOrders.length > 0;
   const checklist = [
-    { label: "Find verified suppliers", done: ws.suppliers.length > 0, to: "find-suppliers" },
+    { label: "Find verified suppliers", done: savedTotal > 0, to: "find-suppliers" },
     { label: "Add products & materials", done: ws.materials.length > 0, to: "materials" },
     {
       label: "Raise your first purchase request",
@@ -65,6 +78,8 @@ export function DashboardPage() {
       to: "team",
     },
   ];
+
+  const stepsDone = checklist.filter((c) => c.done).length;
 
   return (
     <>
@@ -81,6 +96,12 @@ export function DashboardPage() {
               <Sparkles className="size-4 text-magenta" />
               {formatDate(new Date(), "EEEE, d MMMM")}
             </div>
+            {companyName ? (
+              <span className="ml-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white/90 backdrop-blur">
+                <ShieldCheck className="size-4 text-cyan" aria-hidden />
+                {companyName}
+              </span>
+            ) : null}
             <h1 className="mt-6 text-4xl font-semibold leading-[1.08] text-white sm:text-5xl">
               {greeting()},{" "}
               <span className="grad-rupee animate-gradient-pan">
@@ -88,7 +109,7 @@ export function DashboardPage() {
               </span>
             </h1>
             <p className="mt-4 text-base leading-relaxed text-navy-muted sm:text-lg">
-              Here's what needs your attention across purchasing today.
+              Find verified suppliers, collect quotes and keep every order approved, all in one place.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button asChild variant="hero" size="lg">
@@ -136,9 +157,22 @@ export function DashboardPage() {
       {empty ? (
         <Panel
           title="Get started"
-          description="Four quick steps to a working procurement flow"
+          description={`${stepsDone} of ${checklist.length} done. Four quick steps to a working procurement flow`}
           className="mb-8"
         >
+          <div
+            className="mb-5 h-2 overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={checklist.length}
+            aria-valuenow={stepsDone}
+            aria-label="Setup progress"
+          >
+            <div
+              className="h-full rounded-full bg-gradient-cta transition-all"
+              style={{ width: `${(stepsDone / checklist.length) * 100}%` }}
+            />
+          </div>
           <ul className="grid gap-4 sm:grid-cols-2">
             {checklist.map((c, i) => (
               <li key={c.label}>
@@ -162,22 +196,28 @@ export function DashboardPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Spend this month"
-          value={cur}
-          format={(n) => formatMoneyCompact(n)}
-          icon={IndianRupee}
-          accent="indigo"
-          trend={prev ? { pct: (cur - prev) / prev, goodWhenUp: false } : null}
-          spark={months.map((m) => m.spend)}
-          hint="vs last month"
+          label="Saved suppliers"
+          value={savedTotal}
+          format={(n) => String(Math.round(n))}
+          icon={BookmarkCheck}
+          accent="emerald"
+          hint={saved.status === "loading" ? "Loading your shortlist…" : "on your team's shortlist"}
         />
         <KpiCard
-          label="Awaiting approval"
-          value={pendingReq.length}
+          label="Verified on your shortlist"
+          value={verifiedSaved}
           format={(n) => String(Math.round(n))}
-          icon={ClipboardCheck}
-          accent="blue"
-          hint="purchase requests"
+          icon={ShieldCheck}
+          accent="cyan"
+          hint={
+            !orgId
+              ? "sample data"
+              : saved.status !== "ready"
+                ? "Checking trust levels…"
+                : saved.items.length < saved.total
+                  ? `of your ${saved.items.length} newest saved`
+                  : `of ${saved.total} saved suppliers`
+          }
         />
         <KpiCard
           label="Open RFQs"
@@ -188,16 +228,24 @@ export function DashboardPage() {
           hint="collecting or evaluating quotes"
         />
         <KpiCard
-          label="Overdue deliveries"
-          value={overdue.length}
-          format={(n) => String(Math.round(n))}
-          icon={Timer}
-          accent="coral"
-          hint={`${openPo.length} open orders`}
+          label="Spend this month"
+          value={cur}
+          format={(n) => formatMoneyCompact(n)}
+          icon={IndianRupee}
+          accent="indigo"
+          trend={prev ? { pct: (cur - prev) / prev, goodWhenUp: false } : null}
+          {...(hasSpend ? { spark: months.map((m) => m.spend) } : {})}
+          hint={`vs last month · ${openPo.length} open orders`}
         />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
+        <ShortlistPanel saved={saved} className="xl:col-span-2" />
+        <TrustWatchPanel saved={saved} />
+      </div>
+
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+        {hasSpend ? (
         <Panel
           title="Monthly spend"
           description="Purchase orders issued, last 12 months"
@@ -238,6 +286,29 @@ export function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </Panel>
+        ) : (
+          <Panel
+            title="Spend intelligence"
+            description="Your monthly spend and category breakdown appear here"
+            className="xl:col-span-2"
+          >
+            <EmptyState
+              icon={IndianRupee}
+              accent="indigo"
+              title="No orders yet"
+              body="Raise a purchase request, collect quotes from verified suppliers and issue your first purchase order. Charts fill in on their own."
+              className="border-0 py-6"
+              action={
+                <Button asChild>
+                  <AppLink to="requests/new">
+                    <Plus />
+                    New request
+                  </AppLink>
+                </Button>
+              }
+            />
+          </Panel>
+        )}
         <Panel
           title="Needs your attention"
           action={
@@ -246,9 +317,23 @@ export function DashboardPage() {
             </AppLink>
           }
         >
-          {pendingReq.length === 0 ? (
+          {overdue.length > 0 ? (
+            <AppLink
+              to="purchase-orders"
+              className="card-lift mb-3 flex items-center gap-3 rounded-lg border p-4"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl tint-coral">
+                <Timer className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1 text-[15px] font-semibold">
+                {overdue.length} {overdue.length === 1 ? "delivery is" : "deliveries are"} overdue
+              </div>
+              <ArrowRight className="size-5 text-muted-foreground" />
+            </AppLink>
+          ) : null}
+          {pendingReq.length === 0 && overdue.length === 0 ? (
             <p className="py-10 text-center text-base text-muted-foreground">You're all caught up.</p>
-          ) : (
+          ) : pendingReq.length === 0 ? null : (
             <ul className="space-y-3">
               {pendingReq.slice(0, 5).map((r) => (
                 <li key={r.id}>
@@ -270,7 +355,8 @@ export function DashboardPage() {
         </Panel>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      {hasSpend || insights.length > 0 ? (
+      <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Panel title="Spend by category" description="All time">
           {byCat.length === 0 ? (
             <p className="py-10 text-center text-base text-muted-foreground">No spend recorded yet.</p>
@@ -347,30 +433,8 @@ export function DashboardPage() {
             </ul>
           )}
         </Panel>
-        <Panel title="Recent activity">
-          {ws.activity.length === 0 ? (
-            <p className="py-10 text-center text-base text-muted-foreground">
-              Nothing yet — activity shows up as your team works.
-            </p>
-          ) : (
-            <ul className="space-y-5">
-              {ws.activity.slice(0, 6).map((a) => (
-                <li key={a.id} className="flex items-start gap-4 text-[15px]">
-                  <Person name={nameOf(ws.members, a.actorId)} accent="cyan" size={38} />
-                  <div className="min-w-0">
-                    <span className="font-medium">
-                      {nameOf(ws.members, a.actorId).split(" ")[0]}
-                    </span>{" "}
-                    <span className="text-muted-foreground">{a.verb}</span>{" "}
-                    <span className="tabular">{a.target}</span>
-                    <div className="mt-0.5 text-sm text-subtle-foreground">{formatRelative(a.at)}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
       </div>
+      ) : null}
     </>
   );
 }

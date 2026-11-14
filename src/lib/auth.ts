@@ -1,6 +1,7 @@
 import { useSaved } from "@/lib/saved-store";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useUi } from "@/lib/ui-store";
+import { useWs } from "@/lib/ws-store";
 import type { Role } from "@/types/domain";
 
 export type AccountType = "buyer" | "supplier";
@@ -179,6 +180,8 @@ interface Workspace {
 // inside /buyer/dashboard don't query the database every time.
 let cache: { userId: string; hasOrg: boolean } | null = null;
 let supplierCache: { userId: string; has: boolean } | null = null;
+// Whose workspace data the in-memory store currently holds, so one person's data is never shown to the next person who signs in.
+let wsOwner: string | null = null;
 
 export function clearAuthCache() {
   cache = null;
@@ -258,6 +261,13 @@ export async function requireWorkspace(): Promise<"signin" | "onboarding" | "ok"
     cache = { userId: user.id, hasOrg: ws !== null };
     const meta = user.user_metadata as { name?: string } | undefined;
     const email = user.email ?? "";
+    // A real company never shows sample data, and the workspace held in memory is never reused for another person.
+    if (wsOwner !== user.id || (ws && useUi.getState().demo)) {
+      useUi.getState().setDemo(false);
+      useWs.getState().reset(false);
+    }
+    wsOwner = user.id;
+    if (ws) useWs.getState().updateOrg({ name: ws.company });
     useUi.getState().signIn({
       name: meta?.name?.trim() || email.split("@")[0] || "You",
       email,
@@ -332,6 +342,8 @@ export async function signOutUser(): Promise<void> {
     if (isSupabaseConfigured) await getSupabase().auth.signOut();
   } finally {
     clearAuthCache();
+    wsOwner = null;
+    useWs.getState().reset(false);
     useSaved.getState().reset();
     useUi.getState().signOut();
     useUi.setState({ onboarded: false });

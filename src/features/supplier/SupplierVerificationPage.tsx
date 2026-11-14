@@ -1,11 +1,10 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Check, Clock, FileUp, Loader2, ShieldAlert } from "lucide-react";
+import { Check, Clock, FileUp, Loader2, ShieldAlert } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
+import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
 import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
 import { fieldClass } from "@/components/onboarding/fields";
 import { checkGstin, gstinProblem } from "@/lib/gstin";
-import { loadSupplierSummary, type SupplierSummary } from "@/lib/onboarding-api";
 import {
   ALLOWED_MIME, MAX_FILE_BYTES, loadPassport, loadProofs, openDocument, submitProof, withdrawProof,
   type CheckType, type ProofRow, type TrustPassport as Passport,
@@ -32,27 +31,39 @@ const STATUS_TEXT: Record<string, { t: string; cls: string }> = {
 };
 
 export function SupplierVerificationPage() {
-  const [summary, setSummary] = useState<SupplierSummary | null>(null);
+  return (
+    <SupplierShell>
+      <PassportContent />
+    </SupplierShell>
+  );
+}
+
+function PassportContent() {
+  // The supplier's own company comes from the shell, which reads it from the database for the signed-in supplier.
+  const { status, summary, reload: reloadShell } = useSupplier();
+  const orgId = summary?.id ?? null;
   const [proofs, setProofs] = useState<ProofRow[]>([]);
   const [passport, setPassport] = useState<Passport | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const reload = useCallback(async (orgId: string) => {
-    const [p, pp] = await Promise.all([loadProofs(orgId), loadPassport(orgId)]);
+  const reload = useCallback(async (id: string) => {
+    const [p, pp] = await Promise.all([loadProofs(id), loadPassport(id)]);
     setProofs(p);
     setPassport(pp);
   }, []);
 
   useEffect(() => {
+    if (status === "loading") return;
+    if (!orgId) {
+      setError("We couldn't find your supplier workspace.");
+      setLoading(false);
+      return;
+    }
     let live = true;
     (async () => {
       try {
-        const s = await loadSupplierSummary();
-        if (!s) throw new Error("We couldn't find your supplier workspace.");
-        if (!live) return;
-        setSummary(s);
-        await reload(s.id);
+        await reload(orgId);
       } catch (e) {
         if (live) setError(e instanceof Error ? e.message : "Something went wrong. Please refresh.");
       } finally {
@@ -62,17 +73,14 @@ export function SupplierVerificationPage() {
     return () => {
       live = false;
     };
-  }, [reload]);
+  }, [status, orgId, reload]);
 
   const latest = (t: CheckType) => proofs.filter((p) => p.type === t);
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <main className="mx-auto max-w-3xl p-6 sm:p-10">
-        <Link to="/supplier/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to dashboard
-        </Link>
-        <h1 className="mt-4 text-3xl font-semibold">Your Trust Passport</h1>
+    <div className="mx-auto max-w-3xl">
+      <div>
+        <h1 className="text-3xl font-semibold">Your Trust Passport</h1>
         <p className="mt-1 text-muted-foreground">
           Each proof is checked separately and shown to buyers with its date. The more you prove, the higher buyers rank you.
         </p>
@@ -88,12 +96,12 @@ export function SupplierVerificationPage() {
 
             <div className="mt-8 space-y-5">
               {(["registration", "address", "bank", "certificate"] as CheckType[]).map((t) => (
-                <ProofCard key={t} type={t} rows={latest(t)} orgId={summary.id} orgState={summary.state} onChanged={() => reload(summary.id)} />
+                <ProofCard key={t} type={t} rows={latest(t)} orgId={summary.id} orgState={summary.state} onChanged={async () => { await reload(summary.id); reloadShell(); }} />
               ))}
             </div>
           </>
         ) : null}
-      </main>
+      </div>
     </div>
   );
 }

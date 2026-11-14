@@ -1,44 +1,21 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Boxes, Check, FileText, LayoutDashboard, LogOut, Package, Receipt, ShieldCheck, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Check, ShieldCheck } from "lucide-react";
 
-import { signOutUser } from "@/lib/auth";
-import { loadSupplierSummary, type SupplierSummary, type VerificationStatus } from "@/lib/onboarding-api";
-
-const NAV = [
-  { label: "Dashboard", icon: LayoutDashboard, on: true },
-  { label: "Product catalogue", icon: Boxes, on: false },
-  { label: "Quote requests", icon: FileText, on: false },
-  { label: "Quotations", icon: Receipt, on: false },
-  { label: "Purchase orders", icon: Package, on: false },
-  { label: "Buyers", icon: Users, on: false },
-] as const;
-
-const VERIFICATION_LABEL: Record<VerificationStatus, string> = {
-  not_submitted: "Not yet verified",
-  submitted: "Verification submitted",
-  in_review: "Verification in review",
-  verified: "Verified",
-  rejected: "Verification needs changes",
-};
+import { SupplierShell, useSupplier, VERIFICATION_LABEL } from "@/components/supplier/SupplierShell";
+import type { VerificationStatus } from "@/lib/onboarding-api";
 
 export function SupplierDashboardPage() {
-  const nav = useNavigate();
+  return (
+    <SupplierShell>
+      <DashboardContent />
+    </SupplierShell>
+  );
+}
+
+function DashboardContent() {
   // The business name, products and verification status come from the database, not from the browser.
-  const [summary, setSummary] = useState<SupplierSummary | null>(null);
-  useEffect(() => {
-    let live = true;
-    loadSupplierSummary()
-      .then((s) => {
-        if (live) setSummary(s);
-      })
-      .catch(() => {
-        /* the page still works with its safe defaults */
-      });
-    return () => {
-      live = false;
-    };
-  }, []);
+  // If they can't be read, the page still works with safe defaults.
+  const { summary } = useSupplier();
   const name = summary?.name || "Your business";
   const status: VerificationStatus = summary?.verification ?? "not_submitted";
   const steps = [
@@ -56,68 +33,45 @@ export function SupplierDashboardPage() {
   ];
 
   return (
-    <div className="flex min-h-dvh bg-background text-foreground">
-      <aside className="hidden w-64 shrink-0 flex-col bg-navy p-4 text-navy-foreground md:flex">
-        <img src="/brand/vendora-logo.png" alt="Vendora" className="mb-6 h-16 w-auto self-start" />
-        <p className="mb-2 px-3 text-xs font-semibold text-navy-muted">Supplier workspace</p>
-        <nav className="flex-1 space-y-1" aria-label="Supplier">
-          {NAV.map(({ label, icon: Icon, on }) => (
-            <span key={label} aria-current={on ? "page" : undefined} className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium ${on ? "bg-white/10 text-white" : "text-navy-muted"}`}>
-              <span className="flex items-center gap-3">
-                <Icon className="h-4 w-4" />
-                {label}
-              </span>
-              {on ? null : <span className="text-[11px]">Soon</span>}
-            </span>
-          ))}
-        </nav>
-        <button type="button" onClick={() => void signOutUser().then(() => nav({ to: "/supplier/signin" }))} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-navy-muted transition hover:bg-white/10 hover:text-white">
-          <LogOut className="h-4 w-4" /> Sign out
-        </button>
-      </aside>
-
-      <main className="flex-1 p-6 sm:p-10">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-semibold">Welcome, {name}</h1>
-              <p className="mt-1 text-muted-foreground">Here is what to do to start receiving orders.</p>
-            </div>
-            <Link to="/supplier/verification" className={`${status === "verified" ? "tint-emerald" : "tint-amber"} flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition hover:opacity-80`}>
-              <ShieldCheck className="h-4 w-4" /> {VERIFICATION_LABEL[status]}
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map(([k, v]) => (
-              <div key={k} className="rounded-2xl border border-border bg-card p-5 shadow-card">
-                <p className="text-sm text-muted-foreground">{k}</p>
-                <p className="mt-1 text-3xl font-semibold tabular">{v}</p>
-              </div>
-            ))}
-          </div>
-
-          <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card">
-            <h2 className="text-xl font-semibold">Set up your supplier workspace</h2>
-            <ul className="mt-4 divide-y divide-border">
-              {steps.map((s) => (
-                <li key={s.t} className="flex items-center gap-4 py-3.5">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.done ? "bg-gradient-emerald text-white" : "bg-muted text-muted-foreground"}`}>{s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : null}</span>
-                  <span>
-                    <span className="block font-medium">{s.t}</span>
-                    <span className="block text-sm text-muted-foreground">{s.d}</span>
-                  </span>
-                  {s.t === "Verify your business" ? (
-                    <Link to="/supplier/verification" className="ml-auto rounded-md bg-gradient-cta px-3.5 py-2 text-sm font-semibold text-white">
-                      {s.done ? "View Trust Passport" : "Start"}
-                    </Link>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </section>
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold">Welcome, {name}</h1>
+          <p className="mt-1 text-muted-foreground">Here is what to do to start receiving orders.</p>
         </div>
-      </main>
+        <Link to="/supplier/verification" className={`${status === "verified" ? "tint-emerald" : "tint-amber"} flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition hover:opacity-80`}>
+          <ShieldCheck className="h-4 w-4" /> {VERIFICATION_LABEL[status]}
+        </Link>
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map(([k, v]) => (
+          <div key={k} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <p className="text-sm text-muted-foreground">{k}</p>
+            <p className="mt-1 text-3xl font-semibold tabular">{v}</p>
+          </div>
+        ))}
+      </div>
+
+      <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <h2 className="text-xl font-semibold">Set up your supplier workspace</h2>
+        <ul className="mt-4 divide-y divide-border">
+          {steps.map((s) => (
+            <li key={s.t} className="flex items-center gap-4 py-3.5">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.done ? "bg-gradient-emerald text-white" : "bg-muted text-muted-foreground"}`}>{s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : null}</span>
+              <span>
+                <span className="block font-medium">{s.t}</span>
+                <span className="block text-sm text-muted-foreground">{s.d}</span>
+              </span>
+              {s.t === "Verify your business" ? (
+                <Link to="/supplier/verification" className="ml-auto rounded-md bg-gradient-cta px-3.5 py-2 text-sm font-semibold text-white">
+                  {s.done ? "View Trust Passport" : "Start"}
+                </Link>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

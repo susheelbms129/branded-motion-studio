@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FileSpreadsheet, Hourglass, ShieldAlert, ShieldCheck } from "lucide-react";
+import { FileSpreadsheet, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState, PageHeader, Panel, StatusBadge } from "@/components/vendora/kit";
@@ -7,6 +7,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { AppLink } from "@/lib/nav";
 import { getRfq, LEVEL_NAMES, RFQ_KEY, type InviteStatus } from "@/lib/rfqs-api";
 import { cn } from "@/lib/utils";
+import { RfqQuotesComparison } from "./RfqQuotesComparison";
 
 const INVITE_LABEL: Record<InviteStatus, string> = {
   sent: "Waiting for reply",
@@ -129,15 +130,12 @@ export function RfqDetailReal({ id }: { id: string }) {
               })}
             </ul>
           </Panel>
-          <Panel title="Quotations">
-            <div className="flex items-start gap-3 text-sm text-muted-foreground">
-              <Hourglass className="mt-0.5 size-4 shrink-0" />
-              <p>
-                Waiting for suppliers to reply. Their quotes will appear here, compared on total
-                landed cost, once suppliers can answer RFQs (coming in the next update).
-              </p>
-            </div>
-          </Panel>
+          <RfqQuotesComparison
+            rfqId={r.id}
+            rfqNumber={r.number}
+            items={d.items}
+            waiting={d.invites.filter((i) => i.status === "sent" || i.status === "viewed").length}
+          />
           <Panel title="Items requested" bodyClassName="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

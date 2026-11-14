@@ -5,3 +5,4 @@
 - [x] Landing page (animated, colorful)
 - [x] Sign up / login / onboarding screens
 - [x] Logged-in app pages (dashboard, requests, RFQs, POs, suppliers, materials, analytics, insights, team, settings)
+- [x] Task 13: buyer compares real quotes on total landed cost (migration 15, RfqQuotesComparison)

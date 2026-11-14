@@ -12,7 +12,7 @@ export const Route = createFileRoute("/buyer/onboarding")({
     // Supplier accounts never use the buyer workspace.
     if ((await signedInAccountType()) === "supplier") throw redirect({ to: "/supplier/dashboard" });
     // Already has a company workspace: nothing left to set up.
-    if (r === "ok") throw redirect({ to: "/app" });
+    if (r === "ok") throw redirect({ to: "/buyer/dashboard" });
   },
   // The saved answers come from the database, so a buyer resumes where they left off on any device.
   // Always fresh: an old cached copy could overwrite newer answers on the next Continue.

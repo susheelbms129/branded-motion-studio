@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Plus, Truck } from "lucide-react";
+import { Plus, SearchCheck, Truck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -29,7 +29,7 @@ import {
   PageHeader,
   StatusBadge,
 } from "@/components/vendora/kit";
-import { appPath } from "@/lib/nav";
+import { AppLink, appPath } from "@/lib/nav";
 import { nameOf } from "@/lib/selectors";
 import { usePerf } from "@/lib/use-perf";
 import { useWs } from "@/lib/ws-store";
@@ -95,17 +95,25 @@ export function SuppliersPage() {
   return (
     <>
       <PageHeader
-        title="Suppliers"
+        title="My Suppliers"
         accent="amber"
-        crumbs={[{ label: "Suppliers" }]}
+        crumbs={[{ label: "My Suppliers" }]}
         description="Your vendor directory with performance scored purely from real orders and quotes."
         actions={
-          <Can permission="supplier.manage">
-            <Button onClick={() => setOpen(true)}>
-              <Plus />
-              Add supplier
+          <>
+            <Button variant="outline" asChild>
+              <AppLink to="find-suppliers">
+                <SearchCheck />
+                Find suppliers on Vendora
+              </AppLink>
             </Button>
-          </Can>
+            <Can permission="supplier.manage">
+              <Button onClick={() => setOpen(true)}>
+                <Plus />
+                Add supplier
+              </Button>
+            </Can>
+          </>
         }
       />
       <DataTable

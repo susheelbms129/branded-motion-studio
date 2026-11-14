@@ -220,7 +220,7 @@ export function AuthScreen({ open, mode, variant = "buyer", onModeChange, onClos
     setState("sending");
     const res = await signInWithProvider(
       provider === "Apple" ? "apple" : "google",
-      supplier ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : mode === "signup" ? "/buyer/onboarding" : "/app",
+      supplier ? (mode === "signup" ? "/supplier/onboarding" : "/supplier/dashboard") : mode === "signup" ? "/buyer/onboarding" : "/buyer/dashboard",
       // Only a brand-new sign-up records which kind of account this is.
       mode === "signup" ? variant : undefined,
     );

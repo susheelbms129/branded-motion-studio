@@ -53,7 +53,7 @@ export function OnboardingPage() {
     finishOnboarding(demo);
     reset(demo);
     if (!demo) updateOrg({ name: co.name || "My Workspace", industry: co.industry, city: co.city });
-    void nav({ to: "/app" });
+    void nav({ to: "/buyer/dashboard" });
   };
   const label = "mb-1.5 block text-sm font-medium text-foreground";
   const cta =

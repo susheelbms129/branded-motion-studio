@@ -148,7 +148,7 @@ export function AcceptInvitePage() {
         ui.finishOnboarding(true);
         useWs.getState().reset(true);
         useWs.getState().updateOrg({ name: r.orgName });
-        return void nav({ to: "/app" });
+        return void nav({ to: "/buyer/dashboard" });
       }
       setBusy(false);
       if (r.state === "wrong_email" || r.state === "unverified") return void load(token);

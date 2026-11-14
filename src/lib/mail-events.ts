@@ -29,17 +29,17 @@ function diff(next: S, prev: S) {
     if (!p) continue;
     const to = resolveRecipients([m.id]);
     if (p.role !== m.role) {
-      for (const r of to) void notify("role_changed", "team", r, { title: ROLE_LABEL[m.role], path: "/app", key: `role:${m.id}:${m.role}:${stamp}` });
+      for (const r of to) void notify("role_changed", "team", r, { title: ROLE_LABEL[m.role], path: "/buyer/dashboard", key: `role:${m.id}:${m.role}:${stamp}` });
     }
     if (p.status !== m.status && m.status === "suspended") {
-      for (const r of to) void notify("member_suspended", "team", r, { title: m.name, path: "/app", key: `susp:${m.id}:${stamp}` });
+      for (const r of to) void notify("member_suspended", "team", r, { title: m.name, path: "/buyer/dashboard", key: `susp:${m.id}:${stamp}` });
     }
   }
 
   // Purchase requests
   for (const r of next.requests) {
     const p = prev.requests.find((x) => x.id === r.id);
-    const path = link("/app/requests", r.id);
+    const path = link("/buyer/dashboard/requests", r.id);
     const title = `${r.number} · ${r.title}`;
     const submitted = r.status === "pending_approval" && (!p || p.status !== "pending_approval");
     const approver = pendingApprover(r);
@@ -68,7 +68,7 @@ function diff(next: S, prev: S) {
   const poRecipients = resolveRecipients(next.members.filter((m) => m.role === "owner" || m.role === "procurement_manager").map((m) => m.id));
   for (const po of next.purchaseOrders) {
     const p = prev.purchaseOrders.find((x) => x.id === po.id);
-    const path = link("/app/purchase-orders", po.id);
+    const path = link("/buyer/dashboard/purchase-orders", po.id);
     const supplier = next.suppliers.find((s) => s.id === po.supplierId)?.name ?? "supplier";
     if (!p) {
       for (const to of poRecipients) void notify("po_issued", "orders", to, { title: `${po.number} · ${supplier}`, path, status: po.status, key: `po:${po.id}:new` });
@@ -80,7 +80,7 @@ function diff(next: S, prev: S) {
   // New suppliers
   for (const s of next.suppliers) {
     if (prev.suppliers.some((x) => x.id === s.id)) continue;
-    for (const to of poRecipients) void notify("supplier_added", "suppliers", to, { title: s.name, path: link("/app/suppliers", s.id), detail: [s.city, s.state].filter(Boolean).join(", ") || undefined, key: `sup:${s.id}` });
+    for (const to of poRecipients) void notify("supplier_added", "suppliers", to, { title: s.name, path: link("/buyer/dashboard/suppliers", s.id), detail: [s.city, s.state].filter(Boolean).join(", ") || undefined, key: `sup:${s.id}` });
   }
 }
 

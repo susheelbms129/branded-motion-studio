@@ -26,7 +26,7 @@ export async function signUpWithEmail(
   opts?: { redirectPath?: string },
 ): Promise<AuthResult> {
   if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED };
-  const path = opts?.redirectPath && /^\/(accept-invite\?token=[0-9a-f]{64}|[A-Za-z0-9/_-]*)$/.test(opts.redirectPath) ? opts.redirectPath : "/app";
+  const path = opts?.redirectPath && /^\/(accept-invite\?token=[0-9a-f]{64}|[A-Za-z0-9/_-]*)$/.test(opts.redirectPath) ? opts.redirectPath : "/buyer/dashboard";
   try {
     // `account_type` is only the choice made on the sign-up form. The database reads it ONCE, when the
     // account is created, and stores it on the profile where the browser cannot change it afterwards.
@@ -75,7 +75,7 @@ async function readAccountType(user: { id: string; user_metadata?: unknown }): P
 }
 
 /** Where each kind of account lives. Buyers and suppliers never share a workspace or a sign-in page. */
-export const homePathFor = (t: AccountType) => (t === "supplier" ? "/supplier/dashboard" : "/app");
+export const homePathFor = (t: AccountType) => (t === "supplier" ? "/supplier/dashboard" : "/buyer/dashboard");
 export const signInPathFor = (t: AccountType) => (t === "supplier" ? "/supplier/signin" : "/buyer/signin");
 
 /**
@@ -149,7 +149,7 @@ async function claimSignupIntent(user: { user_metadata?: unknown }): Promise<voi
 // Redirects the browser to Google / Apple; the session is picked up when the user returns.
 export async function signInWithProvider(
   provider: "google" | "apple",
-  redirectPath = "/app",
+  redirectPath = "/buyer/dashboard",
   signup?: AccountType,
 ): Promise<AuthResult> {
   if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED };
@@ -175,7 +175,7 @@ interface Workspace {
 }
 
 // Remembers, per signed-in user, whether they already belong to a workspace, so route changes
-// inside /app don't query the database every time.
+// inside /buyer/dashboard don't query the database every time.
 let cache: { userId: string; hasOrg: boolean } | null = null;
 let supplierCache: { userId: string; has: boolean } | null = null;
 
@@ -295,7 +295,7 @@ export async function hasSupplierWorkspace(): Promise<boolean> {
 
 /**
  * Guard for the supplier area. "signin" = no session, "buyer" = signed in but with a buyer account
- * (they belong in /app, never here), "ok" = a supplier.
+ * (they belong in /buyer/dashboard, never here), "ok" = a supplier.
  */
 export async function requireSupplier(): Promise<"signin" | "buyer" | "ok"> {
   if (!isSupabaseConfigured) return "signin";

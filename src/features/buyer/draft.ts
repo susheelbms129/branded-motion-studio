@@ -150,11 +150,11 @@ export function forgetLocalDrafts() {
 }
 
 /** Where the buyer goes after launching: the action they picked, otherwise the dashboard. */
-export function landingPathFor(a: NextAction | null): "/app" | "/app/suppliers" | "/app/rfqs" | "/app/team" {
-  if (a === "suppliers") return "/app/suppliers";
-  if (a === "rfq") return "/app/rfqs";
-  if (a === "team") return "/app/team";
-  return "/app";
+export function landingPathFor(a: NextAction | null): "/buyer/dashboard" | "/buyer/dashboard/find-suppliers" | "/buyer/dashboard/rfqs" | "/buyer/dashboard/team" {
+  if (a === "suppliers") return "/buyer/dashboard/find-suppliers";
+  if (a === "rfq") return "/buyer/dashboard/rfqs";
+  if (a === "team") return "/buyer/dashboard/team";
+  return "/buyer/dashboard";
 }
 
 /** Light check for the optional website field. Empty is fine. */

@@ -6,6 +6,7 @@ import {
   Package,
   ReceiptText,
   Scale,
+  SearchCheck,
   Settings,
   Sparkles,
   Truck,
@@ -22,6 +23,7 @@ export type ModuleKey =
   | "rfqs"
   | "quotations"
   | "purchaseOrders"
+  | "findSuppliers"
   | "suppliers"
   | "materials"
   | "analytics"
@@ -36,7 +38,8 @@ export const MODULES: Record<ModuleKey, { label: string; icon: LucideIcon; accen
   rfqs: { label: "RFQs", icon: FileSpreadsheet, accent: "violet", path: "rfqs", shortcut: "Q" },
   quotations: { label: "Quotations", icon: Scale, accent: "cyan", path: "rfqs" },
   purchaseOrders: { label: "Purchase Orders", icon: ReceiptText, accent: "emerald", path: "purchase-orders", shortcut: "P" },
-  suppliers: { label: "Suppliers", icon: Truck, accent: "amber", path: "suppliers", shortcut: "S" },
+  findSuppliers: { label: "Find Suppliers", icon: SearchCheck, accent: "emerald", path: "find-suppliers", shortcut: "F" },
+  suppliers: { label: "My Suppliers", icon: Truck, accent: "amber", path: "suppliers", shortcut: "S" },
   materials: { label: "Products & Materials", icon: Package, accent: "pink", path: "materials" },
   analytics: { label: "Spend Analytics", icon: BarChart3, accent: "indigo", path: "analytics" },
   insights: { label: "AI Insights", icon: Sparkles, accent: "ai", path: "insights" },

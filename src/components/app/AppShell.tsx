@@ -42,7 +42,7 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
 
 const GROUPS: { label: string; keys: ModuleKey[] }[] = [
   { label: "Workspace", keys: ["dashboard", "requests", "rfqs", "purchaseOrders"] },
-  { label: "Sourcing", keys: ["suppliers", "materials"] },
+  { label: "Sourcing", keys: ["findSuppliers", "suppliers", "materials"] },
   { label: "Intelligence", keys: ["analytics", "insights"] },
   { label: "Admin", keys: ["notifications", "team", "settings"] },
 ];
@@ -76,7 +76,7 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
               const to = appPath(m.path);
               const active =
                 m.path === ""
-                  ? loc.pathname === "/app" || loc.pathname === "/app/"
+                  ? loc.pathname === "/buyer/dashboard" || loc.pathname === "/buyer/dashboard/"
                   : loc.pathname.startsWith(to);
               const n = badge[k] ?? 0;
               return (
@@ -313,7 +313,7 @@ export function AppShell() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user?.email ?? actor?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => void nav({ to: "/app/settings" as never })}>
+                <DropdownMenuItem onSelect={() => void nav({ to: "/buyer/dashboard/settings" as never })}>
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem

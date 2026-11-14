@@ -149,7 +149,7 @@ function AuthRoute() {
         clearAuthCache();
         // Signed out inside a workspace: go to that side's own sign-in.
         const p = window.location.pathname;
-        if (p.startsWith("/app")) void nav({ to: "/buyer/signin" });
+        if (p.startsWith("/buyer/dashboard")) void nav({ to: "/buyer/signin" });
         else if (p === "/supplier/dashboard" || p === "/supplier/onboarding") void nav({ to: "/supplier/signin" });
       }
     });
@@ -177,7 +177,7 @@ function AuthRoute() {
                 : "/supplier/dashboard"
               : mode === "signup"
                 ? "/buyer/onboarding"
-                : "/app",
+                : "/buyer/dashboard",
         })
       }
     />

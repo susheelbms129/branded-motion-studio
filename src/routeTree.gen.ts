@@ -19,12 +19,14 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AdminVerificationRouteImport } from './routes/admin.verification'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppSplatRouteImport } from './routes/app.$'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppInsightsRouteImport } from './routes/app.insights'
 import { Route as AppMaterialsRouteImport } from './routes/app.materials'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
 import { Route as BuyerOnboardingRouteImport } from './routes/buyer.onboarding'
 import { Route as BuyerSigninRouteImport } from './routes/buyer.signin'
 import { Route as BuyerSignupRouteImport } from './routes/buyer.signup'
@@ -43,6 +45,24 @@ import { Route as AppRfqsIndexRouteImport } from './routes/app.rfqs.index'
 import { Route as AppRfqsIdRouteImport } from './routes/app.rfqs.$id'
 import { Route as AppSuppliersIndexRouteImport } from './routes/app.suppliers.index'
 import { Route as AppSuppliersIdRouteImport } from './routes/app.suppliers.$id'
+import { Route as BuyerDashboardIndexRouteImport } from './routes/buyer.dashboard.index'
+import { Route as BuyerDashboardAnalyticsRouteImport } from './routes/buyer.dashboard.analytics'
+import { Route as BuyerDashboardInsightsRouteImport } from './routes/buyer.dashboard.insights'
+import { Route as BuyerDashboardMaterialsRouteImport } from './routes/buyer.dashboard.materials'
+import { Route as BuyerDashboardNotificationsRouteImport } from './routes/buyer.dashboard.notifications'
+import { Route as BuyerDashboardSettingsRouteImport } from './routes/buyer.dashboard.settings'
+import { Route as BuyerDashboardTeamRouteImport } from './routes/buyer.dashboard.team'
+import { Route as BuyerDashboardFindSuppliersIndexRouteImport } from './routes/buyer.dashboard.find-suppliers.index'
+import { Route as BuyerDashboardFindSuppliersIdRouteImport } from './routes/buyer.dashboard.find-suppliers.$id'
+import { Route as BuyerDashboardPurchaseOrdersIndexRouteImport } from './routes/buyer.dashboard.purchase-orders.index'
+import { Route as BuyerDashboardPurchaseOrdersIdRouteImport } from './routes/buyer.dashboard.purchase-orders.$id'
+import { Route as BuyerDashboardRequestsIndexRouteImport } from './routes/buyer.dashboard.requests.index'
+import { Route as BuyerDashboardRequestsIdRouteImport } from './routes/buyer.dashboard.requests.$id'
+import { Route as BuyerDashboardRequestsNewRouteImport } from './routes/buyer.dashboard.requests.new'
+import { Route as BuyerDashboardRfqsIndexRouteImport } from './routes/buyer.dashboard.rfqs.index'
+import { Route as BuyerDashboardRfqsIdRouteImport } from './routes/buyer.dashboard.rfqs.$id'
+import { Route as BuyerDashboardSuppliersIndexRouteImport } from './routes/buyer.dashboard.suppliers.index'
+import { Route as BuyerDashboardSuppliersIdRouteImport } from './routes/buyer.dashboard.suppliers.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +114,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSplatRoute = AppSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -123,6 +148,11 @@ const AppTeamRoute = AppTeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => AppRoute,
+} as any)
+const BuyerDashboardRoute = BuyerDashboardRouteImport.update({
+  id: '/buyer/dashboard',
+  path: '/buyer/dashboard',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BuyerOnboardingRoute = BuyerOnboardingRouteImport.update({
   id: '/buyer/onboarding',
@@ -214,6 +244,106 @@ const AppSuppliersIdRoute = AppSuppliersIdRouteImport.update({
   path: '/suppliers/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const BuyerDashboardIndexRoute = BuyerDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardAnalyticsRoute = BuyerDashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardInsightsRoute = BuyerDashboardInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardMaterialsRoute = BuyerDashboardMaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardNotificationsRoute =
+  BuyerDashboardNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardSettingsRoute = BuyerDashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardTeamRoute = BuyerDashboardTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardFindSuppliersIndexRoute =
+  BuyerDashboardFindSuppliersIndexRouteImport.update({
+    id: '/find-suppliers/',
+    path: '/find-suppliers/',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardFindSuppliersIdRoute =
+  BuyerDashboardFindSuppliersIdRouteImport.update({
+    id: '/find-suppliers/$id',
+    path: '/find-suppliers/$id',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardPurchaseOrdersIndexRoute =
+  BuyerDashboardPurchaseOrdersIndexRouteImport.update({
+    id: '/purchase-orders/',
+    path: '/purchase-orders/',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardPurchaseOrdersIdRoute =
+  BuyerDashboardPurchaseOrdersIdRouteImport.update({
+    id: '/purchase-orders/$id',
+    path: '/purchase-orders/$id',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardRequestsIndexRoute =
+  BuyerDashboardRequestsIndexRouteImport.update({
+    id: '/requests/',
+    path: '/requests/',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardRequestsIdRoute =
+  BuyerDashboardRequestsIdRouteImport.update({
+    id: '/requests/$id',
+    path: '/requests/$id',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardRequestsNewRoute =
+  BuyerDashboardRequestsNewRouteImport.update({
+    id: '/requests/new',
+    path: '/requests/new',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardRfqsIndexRoute = BuyerDashboardRfqsIndexRouteImport.update({
+  id: '/rfqs/',
+  path: '/rfqs/',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardRfqsIdRoute = BuyerDashboardRfqsIdRouteImport.update({
+  id: '/rfqs/$id',
+  path: '/rfqs/$id',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardSuppliersIndexRoute =
+  BuyerDashboardSuppliersIndexRouteImport.update({
+    id: '/suppliers/',
+    path: '/suppliers/',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
+const BuyerDashboardSuppliersIdRoute =
+  BuyerDashboardSuppliersIdRouteImport.update({
+    id: '/suppliers/$id',
+    path: '/suppliers/$id',
+    getParentRoute: () => BuyerDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -225,12 +355,14 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/admin/verification': typeof AdminVerificationRoute
+  '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/buyer/dashboard': typeof BuyerDashboardRouteWithChildren
   '/buyer/onboarding': typeof BuyerOnboardingRoute
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
@@ -246,10 +378,28 @@ export interface FileRoutesByFullPath {
   '/app/requests/new': typeof AppRequestsNewRoute
   '/app/rfqs/$id': typeof AppRfqsIdRoute
   '/app/suppliers/$id': typeof AppSuppliersIdRoute
+  '/buyer/dashboard/analytics': typeof BuyerDashboardAnalyticsRoute
+  '/buyer/dashboard/insights': typeof BuyerDashboardInsightsRoute
+  '/buyer/dashboard/materials': typeof BuyerDashboardMaterialsRoute
+  '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
+  '/buyer/dashboard/settings': typeof BuyerDashboardSettingsRoute
+  '/buyer/dashboard/team': typeof BuyerDashboardTeamRoute
   '/app/purchase-orders/': typeof AppPurchaseOrdersIndexRoute
   '/app/requests/': typeof AppRequestsIndexRoute
   '/app/rfqs/': typeof AppRfqsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
+  '/buyer/dashboard/': typeof BuyerDashboardIndexRoute
+  '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
+  '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
+  '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
+  '/buyer/dashboard/requests/new': typeof BuyerDashboardRequestsNewRoute
+  '/buyer/dashboard/rfqs/$id': typeof BuyerDashboardRfqsIdRoute
+  '/buyer/dashboard/suppliers/$id': typeof BuyerDashboardSuppliersIdRoute
+  '/buyer/dashboard/find-suppliers/': typeof BuyerDashboardFindSuppliersIndexRoute
+  '/buyer/dashboard/purchase-orders/': typeof BuyerDashboardPurchaseOrdersIndexRoute
+  '/buyer/dashboard/requests/': typeof BuyerDashboardRequestsIndexRoute
+  '/buyer/dashboard/rfqs/': typeof BuyerDashboardRfqsIndexRoute
+  '/buyer/dashboard/suppliers/': typeof BuyerDashboardSuppliersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -260,6 +410,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/admin/verification': typeof AdminVerificationRoute
+  '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -281,10 +432,28 @@ export interface FileRoutesByTo {
   '/app/requests/new': typeof AppRequestsNewRoute
   '/app/rfqs/$id': typeof AppRfqsIdRoute
   '/app/suppliers/$id': typeof AppSuppliersIdRoute
+  '/buyer/dashboard/analytics': typeof BuyerDashboardAnalyticsRoute
+  '/buyer/dashboard/insights': typeof BuyerDashboardInsightsRoute
+  '/buyer/dashboard/materials': typeof BuyerDashboardMaterialsRoute
+  '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
+  '/buyer/dashboard/settings': typeof BuyerDashboardSettingsRoute
+  '/buyer/dashboard/team': typeof BuyerDashboardTeamRoute
   '/app/purchase-orders': typeof AppPurchaseOrdersIndexRoute
   '/app/requests': typeof AppRequestsIndexRoute
   '/app/rfqs': typeof AppRfqsIndexRoute
   '/app/suppliers': typeof AppSuppliersIndexRoute
+  '/buyer/dashboard': typeof BuyerDashboardIndexRoute
+  '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
+  '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
+  '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
+  '/buyer/dashboard/requests/new': typeof BuyerDashboardRequestsNewRoute
+  '/buyer/dashboard/rfqs/$id': typeof BuyerDashboardRfqsIdRoute
+  '/buyer/dashboard/suppliers/$id': typeof BuyerDashboardSuppliersIdRoute
+  '/buyer/dashboard/find-suppliers': typeof BuyerDashboardFindSuppliersIndexRoute
+  '/buyer/dashboard/purchase-orders': typeof BuyerDashboardPurchaseOrdersIndexRoute
+  '/buyer/dashboard/requests': typeof BuyerDashboardRequestsIndexRoute
+  '/buyer/dashboard/rfqs': typeof BuyerDashboardRfqsIndexRoute
+  '/buyer/dashboard/suppliers': typeof BuyerDashboardSuppliersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -297,12 +466,14 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/admin/verification': typeof AdminVerificationRoute
+  '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
+  '/buyer/dashboard': typeof BuyerDashboardRouteWithChildren
   '/buyer/onboarding': typeof BuyerOnboardingRoute
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
@@ -318,10 +489,28 @@ export interface FileRoutesById {
   '/app/requests/new': typeof AppRequestsNewRoute
   '/app/rfqs/$id': typeof AppRfqsIdRoute
   '/app/suppliers/$id': typeof AppSuppliersIdRoute
+  '/buyer/dashboard/analytics': typeof BuyerDashboardAnalyticsRoute
+  '/buyer/dashboard/insights': typeof BuyerDashboardInsightsRoute
+  '/buyer/dashboard/materials': typeof BuyerDashboardMaterialsRoute
+  '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
+  '/buyer/dashboard/settings': typeof BuyerDashboardSettingsRoute
+  '/buyer/dashboard/team': typeof BuyerDashboardTeamRoute
   '/app/purchase-orders/': typeof AppPurchaseOrdersIndexRoute
   '/app/requests/': typeof AppRequestsIndexRoute
   '/app/rfqs/': typeof AppRfqsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
+  '/buyer/dashboard/': typeof BuyerDashboardIndexRoute
+  '/buyer/dashboard/find-suppliers/$id': typeof BuyerDashboardFindSuppliersIdRoute
+  '/buyer/dashboard/purchase-orders/$id': typeof BuyerDashboardPurchaseOrdersIdRoute
+  '/buyer/dashboard/requests/$id': typeof BuyerDashboardRequestsIdRoute
+  '/buyer/dashboard/requests/new': typeof BuyerDashboardRequestsNewRoute
+  '/buyer/dashboard/rfqs/$id': typeof BuyerDashboardRfqsIdRoute
+  '/buyer/dashboard/suppliers/$id': typeof BuyerDashboardSuppliersIdRoute
+  '/buyer/dashboard/find-suppliers/': typeof BuyerDashboardFindSuppliersIndexRoute
+  '/buyer/dashboard/purchase-orders/': typeof BuyerDashboardPurchaseOrdersIndexRoute
+  '/buyer/dashboard/requests/': typeof BuyerDashboardRequestsIndexRoute
+  '/buyer/dashboard/rfqs/': typeof BuyerDashboardRfqsIndexRoute
+  '/buyer/dashboard/suppliers/': typeof BuyerDashboardSuppliersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -335,12 +524,14 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/admin/verification'
+    | '/app/$'
     | '/app/analytics'
     | '/app/insights'
     | '/app/materials'
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/buyer/dashboard'
     | '/buyer/onboarding'
     | '/buyer/signin'
     | '/buyer/signup'
@@ -356,10 +547,28 @@ export interface FileRouteTypes {
     | '/app/requests/new'
     | '/app/rfqs/$id'
     | '/app/suppliers/$id'
+    | '/buyer/dashboard/analytics'
+    | '/buyer/dashboard/insights'
+    | '/buyer/dashboard/materials'
+    | '/buyer/dashboard/notifications'
+    | '/buyer/dashboard/settings'
+    | '/buyer/dashboard/team'
     | '/app/purchase-orders/'
     | '/app/requests/'
     | '/app/rfqs/'
     | '/app/suppliers/'
+    | '/buyer/dashboard/'
+    | '/buyer/dashboard/find-suppliers/$id'
+    | '/buyer/dashboard/purchase-orders/$id'
+    | '/buyer/dashboard/requests/$id'
+    | '/buyer/dashboard/requests/new'
+    | '/buyer/dashboard/rfqs/$id'
+    | '/buyer/dashboard/suppliers/$id'
+    | '/buyer/dashboard/find-suppliers/'
+    | '/buyer/dashboard/purchase-orders/'
+    | '/buyer/dashboard/requests/'
+    | '/buyer/dashboard/rfqs/'
+    | '/buyer/dashboard/suppliers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -370,6 +579,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/admin/verification'
+    | '/app/$'
     | '/app/analytics'
     | '/app/insights'
     | '/app/materials'
@@ -391,10 +601,28 @@ export interface FileRouteTypes {
     | '/app/requests/new'
     | '/app/rfqs/$id'
     | '/app/suppliers/$id'
+    | '/buyer/dashboard/analytics'
+    | '/buyer/dashboard/insights'
+    | '/buyer/dashboard/materials'
+    | '/buyer/dashboard/notifications'
+    | '/buyer/dashboard/settings'
+    | '/buyer/dashboard/team'
     | '/app/purchase-orders'
     | '/app/requests'
     | '/app/rfqs'
     | '/app/suppliers'
+    | '/buyer/dashboard'
+    | '/buyer/dashboard/find-suppliers/$id'
+    | '/buyer/dashboard/purchase-orders/$id'
+    | '/buyer/dashboard/requests/$id'
+    | '/buyer/dashboard/requests/new'
+    | '/buyer/dashboard/rfqs/$id'
+    | '/buyer/dashboard/suppliers/$id'
+    | '/buyer/dashboard/find-suppliers'
+    | '/buyer/dashboard/purchase-orders'
+    | '/buyer/dashboard/requests'
+    | '/buyer/dashboard/rfqs'
+    | '/buyer/dashboard/suppliers'
   id:
     | '__root__'
     | '/'
@@ -406,12 +634,14 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/admin/verification'
+    | '/app/$'
     | '/app/analytics'
     | '/app/insights'
     | '/app/materials'
     | '/app/notifications'
     | '/app/settings'
     | '/app/team'
+    | '/buyer/dashboard'
     | '/buyer/onboarding'
     | '/buyer/signin'
     | '/buyer/signup'
@@ -427,10 +657,28 @@ export interface FileRouteTypes {
     | '/app/requests/new'
     | '/app/rfqs/$id'
     | '/app/suppliers/$id'
+    | '/buyer/dashboard/analytics'
+    | '/buyer/dashboard/insights'
+    | '/buyer/dashboard/materials'
+    | '/buyer/dashboard/notifications'
+    | '/buyer/dashboard/settings'
+    | '/buyer/dashboard/team'
     | '/app/purchase-orders/'
     | '/app/requests/'
     | '/app/rfqs/'
     | '/app/suppliers/'
+    | '/buyer/dashboard/'
+    | '/buyer/dashboard/find-suppliers/$id'
+    | '/buyer/dashboard/purchase-orders/$id'
+    | '/buyer/dashboard/requests/$id'
+    | '/buyer/dashboard/requests/new'
+    | '/buyer/dashboard/rfqs/$id'
+    | '/buyer/dashboard/suppliers/$id'
+    | '/buyer/dashboard/find-suppliers/'
+    | '/buyer/dashboard/purchase-orders/'
+    | '/buyer/dashboard/requests/'
+    | '/buyer/dashboard/rfqs/'
+    | '/buyer/dashboard/suppliers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -443,6 +691,7 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   AdminVerificationRoute: typeof AdminVerificationRoute
+  BuyerDashboardRoute: typeof BuyerDashboardRouteWithChildren
   BuyerOnboardingRoute: typeof BuyerOnboardingRoute
   BuyerSigninRoute: typeof BuyerSigninRoute
   BuyerSignupRoute: typeof BuyerSignupRoute
@@ -526,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/$': {
+      id: '/app/$'
+      path: '/$'
+      fullPath: '/app/$'
+      preLoaderRoute: typeof AppSplatRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/analytics': {
       id: '/app/analytics'
       path: '/analytics'
@@ -567,6 +823,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/team'
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/buyer/dashboard': {
+      id: '/buyer/dashboard'
+      path: '/buyer/dashboard'
+      fullPath: '/buyer/dashboard'
+      preLoaderRoute: typeof BuyerDashboardRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/buyer/onboarding': {
       id: '/buyer/onboarding'
@@ -694,10 +957,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSuppliersIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/buyer/dashboard/': {
+      id: '/buyer/dashboard/'
+      path: '/'
+      fullPath: '/buyer/dashboard/'
+      preLoaderRoute: typeof BuyerDashboardIndexRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/analytics': {
+      id: '/buyer/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/buyer/dashboard/analytics'
+      preLoaderRoute: typeof BuyerDashboardAnalyticsRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/insights': {
+      id: '/buyer/dashboard/insights'
+      path: '/insights'
+      fullPath: '/buyer/dashboard/insights'
+      preLoaderRoute: typeof BuyerDashboardInsightsRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/materials': {
+      id: '/buyer/dashboard/materials'
+      path: '/materials'
+      fullPath: '/buyer/dashboard/materials'
+      preLoaderRoute: typeof BuyerDashboardMaterialsRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/notifications': {
+      id: '/buyer/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/buyer/dashboard/notifications'
+      preLoaderRoute: typeof BuyerDashboardNotificationsRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/settings': {
+      id: '/buyer/dashboard/settings'
+      path: '/settings'
+      fullPath: '/buyer/dashboard/settings'
+      preLoaderRoute: typeof BuyerDashboardSettingsRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/team': {
+      id: '/buyer/dashboard/team'
+      path: '/team'
+      fullPath: '/buyer/dashboard/team'
+      preLoaderRoute: typeof BuyerDashboardTeamRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/find-suppliers/': {
+      id: '/buyer/dashboard/find-suppliers/'
+      path: '/find-suppliers'
+      fullPath: '/buyer/dashboard/find-suppliers/'
+      preLoaderRoute: typeof BuyerDashboardFindSuppliersIndexRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/find-suppliers/$id': {
+      id: '/buyer/dashboard/find-suppliers/$id'
+      path: '/find-suppliers/$id'
+      fullPath: '/buyer/dashboard/find-suppliers/$id'
+      preLoaderRoute: typeof BuyerDashboardFindSuppliersIdRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/purchase-orders/': {
+      id: '/buyer/dashboard/purchase-orders/'
+      path: '/purchase-orders'
+      fullPath: '/buyer/dashboard/purchase-orders/'
+      preLoaderRoute: typeof BuyerDashboardPurchaseOrdersIndexRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/purchase-orders/$id': {
+      id: '/buyer/dashboard/purchase-orders/$id'
+      path: '/purchase-orders/$id'
+      fullPath: '/buyer/dashboard/purchase-orders/$id'
+      preLoaderRoute: typeof BuyerDashboardPurchaseOrdersIdRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/requests/': {
+      id: '/buyer/dashboard/requests/'
+      path: '/requests'
+      fullPath: '/buyer/dashboard/requests/'
+      preLoaderRoute: typeof BuyerDashboardRequestsIndexRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/requests/$id': {
+      id: '/buyer/dashboard/requests/$id'
+      path: '/requests/$id'
+      fullPath: '/buyer/dashboard/requests/$id'
+      preLoaderRoute: typeof BuyerDashboardRequestsIdRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/requests/new': {
+      id: '/buyer/dashboard/requests/new'
+      path: '/requests/new'
+      fullPath: '/buyer/dashboard/requests/new'
+      preLoaderRoute: typeof BuyerDashboardRequestsNewRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/rfqs/': {
+      id: '/buyer/dashboard/rfqs/'
+      path: '/rfqs'
+      fullPath: '/buyer/dashboard/rfqs/'
+      preLoaderRoute: typeof BuyerDashboardRfqsIndexRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/rfqs/$id': {
+      id: '/buyer/dashboard/rfqs/$id'
+      path: '/rfqs/$id'
+      fullPath: '/buyer/dashboard/rfqs/$id'
+      preLoaderRoute: typeof BuyerDashboardRfqsIdRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/suppliers/': {
+      id: '/buyer/dashboard/suppliers/'
+      path: '/suppliers'
+      fullPath: '/buyer/dashboard/suppliers/'
+      preLoaderRoute: typeof BuyerDashboardSuppliersIndexRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/suppliers/$id': {
+      id: '/buyer/dashboard/suppliers/$id'
+      path: '/suppliers/$id'
+      fullPath: '/buyer/dashboard/suppliers/$id'
+      preLoaderRoute: typeof BuyerDashboardSuppliersIdRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppSplatRoute: typeof AppSplatRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppMaterialsRoute: typeof AppMaterialsRoute
@@ -717,6 +1107,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppSplatRoute: AppSplatRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppMaterialsRoute: AppMaterialsRoute,
@@ -737,6 +1128,53 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface BuyerDashboardRouteChildren {
+  BuyerDashboardAnalyticsRoute: typeof BuyerDashboardAnalyticsRoute
+  BuyerDashboardInsightsRoute: typeof BuyerDashboardInsightsRoute
+  BuyerDashboardMaterialsRoute: typeof BuyerDashboardMaterialsRoute
+  BuyerDashboardNotificationsRoute: typeof BuyerDashboardNotificationsRoute
+  BuyerDashboardSettingsRoute: typeof BuyerDashboardSettingsRoute
+  BuyerDashboardTeamRoute: typeof BuyerDashboardTeamRoute
+  BuyerDashboardIndexRoute: typeof BuyerDashboardIndexRoute
+  BuyerDashboardFindSuppliersIdRoute: typeof BuyerDashboardFindSuppliersIdRoute
+  BuyerDashboardPurchaseOrdersIdRoute: typeof BuyerDashboardPurchaseOrdersIdRoute
+  BuyerDashboardRequestsIdRoute: typeof BuyerDashboardRequestsIdRoute
+  BuyerDashboardRequestsNewRoute: typeof BuyerDashboardRequestsNewRoute
+  BuyerDashboardRfqsIdRoute: typeof BuyerDashboardRfqsIdRoute
+  BuyerDashboardSuppliersIdRoute: typeof BuyerDashboardSuppliersIdRoute
+  BuyerDashboardFindSuppliersIndexRoute: typeof BuyerDashboardFindSuppliersIndexRoute
+  BuyerDashboardPurchaseOrdersIndexRoute: typeof BuyerDashboardPurchaseOrdersIndexRoute
+  BuyerDashboardRequestsIndexRoute: typeof BuyerDashboardRequestsIndexRoute
+  BuyerDashboardRfqsIndexRoute: typeof BuyerDashboardRfqsIndexRoute
+  BuyerDashboardSuppliersIndexRoute: typeof BuyerDashboardSuppliersIndexRoute
+}
+
+const BuyerDashboardRouteChildren: BuyerDashboardRouteChildren = {
+  BuyerDashboardAnalyticsRoute: BuyerDashboardAnalyticsRoute,
+  BuyerDashboardInsightsRoute: BuyerDashboardInsightsRoute,
+  BuyerDashboardMaterialsRoute: BuyerDashboardMaterialsRoute,
+  BuyerDashboardNotificationsRoute: BuyerDashboardNotificationsRoute,
+  BuyerDashboardSettingsRoute: BuyerDashboardSettingsRoute,
+  BuyerDashboardTeamRoute: BuyerDashboardTeamRoute,
+  BuyerDashboardIndexRoute: BuyerDashboardIndexRoute,
+  BuyerDashboardFindSuppliersIdRoute: BuyerDashboardFindSuppliersIdRoute,
+  BuyerDashboardPurchaseOrdersIdRoute: BuyerDashboardPurchaseOrdersIdRoute,
+  BuyerDashboardRequestsIdRoute: BuyerDashboardRequestsIdRoute,
+  BuyerDashboardRequestsNewRoute: BuyerDashboardRequestsNewRoute,
+  BuyerDashboardRfqsIdRoute: BuyerDashboardRfqsIdRoute,
+  BuyerDashboardSuppliersIdRoute: BuyerDashboardSuppliersIdRoute,
+  BuyerDashboardFindSuppliersIndexRoute: BuyerDashboardFindSuppliersIndexRoute,
+  BuyerDashboardPurchaseOrdersIndexRoute:
+    BuyerDashboardPurchaseOrdersIndexRoute,
+  BuyerDashboardRequestsIndexRoute: BuyerDashboardRequestsIndexRoute,
+  BuyerDashboardRfqsIndexRoute: BuyerDashboardRfqsIndexRoute,
+  BuyerDashboardSuppliersIndexRoute: BuyerDashboardSuppliersIndexRoute,
+}
+
+const BuyerDashboardRouteWithChildren = BuyerDashboardRoute._addFileChildren(
+  BuyerDashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptInviteRoute: AcceptInviteRoute,
@@ -747,6 +1185,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   AdminVerificationRoute: AdminVerificationRoute,
+  BuyerDashboardRoute: BuyerDashboardRouteWithChildren,
   BuyerOnboardingRoute: BuyerOnboardingRoute,
   BuyerSigninRoute: BuyerSigninRoute,
   BuyerSignupRoute: BuyerSignupRoute,

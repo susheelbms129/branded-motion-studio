@@ -57,6 +57,8 @@ M6 = os.path.join(MIG, "20261117000006_trust_hardening.sql")
 apply(M6)
 M7 = os.path.join(MIG, "20261118000007_supplier_directory.sql")
 apply(M7); apply(M7)   # safe to run twice
+M8 = os.path.join(MIG, "20261119000008_supplier_profile_view.sql")
+apply(M8); apply(M8)   # safe to run twice
 
 ids = {k: str(uuid.uuid4()) for k in "SFXBMAZ"}  # S owner, F finance, X other supplier owner, B buyer, M member-employee, A admin, Z stranger
 def add_user(k, email, typ):
@@ -150,6 +152,41 @@ p1 = res("B", "''", "''", "''", "false", "1", "0"); p2 = res("B", "''", "''", "'
 check("paging: total stays, pages differ", p1["total"] == 2 and len(p1["items"]) == 1 and len(p2["items"]) == 1 and p1["items"][0]["org_id"] != p2["items"][0]["org_id"])
 check("page size is capped and bad numbers are tamed", res("B", "''", "''", "''", "false", "100000", "-5")["total"] == 2 and len(res("B", "''", "''", "''", "false", "0", "0")["items"]) == 1)
 check("listing never changes anything", sh("select count(*) from audit_log where action like 'directory%'")[1] == "0")
+
+# ───────── the supplier profile (migration 8) ─────────
+GP = lambda k, o: U(k, f"select get_supplier_profile('{o}')::text")
+prof = lambda k, o: json.loads(GP(k, o)[1])
+big = "data:image/png;base64," + "A" * 120000
+small = "data:image/png;base64,iVBORw0KGgo="
+sh(f"update supplier_profiles set description='Industrial fasteners and fittings from Peenya.', logo='{small}' where org_id='{org1}'")
+sh(f"update businesses set country='India', business_type='Manufacturer', company_size='11-50', year_established=2009, website='kaveri.example.in' where id='{org1}'")
+sh(f"insert into supplier_capabilities(org_id,coverage,delivery_time,min_order_value,delivery_options,pickup,details) values ('{org1}', array['Pan India'], '3-5 days', 5000, array['Courier'], 'Yes', '{{\"inHouse\":\"Yes\",\"monthlyCapacity\":\"50 tonnes\"}}'::jsonb)")
+sh(f"insert into supplier_locations(org_id,country,state,city) values ('{org1}','India','Karnataka','Bengaluru'), ('{org1}','India','Tamil Nadu','Hosur')")
+sh(f"insert into supplier_products(org_id,name,category,description,images,unit,moq,price,availability,sort_order) values ('{org1}','Hex bolt M8','Fasteners','Zinc plated hex bolt, 8.8 grade.', array['{small}'], 'pcs', 500, 4.5, 'Available', 1), ('{org1}','Anchor set','Hardware','Heavy duty anchors.', array['{big}'], 'box', 10, 220, 'Made to order', 2)")
+
+denied("anonymous cannot open a profile", sh(f"select get_supplier_profile('{org1}')", "anon"))
+denied("a supplier cannot open a competitor's profile", GP("X", org1), "not_allowed")
+denied("a supplier cannot open their own through the buyer view either", GP("S", org1), "not_allowed")
+ok("a buyer can open a profile", GP("B", org1)); ok("a reviewer can open a profile", GP("A", org1))
+p = prof("B", org1)
+check("profile carries the public company facts", p["name"] == "Kaveri Industrial" and p["city"] == "Bengaluru" and p["state"] == "Karnataka" and p["country"] == "India" and p["business_type"] == "Manufacturer" and p["year_established"] == 2009 and p["company_size"] == "11-50", str(p))
+check("full description and categories", p["description"].startswith("Industrial fasteners") and p["categories"] == ["Fasteners", "Hardware"])
+check("products are listed in order", [x["name"] for x in p["products"]] == ["Hex bolt M8", "Anchor set"] and p["products"][0]["price"] == 4.5 and p["products"][0]["availability"] == "Available")
+check("one small photo per product, a large one is left out", p["products"][0]["image"] == small and p["products"][1]["image"] is None)
+check("capabilities and service areas", p["capabilities"]["delivery_time"] == "3-5 days" and p["capabilities"]["details"]["monthlyCapacity"] == "50 tonnes" and len(p["locations"]) == 2)
+check("passport is included (level 2, proofs counted)", p["passport"]["level"] == 2 and len(p["passport"]["checks"]) == 3)
+raw = GP("B", org1)[1]
+for secret in ["private@kaveri.in", "9880011223", "Ravi Kumar", "kaveri.example.in", "HDFC0001234", "secret.pdf", "Account ending", "No. 14, 3rd Cross"]:
+    check(f"private detail never returned: {secret}", secret not in raw)
+denied("an unfinished supplier cannot be opened", GP("B", org3), "not_found")
+denied("a buyer company cannot be opened", GP("B", orgB), "not_found")
+denied("a made-up id cannot be opened", GP("B", str(uuid.uuid4())), "not_found")
+denied("a missing id is refused", U("B", "select get_supplier_profile(null)"), "not_found")
+sh(f"update verification_checks set expires_at = current_date - 1 where org_id='{org1}'")
+check("an expired proof stops counting on the profile too", prof("B", org1)["passport"]["level"] == 0)
+sh(f"update verification_checks set expires_at = current_date + 300 where org_id='{org1}' and type <> 'bank'"); sh(f"update verification_checks set expires_at = current_date + 100 where org_id='{org1}' and type = 'bank'")
+check("reading a profile never changes anything", sh("select count(*) from audit_log where action like 'directory%' or action like 'supplier_profile%'")[1] == "0")
+check("only buyers and reviewers hold execute on the function", sh("select count(*) from information_schema.routine_privileges where routine_name='get_supplier_profile' and grantee in ('anon','public')")[1] == "0")
 
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

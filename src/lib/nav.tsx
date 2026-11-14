@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 
-/** App-relative link: to="requests/123" → /app/requests/123 ; to="" → /app */
-export const appPath = (path = "") => `/app${path ? `/${path}` : ""}`;
+/** App-relative link: to="requests/123" → /buyer/dashboard/requests/123 ; to="" → /buyer/dashboard */
+export const appPath = (path = "") => `/buyer/dashboard${path ? `/${path}` : ""}`;
 export function AppLink({
   to = "",
   ...rest

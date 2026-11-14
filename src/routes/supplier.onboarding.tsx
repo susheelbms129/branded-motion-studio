@@ -9,7 +9,7 @@ export const Route = createFileRoute("/supplier/onboarding")({
   beforeLoad: async () => {
     const r = await requireSupplier();
     if (r === "signin") throw redirect({ to: "/supplier/signin" });
-    if (r === "buyer") throw redirect({ to: "/app" });
+    if (r === "buyer") throw redirect({ to: "/buyer/dashboard" });
     // Already launched their business: nothing left to set up.
     if (await hasSupplierWorkspace()) throw redirect({ to: "/supplier/dashboard" });
   },

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/supplier/dashboard")({
   beforeLoad: async () => {
     const r = await requireSupplier();
     if (r === "signin") throw redirect({ to: "/supplier/signin" });
-    if (r === "buyer") throw redirect({ to: "/app" });
+    if (r === "buyer") throw redirect({ to: "/buyer/dashboard" });
     // A supplier who hasn't launched their business yet finishes setup first. This is decided by the
     // database (do they belong to a supplier company?), never by anything stored in the browser.
     if (!(await hasSupplierWorkspace())) throw redirect({ to: "/supplier/onboarding" });

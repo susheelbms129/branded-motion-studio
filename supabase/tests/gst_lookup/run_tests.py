@@ -53,6 +53,8 @@ M4 = os.path.join(MIG, "20261115000004_trust_passport.sql")
 apply(M4)
 M5 = os.path.join(MIG, "20261116000005_gst_lookup.sql")
 apply(M5); apply(M5)   # must be safe to run twice
+M6 = os.path.join(MIG, "20261117000006_trust_hardening.sql")
+apply(M6); apply(M6)   # hardening: safe to run twice
 
 ids = {k: str(uuid.uuid4()) for k in "SFXBMAZ"}  # S owner, F finance, X other supplier owner, B buyer, M member-employee, A admin, Z stranger
 def add_user(k, email, typ):
@@ -121,16 +123,21 @@ denied("the lookup columns cannot be edited directly", U("S", f"update verificat
 # ───────── a failed lookup never blocks, retries are limited ─────────
 ok("provider down is recorded as unavailable", rec(g1, {"outcome": "unavailable", "reason": "provider_http_500"}))
 check("unavailable is not final", look(g1)["outcome"] == "unavailable" and sh(f"select lookup_at is null from verification_checks where id='{g1}'")[1] == "t")
-ok("2nd try allowed", U("S", f"select request_gst_lookup('{g1}')")); ok("3rd try allowed", U("S", f"select request_gst_lookup('{g1}')"))
+age = lambda cid: sh(f"update verification_checks set lookup_last_try = now() - interval '1 minute' where id='{cid}'")
+denied("double-click protection: a retry within 30 seconds is refused", U("S", f"select request_gst_lookup('{g1}')"), "too_soon")
+age(g1); ok("2nd try allowed", U("S", f"select request_gst_lookup('{g1}')")); age(g1); ok("3rd try allowed", U("S", f"select request_gst_lookup('{g1}')"))
+age(g1)
 denied("supplier limited to 3 tries per proof", U("S", f"select request_gst_lookup('{g1}')"), "too_many_tries")
 ok("a reviewer may still retry", U("A", f"select request_gst_lookup('{g1}')"))
+age(g1); U("A", f"select request_gst_lookup('{g1}')"); age(g1); U("A", f"select request_gst_lookup('{g1}')"); age(g1)
+denied("a reviewer is capped too (6 tries per proof)", U("A", f"select request_gst_lookup('{g1}')"), "too_many_tries")
 
 # ───────── a good answer ─────────
 bad_kind = rec(g1, {"outcome": "weird"}); denied("unknown outcome rejected", bad_kind, "invalid_outcome")
 ok("good answer recorded", rec(g1, {"outcome": "ok", "legal_name": "KAVERI INDUSTRIAL SUPPLIES PRIVATE LIMITED", "trade_name": "", "gst_status": "Active",
                                     "registered_on": "2017-07-01", "constitution": "Private Limited Company"}))
 l = look(g1)
-check("name match computed by the database", l["name_match"] == "match" and l["gst_status"] == "Active" and l["registered_on"] == "2017-07-01")
+check("name match computed by the database (contained name is only partial)", l["name_match"] == "partial" and l["gst_status"] == "Active" and l["registered_on"] == "2017-07-01")
 check("answer is final", sh(f"select lookup_at is not null from verification_checks where id='{g1}'")[1] == "t")
 denied("cannot ask again once checked", U("A", f"select request_gst_lookup('{g1}')"), "already_checked")
 ok("a late/duplicate answer is ignored quietly", rec(g1, {"outcome": "ok", "legal_name": "EVIL CO", "gst_status": "Cancelled"}))
@@ -143,7 +150,7 @@ check("impossible/foreign-format dates are dropped, not stored", look(g2)["regis
 
 # ───────── the reviewer sees it; an inactive registration cannot be verified ─────────
 q = {x["id"]: x for x in json.loads(U("A", "select admin_queue()::text")[1])}
-check("queue carries the live result", q[g1]["lookup"]["name_match"] == "match" and "duplicate_gstin" in q[g1] and "auto_flags" in q[g1])
+check("queue carries the live result", q[g1]["lookup"]["name_match"] == "partial" and "duplicate_gstin" in q[g1] and "auto_flags" in q[g1])
 check("buyers still cannot read the queue", not U("B", "select admin_queue()")[0])
 U("A", f"select admin_claim_check('{g1}')")
 sh(f"update verification_checks set lookup = jsonb_set(lookup,'{{gst_status}}','\"Cancelled\"') where id='{g1}'")
@@ -162,16 +169,85 @@ sh(f"update verification_checks set lookup=null, lookup_at=null where id='{g2}'"
 rec(g2, {"outcome": "not_found"})
 check("not_found is final and shown", look(g2)["outcome"] == "not_found" and look(g2)["name_match"] == "unknown")
 U("A", f"select admin_claim_check('{g2}')")
-ok("not_found does not auto-block (reviewer decides)", U("A", f"select admin_decide('{g2}','verify')"))
+denied("not_found needs a written reason to verify", U("A", f"select admin_decide('{g2}','verify')"), "gst_not_found")
+ok("not_found can be overridden with a reason (audited)", U("A", f"select admin_decide('{g2}','verify','Checked the GST portal certificate: new number, not in provider cache yet')"))
 
 # ───────── daily cost cap ─────────
 org3 = str(uuid.uuid4()); sh(f"insert into businesses(id,slug,name,kind,state) values ('{org3}','cap-co','Cap Co','supplier','Karnataka')"); sh(f"insert into supplier_verifications(org_id) values ('{org3}')")
 sh(f"insert into memberships(org_id,user_id,role) values ('{org3}','{ids['Z']}','owner')")
-sh(f"insert into verification_checks(org_id,type,reference,status,lookup_last_try) select '{org3}','certificate','c'||g,'superseded',now() from generate_series(1,10) g")
+sh(f"insert into verification_checks(org_id,type,reference,status,lookup_last_try,lookup_tries) select '{org3}','certificate','c'||g,'superseded',now(), 2 from generate_series(1,10) g")
 sh(f"update verification_checks set label = 'l'||id where org_id='{org3}'")
 cz = start("Z", org3, "registration", "", mk("29AAACR5055K1Z"))[1]
 put("Z", f"{org3}/{cz}/a.pdf"); U("Z", f"select attach_document('{cz}','{org3}/{cz}/a.pdf','a.pdf')"); U("Z", f"select submit_check('{cz}')")
 denied("daily cost cap per company", U("Z", f"select request_gst_lookup('{cz}')"), "daily_limit")
+
+# ═════════════ migration 6 (hardening) ═════════════
+check("short name is never a full match", nm("Sri Ltd", "Sri Lakshmi Steel Industries") == "partial")
+check("generic words (Enterprises, Traders...) do not create a match", nm("Sharma Enterprises", "Verma Enterprises") == "mismatch" and nm("Sharma Traders", "Verma Trading Co") == "mismatch")
+check("same name with generic suffix still matches", nm("Kaveri Industries", "Kaveri Industries Pvt Ltd") == "match")
+
+# one explicit rule per GST outcome (org1's business is "Kaveri Industrial")
+GST_4, GST_5, GST_6 = mk("29AABCU9603R1Z"), mk("29AAACB2894G1Z"), mk("29AAECK1234A1Z")
+def pending_with(k, org, gst, res):
+    cid = submitted_gst(k, org, gst); rec(cid, res); U("A", f"select admin_claim_check('{cid}')"); return cid
+g4 = pending_with("S", org1, GST_4, {"outcome": "ok", "legal_name": "Totally Different Traders", "gst_status": "Active"})
+check("different company name is recorded as mismatch", look(g4)["name_match"] == "mismatch")
+denied("Active + MISMATCH needs a written reason", U("A", f"select admin_decide('{g4}','verify')"), "name_mismatch")
+denied("a one-word note is not a reason", U("A", f"select admin_decide('{g4}','verify','ok')"), "name_mismatch")
+ok("Active + mismatch verifies with a reason", U("A", f"select admin_decide('{g4}','verify','Trade name differs; GST certificate shows same PAN as company registration')"))
+g5 = pending_with("S", org1, GST_5, {"outcome": "ok", "legal_name": "Kaveri Industrial Pvt Ltd"})   # provider gave no status
+check("a missing status is treated as Unknown by the guard (null in the record)", look(g5)["gst_status"] is None)
+denied("status Unknown needs a written reason", U("A", f"select admin_decide('{g5}','verify')"), "gst_status_unknown")
+ok("status Unknown verifies with a reason", U("A", f"select admin_decide('{g5}','verify','Checked the GST portal manually: Active as of today')"))
+g6 = pending_with("S", org1, GST_6, {"outcome": "ok", "legal_name": "Kaveri Industrial Pvt Ltd", "gst_status": "Active"})
+ok("Active + matching name verifies with no note", U("A", f"select admin_decide('{g6}','verify')"))
+g7 = pending_with("X", org2, GST_MH, {"outcome": "unavailable", "reason": "provider_http_503"})
+ok("provider down: verifying by hand is still allowed", U("A", f"select admin_decide('{g7}','verify')"))
+
+# the passport says HOW each proof was checked
+pp = json.loads(U("B", f"select get_trust_passport('{org1}')::text")[1])
+reg = [c for c in pp["checks"] if c["type"] == "registration"]
+today = sh("select current_date::text")[1]
+check("government record + matching name -> evidence government_record, with the check date", len(reg) == 1 and reg[0]["evidence"] == "government_record" and reg[0]["record_checked_on"] == today, str(reg))
+pp2 = json.loads(U("B", f"select get_trust_passport('{org2}')::text")[1])
+r2 = [c for c in pp2["checks"] if c["type"] == "registration"]
+check("no live record -> evidence document_reviewed, no record date", len(r2) == 1 and r2[0]["evidence"] == "document_reviewed" and r2[0]["record_checked_on"] is None, str(r2))
+check("level names: no 'Certified' any more", json.loads(U("B", f"select get_trust_passport('{org1}')::text")[1])["level_name"] == "Registered")
+check("passport still hides bank and address details", "HDFC" not in json.dumps(pp) and "Peenya" not in json.dumps(pp))
+
+# sensitive evidence: owner / finance manager / reviewer only
+doc_check = sh(f"select id from verification_checks where org_id='{org1}' and doc_path is not null limit 1")[1]
+denied("an ordinary employee cannot open a document", U("M", f"select record_document_view('{doc_check}')"), "not_allowed")
+ok("the owner can", U("S", f"select record_document_view('{doc_check}')")); ok("the finance manager can", U("F", f"select record_document_view('{doc_check}')")); ok("a reviewer can", U("A", f"select record_document_view('{doc_check}')"))
+check("an employee cannot list the proofs (address, IFSC)", U("M", "select count(*) from verification_checks")[1] == "0")
+check("an employee cannot list stored documents", U("M", "select count(*) from storage.objects")[1] == "0" and int(U("S", "select count(*) from storage.objects")[1]) > 0)
+check("a buyer cannot list stored documents", U("B", "select count(*) from storage.objects")[1] == "0")
+
+# reviewer operations
+denied("a supplier cannot read the ops stats", U("S", "select admin_ops_stats()"), "not_allowed")
+denied("anonymous cannot read the ops stats", sh("select admin_ops_stats()", "anon"))
+st = json.loads(U("A", "select admin_ops_stats()::text")[1])
+check("no heartbeat yet = expiry job reported unhealthy", st["expiry_job_healthy"] is False and st["expiry_job_last_run"] is None)
+SVC("select refresh_trust_passports()")
+st = json.loads(U("A", "select admin_ops_stats()::text")[1])
+check("after the job runs the heartbeat is recorded and healthy", st["expiry_job_healthy"] is True and st["expiry_job_last_run"] is not None)
+check("heartbeat table is invisible to the API", not U("A", "select count(*) from ops_heartbeats")[0])
+g8 = submitted_gst("X", org2, mk("27AAACI1681G1Z")); U("A", f"select admin_claim_check('{g8}')")
+sh(f"update verification_checks set claimed_at = now() - interval '30 hours', submitted_at = now() - interval '40 hours' where id='{g8}'")
+st = json.loads(U("A", "select admin_ops_stats()::text")[1])
+check("stale claim and 24h+ waiting are counted", st["stale_claims"] >= 1 and st["waiting_over_24h"] >= 1 and st["oldest_waiting_hours"] >= 39 and st["open"] >= 1)
+check("reviewer workload is listed", any(r["open_claims"] >= 1 for r in st["reviewers"]))
+check("missing live result is counted", st["no_live_result"] >= 0 and "lookup_failures_24h" in st and "expiring_30d" in st)
+denied("a supplier cannot release claims", U("S", "select admin_release_stale(24)"), "not_allowed")
+denied("hours must be sensible", U("A", "select admin_release_stale(0)"), "invalid_hours")
+check("stale claims go back to the queue", U("A", "select admin_release_stale(24)")[1] == "1" and sh(f"select status || coalesce(claimed_by::text,'') from verification_checks where id='{g8}'")[1] == "submitted")
+check("release is audited", int(sh(f"select count(*) from audit_log where entity_id='{g8}' and action='proof_claim_released'")[1]) == 1)
+
+# platform-wide kill switch
+sh(f"insert into verification_checks(org_id,type,reference,status,lookup_last_try,lookup_tries) values ('{org3}','certificate','killswitch','superseded',now(),600)")
+denied("platform-wide daily cap pauses live checks", U("A", f"select request_gst_lookup('{g8}')"), "platform_limit")
+sh("delete from verification_checks where reference='killswitch'")
+ok("and they resume once the count drops", U("A", f"select request_gst_lookup('{g8}')"))
 
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

@@ -11,7 +11,7 @@ import type { CheckType, TrustPassport as Passport } from "@/lib/verification-ap
 const LEVELS = [
   { n: 1, name: "Registered", hint: "Business registration checked" },
   { n: 2, name: "Verified", hint: "+ address and bank checked" },
-  { n: 3, name: "Certified", hint: "+ a quality certificate checked" },
+  { n: 3, name: "Verified + Certificates", hint: "+ a quality certificate document reviewed" },
 ] as const;
 
 export const TYPE_TITLE: Record<CheckType, string> = {
@@ -19,6 +19,12 @@ export const TYPE_TITLE: Record<CheckType, string> = {
   address: "Business address",
   bank: "Bank account",
   certificate: "Certificate",
+};
+
+/** How a proof was checked. Never blur these: a reviewed document is not the same as a government record. */
+const EVIDENCE: Record<string, string> = {
+  government_record: "Government record checked",
+  document_reviewed: "Document reviewed by Vendora",
 };
 
 export const fmtDate = (iso: string | null) =>
@@ -64,6 +70,12 @@ export function TrustPassport({ passport, className }: { passport: Passport; cla
               <span>
                 <span className="block font-medium">{c.type === "certificate" ? c.label : TYPE_TITLE[c.type]}</span>
                 {c.reference ? <span className="block text-sm text-muted-foreground">{c.type === "certificate" && c.issuer ? `${c.issuer} · ` : ""}No. {c.reference}</span> : null}
+                {c.evidence ? (
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {EVIDENCE[c.evidence]}
+                    {c.evidence === "government_record" && c.record_checked_on ? ` on ${fmtDate(c.record_checked_on)}` : ""}
+                  </span>
+                ) : null}
               </span>
               <span className="text-right text-sm text-muted-foreground">
                 <span className="block">Verified {fmtDate(c.verified_on)}</span>
@@ -75,6 +87,9 @@ export function TrustPassport({ passport, className }: { passport: Passport; cla
       ) : (
         <p className="mt-5 text-sm text-muted-foreground">No proofs have been verified yet, so buyers see this supplier as unverified.</p>
       )}
+      <p className="mt-4 text-xs text-muted-foreground">
+        Vendora checks identity and documents. It does not guarantee a supplier's quality, delivery or finances.
+      </p>
     </section>
   );
 }

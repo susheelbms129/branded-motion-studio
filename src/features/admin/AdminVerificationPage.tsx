@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
 import { fieldClass } from "@/components/onboarding/fields";
 import { cn } from "@/lib/utils";
-import { claimProof, decideProof, loadQueue, openDocument, releaseProof, requestGstLookup, type GstLookup, type QueueItem } from "@/lib/verification-api";
+import { claimProof, decideProof, loadOpsStats, loadQueue, openDocument, releaseProof, releaseStaleClaims, requestGstLookup, type GstLookup, type OpsStats, type QueueItem } from "@/lib/verification-api";
 
 const ctaBtn = "btn-shine rounded-md bg-gradient-cta px-4 py-2 text-sm font-semibold text-white shadow-glow transition disabled:opacity-60";
 const outlineBtn = "rounded-md border border-input bg-white px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted/60 disabled:opacity-60";
@@ -15,10 +15,12 @@ export function AdminVerificationPage() {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [stats, setStats] = useState<OpsStats | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       setItems(await loadQueue(scope));
+      setStats(await loadOpsStats().catch(() => null));   // health numbers never block the queue
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "We couldn't load the queue.");
@@ -37,6 +39,7 @@ export function AdminVerificationPage() {
       <main className="mx-auto max-w-4xl p-6 sm:p-10">
         <h1 className="text-3xl font-semibold">Verification review</h1>
         <p className="mt-1 text-muted-foreground">Oldest first. Take a proof, check the document against the details, then verify or reject with a reason.</p>
+        {stats ? <OpsBar stats={stats} onChanged={refresh} /> : null}
         <div className="mt-6 flex gap-2" role="tablist">
           {(["open", "done"] as const).map((s) => (
             <button key={s} type="button" role="tab" aria-selected={scope === s} onClick={() => setScope(s)}
@@ -51,6 +54,37 @@ export function AdminVerificationPage() {
           : <ul className="mt-6 space-y-4">{items.map((it) => <Row key={it.id} it={it} onChanged={refresh} />)}</ul>}
       </main>
     </div>
+  );
+}
+
+/** Health of the review operation: what is late, what is stuck, whether the nightly expiry job is alive. */
+function OpsBar({ stats, onChanged }: { stats: OpsStats; onChanged: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const problems = stats.waiting_over_24h > 0 || stats.stale_claims > 0 || !stats.expiry_job_healthy || stats.lookup_failures_24h > 0;
+  const release = async () => {
+    setBusy(true); setMsg("");
+    try { const n = await releaseStaleClaims(24); setMsg(`${n} claim${n === 1 ? "" : "s"} given back to the queue.`); await onChanged(); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Something went wrong."); }
+    finally { setBusy(false); }
+  };
+  return (
+    <section aria-label="Review health" className={cn("mt-6 rounded-xl border p-4 text-sm", problems ? "border-amber-300 bg-amber-50 text-amber-900" : "border-border bg-card")}>
+      <p className="font-semibold">{problems ? "Needs attention" : "All healthy"}</p>
+      <ul className="mt-1 grid gap-x-6 gap-y-0.5 sm:grid-cols-2">
+        <li>{stats.open} open{stats.oldest_waiting_hours != null ? ` · oldest waiting ${Math.round(stats.oldest_waiting_hours)} h` : ""}</li>
+        <li>{stats.waiting_over_24h} waiting more than 24 h</li>
+        <li>{stats.stale_claims} claimed but untouched for 24 h</li>
+        <li>{stats.lookup_failures_24h} live GST check{stats.lookup_failures_24h === 1 ? "" : "s"} failed in 24 h{stats.no_live_result > 0 ? ` · ${stats.no_live_result} without a live result` : ""}</li>
+        <li>{stats.expiring_30d} proof{stats.expiring_30d === 1 ? "" : "s"} expiring within 30 days</li>
+        <li className={stats.expiry_job_healthy ? "" : "font-semibold"}>
+          Daily expiry job: {stats.expiry_job_last_run ? `last ran ${fmtDate(stats.expiry_job_last_run)}` : "has never run"}{stats.expiry_job_healthy ? "" : " (check your cron)"}
+        </li>
+      </ul>
+      {stats.reviewers.length > 0 ? <p className="mt-1 text-muted-foreground">Workload: {stats.reviewers.map((r) => `${r.name} ${r.open_claims}`).join(" · ")}</p> : null}
+      {stats.stale_claims > 0 ? <button type="button" disabled={busy} onClick={release} className="mt-2 font-semibold text-primary hover:underline">Give stale claims back to the queue</button> : null}
+      {msg ? <p role="status" className="mt-1">{msg}</p> : null}
+    </section>
   );
 }
 
@@ -123,7 +157,7 @@ function Row({ it, onChanged }: { it: QueueItem; onChanged: () => Promise<void> 
           {it.status === "submitted" ? <button type="button" disabled={busy} className={ctaBtn} onClick={() => run(() => claimProof(it.id))}>Take this proof</button> : null}
           {mine ? (
             <>
-              <label className="block text-sm font-medium">Note to the supplier (required to reject)
+              <label className="block text-sm font-medium">Note (the supplier can see it). Required to reject, and to verify when the live check shows a name mismatch, an unknown status or no record
                 <textarea className={cn(fieldClass, "mt-1 min-h-16")} value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} placeholder="For example: the address on the bill does not match." />
               </label>
               {it.type !== "certificate" ? (
@@ -181,16 +215,17 @@ function LiveCheck({ lookup, canRun, company, onRun, busy }: { lookup: GstLookup
   if (lookup.outcome === "not_found") {
     return (
       <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" aria-label="Live government check">
-        <p className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> The government record has no taxpayer with this GST number. Look closely at the document before verifying.</p>
+        <p className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> The government record has no taxpayer with this GST number. To verify anyway you must write a reason in the note.</p>
       </div>
     );
   }
   const active = (lookup.gst_status ?? "").toLowerCase() === "active";
+  const unknownStatus = !lookup.gst_status || lookup.gst_status.toLowerCase() === "unknown";
   const m = MATCH_TEXT[lookup.name_match ?? "unknown"] ?? UNKNOWN_MATCH;
   return (
     <ul className="mt-3 space-y-1 rounded-xl bg-muted/40 p-3 text-sm" aria-label="Live government check">
       <li className="font-medium">Live government record{lookup.fetched_at ? ` (checked ${fmtDate(lookup.fetched_at)})` : ""}</li>
-      <Flag ok={active} text={active ? "Registration is Active" : `Registration is ${lookup.gst_status || "not active"}${lookup.cancelled_on ? ` (since ${fmtDate(lookup.cancelled_on)})` : ""}. It cannot be verified.`} />
+      <Flag ok={active} warn={unknownStatus} text={active ? "Registration is Active" : unknownStatus ? "The record gave no registration status. Check the GST portal and explain in the note." : `Registration is ${lookup.gst_status}${lookup.cancelled_on ? ` (since ${fmtDate(lookup.cancelled_on)})` : ""}. It cannot be verified.`} />
       <Flag ok={m.ok} warn={m.warn} text={`${lookup.legal_name || lookup.trade_name || "The registered name"} ${m.t}${m.ok ? "" : ` (${company})`}`} />
       {lookup.trade_name && lookup.legal_name ? <li className="text-muted-foreground">Trade name: {lookup.trade_name}</li> : null}
       {lookup.registered_on ? <li className="text-muted-foreground">Registered on {fmtDate(lookup.registered_on)}{lookup.constitution ? ` · ${lookup.constitution}` : ""}</li> : null}

@@ -64,10 +64,10 @@ export function normalizeTaxpayer(body: Json): Taxpayer | null {
   return {
     legal_name: pick(rec, LEGAL).slice(0, 200),
     trade_name: pick(rec, ["tradeNam", "trade_name", "tradeName"]).slice(0, 200),
-    gst_status: normalizeStatus(pick(rec, ["sts", "gstin_status", "registration_status"])).slice(0, 40),
+    gst_status: normalizeStatus(pick(rec, ["sts", "gstin_status", "registration_status", "status"])).slice(0, 40),
     registered_on: toIsoDate(pick(rec, ["rgdt", "registration_date", "registrationDate"])),
     cancelled_on: toIsoDate(pick(rec, ["cxdt", "cancellation_date", "cancellationDate"])),
-    constitution: pick(rec, ["ctb", "constitution", "constitution_of_business"]).slice(0, 80),
+    constitution: pick(rec, ["ctb", "constitution", "constitution_of_business", "business_constitution"]).slice(0, 80),
   };
 }
 

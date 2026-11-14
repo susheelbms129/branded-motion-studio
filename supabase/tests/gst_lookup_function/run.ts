@@ -45,7 +45,7 @@ reset(); r = await handler(new Request("http://f", { method: "OPTIONS" })); chec
 reset(); script.gate = { data: null, error: { message: "not_allowed" } }; r = await call({ check_id: ID });
 check("gate says not allowed -> 403 and provider is NOT called", r.status === 403 && seen.length === 0 && recorded().length === 0);
 check("gate is called with the user's login, not the service key", calls[0]?.who === "user" && calls[0]?.fn === "request_gst_lookup");
-for (const code of ["already_checked", "too_many_tries", "daily_limit", "not_pending"]) {
+for (const code of ["already_checked", "too_many_tries", "too_soon", "daily_limit", "platform_limit", "not_pending"]) {
   reset(); script.gate = { data: null, error: { message: `ERROR: ${code}: x` } }; r = await call({ check_id: ID });
   check(`gate limit ${code} -> no provider call`, r.status === 200 && (await r.json()).status === code && seen.length === 0);
 }

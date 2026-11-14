@@ -19,6 +19,11 @@ describe("GST provider response normalizer", () => {
   it("never treats a wrapper 'status: success' as the GST status", () => {
     expect(normalizeTaxpayer({ status: "success", data: { lgnm: "X Co" } })?.gst_status).toBe("Unknown");
   });
+  it("reads the gstinapi.in response shape (status, registration_date, business_constitution)", () => {
+    const body = { success: true, gstin: "33AAACC1206D1ZN", credits_remaining: 9, data: { gstin: "33AAACC1206D1ZN", legal_name: "CENTRAL WAREHOUSING CORPORATION", trade_name: "CENTRAL WAREHOUSING CORPORATION", status: "Active", registration_date: "2017-07-01", cancellation_date: null, business_constitution: null } };
+    expect(normalizeTaxpayer(body)).toMatchObject({ legal_name: "CENTRAL WAREHOUSING CORPORATION", gst_status: "Active", registered_on: "2017-07-01", cancelled_on: null });
+    expect(normalizeTaxpayer({ success: true, data: { legal_name: "X", status: "Cancelled", cancellation_date: "2024-03-01" } })).toMatchObject({ gst_status: "Cancelled", cancelled_on: "2024-03-01" });
+  });
   it("returns null when there is no taxpayer record", () => {
     expect(normalizeTaxpayer({ error: "invalid" })).toBeNull();
     expect(normalizeTaxpayer(null)).toBeNull();

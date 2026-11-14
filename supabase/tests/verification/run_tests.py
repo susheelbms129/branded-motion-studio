@@ -53,6 +53,8 @@ M4 = os.path.join(MIG, "20261115000004_trust_passport.sql")
 apply(M4); apply(M4)   # must be safe to run twice
 M5 = os.path.join(MIG, "20261116000005_gst_lookup.sql")
 if os.path.exists(M5): apply(M5)   # the whole suite must still pass with the GST lookup installed
+M6 = os.path.join(MIG, "20261117000006_trust_hardening.sql")
+if os.path.exists(M6): apply(M6); apply(M6)   # hardening: safe to run twice
 
 ids = {k: str(uuid.uuid4()) for k in "SFXBMAZ"}  # S owner, F finance, X other supplier owner, B buyer, M member-employee, A admin, Z stranger
 def add_user(k, email, typ):
@@ -153,7 +155,7 @@ denied("no direct delete", U("S", f"delete from verification_checks where id='{c
 denied("cannot self-promote to admin", U("S", f"insert into platform_admins(user_id) values ('{ids['S']}')"), "permission denied")
 check("platform_admins invisible", not U("S", "select count(*) from platform_admins")[0])
 # who sees what
-check("members see their own proofs", U("S", "select count(*) from verification_checks")[1] == "2" and U("M", "select count(*) from verification_checks")[1] == "2")
+check("owner sees own proofs; an ordinary employee sees none (address/bank evidence is owner/finance only)", U("S", "select count(*) from verification_checks")[1] == "2" and U("F", "select count(*) from verification_checks")[1] == "2" and U("M", "select count(*) from verification_checks")[1] == "0")
 check("other suppliers/buyers/strangers see none", all(U(k, "select count(*) from verification_checks")[1] == "0" for k in "XBZ"))
 check("reviewer sees all", U("A", "select count(*) from verification_checks")[1] == "2")
 
@@ -211,7 +213,7 @@ check("rejected certificate does not count", pp("B", org1)["level"] == 2)
 cc = full("S", "certificate", "ISO 9001", "C-778", "TUV SUD", exp="current_date + 400")
 ok("verify certificate", U("A", f"select admin_decide('{cc}','verify')"))
 p = pp("B", org1)
-check("level 3 = Certified", p["level"] == 3 and any(c["label"] == "ISO 9001" and c["reference"] == "C-778" for c in p["checks"]))
+check("level 3 = Verified + Certificates", p["level"] == 3 and p["level_name"] == "Verified + Certificates" and any(c["label"] == "ISO 9001" and c["reference"] == "C-778" for c in p["checks"]))
 check("certificate keeps the printed expiry (cannot be extended)", sh(f"select (expires_at = current_date + 400)::text from verification_checks where id='{cc}'")[1] == "true")
 
 # ───────── automatic lapse ─────────

@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
   const gate = await asUser.rpc("request_gst_lookup", { p_check: checkId });
   if (gate.error || typeof gate.data !== "string") {
     const m = gate.error?.message ?? "";
-    const code = /already_checked|not_pending|not_applicable|too_many_tries|daily_limit/.exec(m)?.[0];
+    const code = /already_checked|not_pending|not_applicable|too_many_tries|too_soon|daily_limit|platform_limit/.exec(m)?.[0];
     return reply(code ? 200 : 403, { status: code ?? "not_allowed" });
   }
   const gstin = gate.data.trim().toUpperCase();

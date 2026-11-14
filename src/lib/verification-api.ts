@@ -35,6 +35,9 @@ export interface PassportCheck {
   issuer: string;
   verified_on: string | null;
   expires_at: string | null;
+  /** HOW it was checked: the live government record (and the name matched), or a document a Vendora reviewer read. */
+  evidence?: "government_record" | "document_reviewed";
+  record_checked_on?: string | null;
 }
 export interface TrustPassport {
   level: 0 | 1 | 2 | 3;
@@ -54,6 +57,20 @@ export interface GstLookup {
   constitution?: string | null;
   name_match?: "match" | "partial" | "mismatch" | "unknown";
   fetched_at?: string;
+}
+
+/** Reviewer operations: what is stuck, what failed, whether the daily expiry job is alive. */
+export interface OpsStats {
+  open: number;
+  waiting_over_24h: number;
+  oldest_waiting_hours: number | null;
+  stale_claims: number;
+  lookup_failures_24h: number;
+  no_live_result: number;
+  expiring_30d: number;
+  expiry_job_last_run: string | null;
+  expiry_job_healthy: boolean;
+  reviewers: { name: string; open_claims: number; oldest_claim_hours: number }[];
 }
 
 export interface QueueItem {
@@ -188,6 +205,17 @@ export async function loadQueue(scope: "open" | "done"): Promise<QueueItem[]> {
   const { data, error } = await getSupabase().rpc("admin_queue", { p_scope: scope });
   if (error) throw new Error(friendly(error, "We couldn't load the queue."));
   return (data ?? []) as QueueItem[];
+}
+export async function loadOpsStats(): Promise<OpsStats> {
+  const { data, error } = await getSupabase().rpc("admin_ops_stats");
+  if (error) throw new Error(friendly(error, "We couldn't load the review health numbers."));
+  return data as OpsStats;
+}
+/** Gives claims that nobody touched for `hours` back to the queue. Returns how many were released. */
+export async function releaseStaleClaims(hours = 24): Promise<number> {
+  const { data, error } = await getSupabase().rpc("admin_release_stale", { p_hours: hours });
+  if (error) throw new Error(friendly(error, "We couldn't release the stale claims."));
+  return Number(data ?? 0);
 }
 export async function claimProof(id: string): Promise<void> {
   const { error } = await getSupabase().rpc("admin_claim_check", { p_check: id });

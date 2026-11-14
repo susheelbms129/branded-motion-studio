@@ -15,12 +15,14 @@ import {
 import { formatDate } from "@/lib/format";
 import { AppLink, appPath } from "@/lib/nav";
 import { nameOf } from "@/lib/selectors";
+import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
+import { RfqsReal } from "./RfqsReal";
 import type { Rfq } from "@/types/domain";
 
 const TABS = ["all", "draft", "sent", "evaluating", "awarded"] as const;
 
-export function RfqsPage() {
+function RfqsDemo() {
   const ws = useWs();
   const nav = useNavigate();
   const [tab, setTab] = useState("all");
@@ -97,4 +99,9 @@ export function RfqsPage() {
       />
     </>
   );
+}
+
+export function RfqsPage() {
+  const orgId = useUi((s) => s.orgId);
+  return orgId ? <RfqsReal orgId={orgId} /> : <RfqsDemo />;
 }

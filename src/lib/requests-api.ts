@@ -51,7 +51,7 @@ export interface RequestApproval {
 }
 export interface RequestEvent {
   id: number;
-  type: "created" | "submitted" | "routed" | "approved" | "rejected" | "withdrawn" | "auto_approved";
+  type: "created" | "submitted" | "routed" | "approved" | "rejected" | "withdrawn" | "auto_approved" | "rfq_sent";
   text: string;
   at: string;
   actor_id: string | null;

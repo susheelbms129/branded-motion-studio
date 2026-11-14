@@ -5,7 +5,7 @@
 set -u
 cd "$(dirname "$0")"
 bad=0
-for t in invite_only onboarding verification directory separation requests; do
+for t in invite_only onboarding verification directory separation requests rfqs; do
   printf "%-14s" "$t"
   out=$(python3 "$t/run_tests.py" 2>&1 | tail -1)
   echo "$out"

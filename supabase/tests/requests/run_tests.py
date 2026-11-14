@@ -47,9 +47,10 @@ alter table storage.objects enable row level security;
 grant usage on schema storage to anon, authenticated, service_role;
 grant select, insert, update, delete on storage.objects to authenticated;"""); assert r.returncode == 0, r.stderr
 files = sorted(glob.glob(os.path.join(MIG, "*.sql")))
-assert files[-1].endswith("_purchase_requests.sql"), "the newest migration should be purchase requests (12)"
+req_mig = [f for f in files if f.endswith("_purchase_requests.sql")]
+assert req_mig, "the purchase requests migration (12) is missing"
 for f in files: apply(f)
-apply(files[-1])  # safe to run twice
+apply(req_mig[0])  # safe to run twice
 
 # ── people ──  A company: O owner, P procurement, F finance, AP approver, E / E2 employees, SU suspended approver
 #              D company: DO solo owner.  Q company: QO owner + QE employee (for the "nobody can approve" safety net)

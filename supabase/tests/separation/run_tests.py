@@ -73,14 +73,14 @@ SHARED_ORG_TABLES = ["audit_log", "notifications"]   # written by both sides on 
 # "row-level security" = the side lock; anything else = the side lock let it through (and a normal rule stopped the empty row).
 # Each insert is made as valid as the table's own rules need (a purchase request needs the caller as requester), so the
 # ONLY thing that can stop the supplier is the side lock, and the error must name it.
-REQUEST_TABLES = ["purchase_requests", "request_items", "approval_steps"]
+REQUEST_TABLES = ["purchase_requests", "request_items", "approval_steps", "rfqs", "rfq_items", "rfq_invites"]   # closed to direct writes by migrations 12 and 13
 extra = {"purchase_requests": lambda who, o: f"insert into purchase_requests(org_id,requester_id) values ('{o}','{ids[who]}')"}
 for t in BUYER_TABLES:
     q = lambda who, o: extra[t](who, o) if t in extra else f"insert into {t}(org_id) values ('{o}')"
     r = U("S", q("S", oS))
     if t == "insights":   # nobody can insert insights from the browser at all; the policy count below proves the lock is there
         check("supplier owner cannot insert into insights", not r[0], r[2][:120])
-    elif t in REQUEST_TABLES:   # migration 12 closed these to direct writes for everyone (changes go through checked functions)
+    elif t in REQUEST_TABLES:   # migrations 12 and 13 closed these to direct writes for everyone (changes go through checked functions)
         check(f"supplier owner cannot write {t} directly", not r[0] and "permission denied" in r[2], r[2][:120])
     else:
         check(f"supplier owner is stopped by the side lock on {t}", not r[0] and "buyer_side_only" in r[2], r[2][:120])

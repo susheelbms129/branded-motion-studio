@@ -34,10 +34,11 @@ import { AppLink, useAppNavigate } from "@/lib/nav";
 import { nameOf } from "@/lib/selectors";
 import { usePerf } from "@/lib/use-perf";
 import { cn } from "@/lib/utils";
+import { useUi } from "@/lib/ui-store";
 import { useActor, useWs } from "@/lib/ws-store";
+import { RfqDetailReal } from "./RfqDetailReal";
 
-export function RfqDetailPage() {
-  const { id } = useParams({ strict: false }) as { id: string };
+function RfqDetailDemo({ id }: { id: string }) {
   const ws = useWs();
   const actor = useActor();
   const go = useAppNavigate();
@@ -414,4 +415,10 @@ function QuoteDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+export function RfqDetailPage() {
+  const { id } = useParams({ strict: false }) as { id: string };
+  const orgId = useUi((s) => s.orgId);
+  return orgId ? <RfqDetailReal id={id} /> : <RfqDetailDemo id={id} />;
 }

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ClipboardList, RotateCcw, Send, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, FileSpreadsheet, RotateCcw, Send, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -27,8 +27,10 @@ import {
   withdrawRequest,
   type RequestEvent,
 } from "@/lib/requests-api";
+import { getRequestRfq } from "@/lib/rfqs-api";
 import { cn } from "@/lib/utils";
 import type { TimelineEvent } from "@/types/domain";
+import { SendRfqDialog } from "@/features/rfq/SendRfqDialog";
 import { REQUESTS_KEY } from "./use-requests";
 
 // The database records a few more event kinds than the shared timeline knows; map them to the closest look.
@@ -40,16 +42,25 @@ const EVENT_LOOK: Record<RequestEvent["type"], TimelineEvent["type"]> = {
   rejected: "rejected",
   withdrawn: "updated",
   auto_approved: "approved",
+  rfq_sent: "sent",
 };
 
 /** One real purchase request, read from the database. What each person may do comes from the database too. */
 export function RequestDetailReal({ id }: { id: string }) {
   const qc = useQueryClient();
   const go = useAppNavigate();
-  const [dlg, setDlg] = useState<"approve" | "reject" | "delete" | null>(null);
+  const [dlg, setDlg] = useState<"approve" | "reject" | "delete" | "rfq" | null>(null);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
   const q = useQuery({ queryKey: [REQUESTS_KEY, "detail", id], queryFn: () => getRequest(id), retry: false });
+  const status = q.data?.request.status;
+  // only an approved or already-sent request can have an RFQ; the database says who may send it
+  const rfqInfo = useQuery({
+    queryKey: [REQUESTS_KEY, "rfq", id],
+    queryFn: () => getRequestRfq(id),
+    enabled: status === "approved" || status === "converted_to_rfq",
+    retry: false,
+  });
 
   if (q.isLoading) return <p className="py-16 text-center text-sm text-muted-foreground">Loading request…</p>;
   const d = q.data;
@@ -128,6 +139,12 @@ export function RequestDetailReal({ id }: { id: string }) {
                 </Button>
               </>
             ) : null}
+            {r.status === "approved" && rfqInfo.data?.can_send ? (
+              <Button variant="hero" size="lg" disabled={busy} onClick={() => setDlg("rfq")}>
+                <FileSpreadsheet />
+                Send to suppliers
+              </Button>
+            ) : null}
             {d.can_withdraw ? (
               <Button variant="outline" disabled={busy} onClick={() => void act(() => withdrawRequest(r.id), "Withdrawn. It's a draft again.")}>
                 <RotateCcw />
@@ -154,9 +171,23 @@ export function RequestDetailReal({ id }: { id: string }) {
           {r.status === "approved" ? (
             <Panel title="Approved">
               <p className="text-sm text-muted-foreground">
-                This request is approved. The next step is sending it to verified suppliers for quotations; that arrives in the next
-                update.
+                {rfqInfo.data?.can_send
+                  ? "This request is approved. Send it to verified suppliers to collect quotations."
+                  : "This request is approved. An owner or procurement manager can now send it to verified suppliers for quotations."}
               </p>
+            </Panel>
+          ) : null}
+          {r.status === "converted_to_rfq" ? (
+            <Panel title="Sent to suppliers">
+              <p className="text-sm text-muted-foreground">
+                This request is out for quotation
+                {rfqInfo.data?.rfq_number ? ` as ${rfqInfo.data.rfq_number}` : ""}.
+              </p>
+              {rfqInfo.data?.rfq_id ? (
+                <Button asChild variant="outline" className="mt-3">
+                  <AppLink to={`rfqs/${rfqInfo.data.rfq_id}`}>View RFQ</AppLink>
+                </Button>
+              ) : null}
             </Panel>
           ) : null}
           <Panel
@@ -320,6 +351,14 @@ export function RequestDetailReal({ id }: { id: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <SendRfqDialog
+        requestId={r.id}
+        requestTitle={r.title}
+        category={r.category}
+        open={dlg === "rfq"}
+        onOpenChange={(o) => !o && setDlg(null)}
+        onSent={(rfq) => go(`rfqs/${rfq.id}`)}
+      />
     </>
   );
 }

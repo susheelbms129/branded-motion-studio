@@ -1,8 +1,15 @@
-import { Link } from "@tanstack/react-router";
-import { Check, ShieldCheck } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
-import { SupplierShell, useSupplier, VERIFICATION_LABEL } from "@/components/supplier/SupplierShell";
-import type { VerificationStatus } from "@/lib/onboarding-api";
+import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
+import {
+  Hero,
+  NextSteps,
+  ProductsPanel,
+  QuoteInbox,
+  StorefrontPreviewCard,
+  TrustLadder,
+} from "@/features/supplier/dashboard-panels";
+import { useSupplierDashboard } from "@/features/supplier/use-supplier-dashboard";
 
 export function SupplierDashboardPage() {
   return (
@@ -13,65 +20,60 @@ export function SupplierDashboardPage() {
 }
 
 function DashboardContent() {
-  // The business name, products and verification status come from the database, not from the browser.
-  // If they can't be read, the page still works with safe defaults.
-  const { summary } = useSupplier();
+  // Everything comes from the database for the signed-in supplier's own company. Nothing is kept in the browser.
+  const { summary, status: shell } = useSupplier();
   const name = summary?.name || "Your business";
-  const status: VerificationStatus = summary?.verification ?? "not_submitted";
-  const steps = [
-    // This page is only reachable after the supplier has launched their business, so the profile is done.
-    { t: "Business profile", d: "Name, address and contact details", done: true },
-    { t: "Add your products", d: "List what you sell, with price and availability", done: (summary?.products ?? 0) > 0 },
-    { t: "Verify your business", d: "Submit your registration so buyers can trust you", done: status === "submitted" || status === "in_review" || status === "verified" },
-    { t: "Invite your team", d: "Add colleagues to this supplier workspace", done: false },
-  ];
-  const stats = [
-    ["Open quote requests", "0"],
-    ["Quotations sent", "0"],
-    ["Active orders", "0"],
-    ["Connected buyers", "0"],
-  ];
+  const { data, strength, status, reload } = useSupplierDashboard(
+    summary?.id ?? null,
+    name,
+    summary?.state ?? "",
+  );
+  const loading = shell === "loading" || status === "loading";
 
+  if (!loading && (status === "error" || !data || !strength)) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-card">
+        <AlertCircle className="mx-auto size-8 text-amber" aria-hidden />
+        <h1 className="mt-3 text-xl font-semibold">We couldn't load your dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Please check your connection and try again.
+        </p>
+        <button
+          onClick={reload}
+          className="mt-5 inline-flex items-center gap-2 rounded-md bg-gradient-cta px-4 py-2 text-sm font-semibold text-white"
+        >
+          <RefreshCw className="size-4" aria-hidden /> Try again
+        </button>
+      </div>
+    );
+  }
+
+  const level = data?.strength.trustLevel ?? 0;
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-semibold">Welcome, {name}</h1>
-          <p className="mt-1 text-muted-foreground">Here is what to do to start receiving orders.</p>
-        </div>
-        <Link to="/supplier/verification" className={`${status === "verified" ? "tint-emerald" : "tint-amber"} flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition hover:opacity-80`}>
-          <ShieldCheck className="h-4 w-4" /> {VERIFICATION_LABEL[status]}
-        </Link>
-      </div>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(([k, v]) => (
-          <div key={k} className="rounded-2xl border border-border bg-card p-5 shadow-card">
-            <p className="text-sm text-muted-foreground">{k}</p>
-            <p className="mt-1 text-3xl font-semibold tabular">{v}</p>
+    <div className="space-y-6">
+      <Hero name={name} strength={strength} loading={loading} />
+      {data && strength ? (
+        <div className="grid gap-6 lg:grid-cols-5">
+          <div className="space-y-6 lg:col-span-3">
+            <NextSteps strength={strength} />
+            <ProductsPanel products={data.products} />
           </div>
-        ))}
-      </div>
-
-      <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card">
-        <h2 className="text-xl font-semibold">Set up your supplier workspace</h2>
-        <ul className="mt-4 divide-y divide-border">
-          {steps.map((s) => (
-            <li key={s.t} className="flex items-center gap-4 py-3.5">
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.done ? "bg-gradient-emerald text-white" : "bg-muted text-muted-foreground"}`}>{s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : null}</span>
-              <span>
-                <span className="block font-medium">{s.t}</span>
-                <span className="block text-sm text-muted-foreground">{s.d}</span>
-              </span>
-              {s.t === "Verify your business" ? (
-                <Link to="/supplier/verification" className="ml-auto rounded-md bg-gradient-cta px-3.5 py-2 text-sm font-semibold text-white">
-                  {s.done ? "View Trust Passport" : "Start"}
-                </Link>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </section>
+          <div className="space-y-6 lg:col-span-2">
+            <StorefrontPreviewCard p={data.preview} level={level} />
+            <TrustLadder
+              level={level}
+              inReview={data.strength.proofsInReview}
+              needsFix={data.strength.proofsNeedingFix}
+            />
+            <QuoteInbox level={level} />
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-5" aria-busy>
+          <div className="h-72 animate-pulse rounded-2xl bg-muted lg:col-span-3" />
+          <div className="h-72 animate-pulse rounded-2xl bg-muted lg:col-span-2" />
+        </div>
+      )}
     </div>
   );
 }

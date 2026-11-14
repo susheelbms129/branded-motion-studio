@@ -14,6 +14,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { AuthScreen } from "../components/landing/AuthScreen";
 import { clearAuthCache } from "../lib/auth";
+import { signedOutDestination } from "../lib/route-access";
 import { getSupabase, isSupabaseConfigured } from "../lib/supabase";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -147,10 +148,10 @@ function AuthRoute() {
     const { data } = getSupabase().auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         clearAuthCache();
-        // Signed out inside a workspace: go to that side's own sign-in.
-        const p = window.location.pathname;
-        if (p.startsWith("/buyer/dashboard")) void nav({ to: "/buyer/signin" });
-        else if (p === "/supplier/dashboard" || p === "/supplier/onboarding") void nav({ to: "/supplier/signin" });
+        // Signed out (here or in another tab) while a private page is open: go to that side's own sign-in,
+        // so nothing private stays on screen. Covers every page under a private area, including future ones.
+        const dest = signedOutDestination(window.location.pathname);
+        if (dest) void nav({ to: dest as never });
       }
     });
     return () => data.subscription.unsubscribe();

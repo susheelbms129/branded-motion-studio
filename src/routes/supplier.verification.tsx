@@ -1,16 +1,11 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { SupplierVerificationPage } from "@/features/supplier/SupplierVerificationPage";
-import { hasSupplierWorkspace, requireSupplier } from "@/lib/auth";
+import { supplierPageGuard } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/supplier/verification")({
   ssr: false,
-  beforeLoad: async () => {
-    const r = await requireSupplier();
-    if (r === "signin") throw redirect({ to: "/supplier/signin" });
-    if (r === "buyer") throw redirect({ to: "/buyer/dashboard" });
-    if (!(await hasSupplierWorkspace())) throw redirect({ to: "/supplier/onboarding" });
-  },
+  beforeLoad: supplierPageGuard,
   head: () => ({ meta: [{ title: "Trust Passport — Vendora" }] }),
   component: SupplierVerificationPage,
 });

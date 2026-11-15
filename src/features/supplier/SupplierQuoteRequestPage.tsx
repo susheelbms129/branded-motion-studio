@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -26,13 +27,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getFairRankRules, type FairRankRules } from "@/lib/fair-rank-api";
 import { formatDate, formatDateTime, formatMoney, type CurrencyCode } from "@/lib/format";
 import {
   addDays,
   deadline,
   liveTotals,
   placeLine,
+  sourceLabel,
   startForm,
+  toDefaults,
   toInput,
   validateQuote,
   ymd,
@@ -45,9 +49,11 @@ import {
   declineQuoteRequest,
   getQuoteRequest,
   quoteError,
+  saveQuoteDefaults,
   submitQuotation,
   type QuoteRequestDetail,
 } from "@/lib/quote-requests-api";
+import { speedMessage, speedStatus } from "@/lib/quote-speed";
 import { LEVEL_NAMES } from "@/lib/rfqs-api";
 import { QUOTES_CHANGED } from "@/lib/supplier-nav";
 import { cn } from "@/lib/utils";
@@ -171,6 +177,17 @@ function Body({
   const quoted = d.invite.state === "quoted" || d.quote !== null;
   const [revising, setRevising] = useState(false);
   const [declining, setDeclining] = useState(false);
+  // The Fair Rank speed bands, only to show how fast the supplier is replying. If they can't load, the page works without.
+  const [rules, setRules] = useState<FairRankRules | null>(null);
+  useEffect(() => {
+    let live = true;
+    getFairRankRules()
+      .then((r) => live && setRules(r))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // Editable when the RFQ is open and the person may answer, and (if already quoted) they chose to revise.
   const canEdit = d.rfq.open && d.can_respond && (!quoted || revising);
@@ -249,6 +266,7 @@ function Body({
       {quoted && d.quote && !revising ? (
         <SentQuote
           d={d}
+          rules={rules}
           money={money}
           canRevise={d.rfq.open && d.can_respond}
           onRevise={() => setRevising(true)}
@@ -258,6 +276,7 @@ function Body({
       {!quoted || revising ? (
         <QuoteEditor
           d={d}
+          rules={rules}
           orgId={orgId}
           cur={cur}
           editable={canEdit}
@@ -312,11 +331,13 @@ function Banner({
 
 function SentQuote({
   d,
+  rules,
   money,
   canRevise,
   onRevise,
 }: {
   d: QuoteRequestDetail;
+  rules: FairRankRules | null;
   money: (n: number) => string;
   canRevise: boolean;
   onRevise: () => void;
@@ -324,6 +345,7 @@ function SentQuote({
   const q = d.quote!;
   const a = q.amounts;
   const price = new Map(q.lines.map((l) => [l.item_id, l.unit_price]));
+  const speed = rules && d.invite.responded_at ? speedStatus(d.invite.sent_at, d.invite.responded_at, new Date(), rules) : null;
   return (
     <section className={cn(card, "p-6")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -343,6 +365,11 @@ function SentQuote({
           </button>
         ) : null}
       </div>
+      {speed ? (
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg tint-emerald px-3 py-1.5 text-xs font-semibold">
+          <Zap className="size-3.5" aria-hidden /> {speedMessage(speed)}
+        </p>
+      ) : null}
       <ul className="mt-4 divide-y divide-border text-sm">
         {d.items.map((it) => (
           <li key={it.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
@@ -389,6 +416,7 @@ function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
 
 function QuoteEditor({
   d,
+  rules,
   orgId,
   cur,
   editable,
@@ -396,6 +424,7 @@ function QuoteEditor({
   onDecline,
 }: {
   d: QuoteRequestDetail;
+  rules: FairRankRules | null;
   orgId: string;
   cur: CurrencyCode;
   editable: boolean;
@@ -407,6 +436,7 @@ function QuoteEditor({
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
+  const [savedKey, setSavedKey] = useState("");
   const money = (n: number) => formatMoney(n, { currency: cur, decimals: 2 });
   const today = useMemo(() => new Date(), []);
 
@@ -420,6 +450,29 @@ function QuoteEditor({
   const filledFromList = d.items.filter(
     (i) => start.prefilled.includes(i.id) && f.prices[i.id] === String(i.suggestion?.price),
   ).length;
+
+  const speed = rules && !revising && editable ? speedStatus(d.invite.sent_at, null, today, rules) : null;
+  const termKeys = ["gstRate", "shipping", "otherCharges", "deliveryDays", "paymentTermsDays", "validUntil", "notes"];
+  const termsKey = JSON.stringify([f.gstRate, f.shipping, f.otherCharges, f.deliveryDays, f.paymentTermsDays, f.validUntil, f.notes.trim()]);
+
+  async function saveTerms() {
+    setTouched(true);
+    setFormError("");
+    if (termKeys.some((k) => errors[k])) {
+      setFormError("Please fix the highlighted terms first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await saveQuoteDefaults(orgId, toDefaults(f, today));
+      setSavedKey(termsKey);
+      toast.success("Saved. Every new quote will start from these terms.");
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : quoteError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function send() {
     setTouched(true);
@@ -452,6 +505,40 @@ function QuoteEditor({
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <div className="space-y-6 lg:col-span-3">
+        {editable && !revising ? (
+          <section
+            aria-label="Quote in 60 seconds"
+            className={cn(card, "p-5 sm:p-6", start.oneTap && "border-emerald-500/40 bg-emerald-500/5")}
+          >
+            <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <Zap className="size-4" aria-hidden /> Quote in 60 seconds
+            </p>
+            {start.oneTap && Object.keys(errors).length === 0 ? (
+              <>
+                <h2 className="mt-1 text-xl font-semibold">Ready in one tap</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Every item is priced from your own product list and earlier quotes{start.usedDefaults ? ", and your usual terms are applied" : ""}. Landed total{" "}
+                  <span className="font-semibold text-foreground">{money(totals.total)}</span> with GST. Check it, then send.
+                </p>
+                <button type="button" onClick={() => void send()} disabled={dis} className={cn(ctaBtn, "mt-4 w-full sm:w-auto")}>
+                  {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Zap className="size-4" aria-hidden />}
+                  Send quote · {money(totals.total)}
+                </button>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {filledFromList > 0
+                  ? `${filledFromList} of ${d.items.length} ${d.items.length === 1 ? "item is" : "items are"} already priced for you. Check them, add the rest and send.`
+                  : "Price each item and send. Every quote you send teaches Vendora your prices, so the next one is already filled in."}
+              </p>
+            )}
+            {speed ? (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-muted/60 px-3 py-1.5 text-xs font-medium">
+                <Sparkles className="size-3.5" aria-hidden /> {speedMessage(speed)}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
         <section className={cn(card, "p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">
@@ -460,7 +547,7 @@ function QuoteEditor({
             {editable && filledFromList > 0 ? (
               <span className="inline-flex items-center gap-1 rounded-full tint-violet px-2.5 py-1 text-xs font-semibold">
                 <Sparkles className="size-3.5" aria-hidden /> {filledFromList} of {d.items.length}{" "}
-                filled from your product list
+                priced from your own data
               </span>
             ) : null}
           </div>
@@ -481,12 +568,26 @@ function QuoteEditor({
                     </p>
                     {fromList ? (
                       <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-violet">
-                        <Sparkles className="size-3.5" aria-hidden /> From your product list:{" "}
-                        {it.suggestion?.name}
+                        <Sparkles className="size-3.5" aria-hidden />{" "}
+                        {it.suggestion ? sourceLabel(it.suggestion, today) : ""}
                         {it.suggestion?.availability === "Temporarily unavailable"
                           ? " (marked unavailable)"
                           : ""}
                       </p>
+                    ) : null}
+                    {start.possible.includes(it.id) && it.suggestion && !(f.prices[it.id] ?? "").trim() ? (
+                      <button
+                        type="button"
+                        disabled={dis}
+                        onClick={() => setPrice(it.id, String(it.suggestion!.price))}
+                        className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-md border border-border px-2 py-1 text-left text-xs font-medium hover:bg-muted"
+                      >
+                        <Sparkles className="size-3.5 shrink-0" aria-hidden />
+                        <span className="min-w-0">
+                          Use {money(it.suggestion.price)}? Looks like “{it.suggestion.name}”{" "}
+                          ({it.suggestion.source === "past_quote" ? sourceLabel(it.suggestion, today).toLowerCase() : "from your product list"}). Check the size first.
+                        </span>
+                      </button>
                     ) : null}
                     {mismatch && it.suggestion ? (
                       <p className="mt-1 text-xs text-amber">
@@ -627,10 +728,28 @@ function QuoteEditor({
               />
             </Fld>
           </div>
-          {d.last_terms && !revising ? (
+          {!revising && (d.defaults || d.last_terms) ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              Terms started from your last quote. Change anything that differs.
+              {d.defaults
+                ? "Your saved usual terms are applied. Change anything that differs."
+                : "Terms started from your last quote. Change anything that differs."}
             </p>
+          ) : null}
+          {editable && d.can_respond ? (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => void saveTerms()}
+                disabled={busy || savedKey === termsKey}
+                className={ghostBtn}
+              >
+                {savedKey === termsKey ? <Check className="size-4" aria-hidden /> : <Zap className="size-4" aria-hidden />}
+                {savedKey === termsKey ? "Saved as your usual terms" : "Save these as my usual terms"}
+              </button>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Next time, GST, freight, delivery, payment terms, validity and your note start filled in.
+              </p>
+            </div>
           ) : null}
         </section>
       </div>

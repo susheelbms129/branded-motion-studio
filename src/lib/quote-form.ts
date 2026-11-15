@@ -1,7 +1,9 @@
 import { calculateLandedCost, type LandedCost } from "@/lib/landed-cost";
 import {
   MAX_QUOTE_NOTE,
+  type ProductSuggestion,
   type QuoteItem,
+  type SaveDefaultsInput,
   type QuoteRequestDetail,
   type QuoteState,
   type SubmitQuoteInput,
@@ -11,8 +13,9 @@ import {
  * The logic behind the quote form, with no browser and no database, so a test can prove it. The form is checked here to be
  * friendly and checked again by the database to be safe (submit_quotation in migration 14).
  *
- * "Quote in 60 seconds": prices start from the supplier's own product list and the terms from their last quote, so the
- * supplier checks and sends instead of typing everything again.
+ * "Quote in 60 seconds": prices start from the supplier's own product list and from quotes they sent before, and the terms
+ * from the usual terms they saved (or else their last quote), so the supplier checks and sends instead of typing it all again.
+ * Only prices the database is confident about are filled in; a loose match is offered as a one-tap suggestion instead.
  */
 
 export interface QuoteForm {
@@ -59,10 +62,56 @@ const sameUnit = (a: string, b: string) => a.trim().toLowerCase() === b.trim().t
 
 export interface FormStart {
   form: QuoteForm;
-  /** Item ids whose price came from the supplier's own product list. */
+  /** Item ids whose price was filled in from the supplier's own data (product list or an earlier quote). */
   prefilled: string[];
   /** Item ids where a product matched but its price is per a different unit, so nothing was filled in. */
   unitMismatch: string[];
+  /** Item ids with a loose match: nothing was filled in, but the supplier can accept the price with one tap. */
+  possible: string[];
+  /** The terms came from the usual terms the supplier saved. */
+  usedDefaults: boolean;
+  /**
+   * Every item is priced from the supplier's own data with nothing to double-check (no unit change, no minimum-order issue),
+   * so the supplier can review and send in one tap. False when revising, because then the quote already exists.
+   */
+  oneTap: boolean;
+}
+
+/** Whole days between two yyyy-MM-dd dates (b minus a), time zones cannot shift it. */
+function dayDiff(a: string, b: string): number | null {
+  const x = /^(\d{4})-(\d{2})-(\d{2})/.exec(a);
+  const y = /^(\d{4})-(\d{2})-(\d{2})/.exec(b);
+  if (!x || !y) return null;
+  return Math.round((Date.UTC(+y[1]!, +y[2]! - 1, +y[3]!) - Date.UTC(+x[1]!, +x[2]! - 1, +x[3]!)) / 86_400_000);
+}
+
+/** "from your product list" or "from your quote 12 days ago": where a filled-in price came from, in plain words. */
+export function sourceLabel(s: ProductSuggestion, today: Date = new Date()): string {
+  if (s.source === "past_quote") {
+    const n = s.quoted_on ? dayDiff(s.quoted_on, ymd(today)) : null;
+    if (n === null) return "From a quote you sent before";
+    if (n <= 0) return "From a quote you sent today";
+    if (n === 1) return "From your quote yesterday";
+    return `From your quote ${n} days ago`;
+  }
+  return `From your product list: ${s.name}`;
+}
+
+/** Whether the supplier's price is per the same unit the buyer asked for (blank units are not a mismatch). */
+function unitFits(s: ProductSuggestion, unit: string): boolean {
+  if (s.unit_ok !== undefined) return s.unit_ok;
+  return !unit.trim() || sameUnit(s.unit, unit);
+}
+
+/** The database's own answer when it gave one (migration 19), else the older rule: any same-unit match is filled in. */
+function fillsIn(s: ProductSuggestion, unit: string): boolean {
+  return s.auto !== undefined ? s.auto : unitFits(s, unit);
+}
+
+/** Nothing for the supplier to double-check: no unit change, and the buyer's quantity meets the minimum order. */
+function isClean(s: ProductSuggestion, qty: number): boolean {
+  if (s.clean !== undefined) return s.clean;
+  return s.moq === null || s.moq <= qty;
 }
 
 /** The form's starting point: the existing quote (when revising), otherwise product-list prices and the last terms. */
@@ -84,35 +133,62 @@ export function startForm(d: QuoteRequestDetail, today: Date = new Date()): Form
       },
       prefilled: [],
       unitMismatch: [],
+      possible: [],
+      usedDefaults: false,
+      oneTap: false,
     };
   }
   const prices: Record<string, string> = {};
   const prefilled: string[] = [];
   const unitMismatch: string[] = [];
+  const possible: string[] = [];
   for (const it of d.items) {
     const s = it.suggestion;
     if (!s) continue;
-    if (!it.unit.trim() || sameUnit(s.unit, it.unit)) {
+    if (fillsIn(s, it.unit)) {
       prices[it.id] = String(s.price);
       prefilled.push(it.id);
-    } else {
+    } else if (!unitFits(s, it.unit)) {
       unitMismatch.push(it.id);
+    } else if (s.confidence === "possible") {
+      possible.push(it.id);
     }
   }
+  const sd = d.defaults ?? null;
   const t = d.last_terms;
+  const oneTap =
+    d.items.length > 0 &&
+    d.items.every((it) => prefilled.includes(it.id) && it.suggestion !== null && isClean(it.suggestion, it.qty));
   return {
     form: {
       prices,
-      gstRate: String(t?.gst_rate ?? DEFAULT_TERMS.gstRate),
-      shipping: "0",
-      otherCharges: "0",
-      deliveryDays: String(t?.delivery_days ?? DEFAULT_TERMS.deliveryDays),
-      paymentTermsDays: String(t?.payment_terms_days ?? DEFAULT_TERMS.paymentTermsDays),
-      validUntil: ymd(addDays(today, DEFAULT_TERMS.validDays)),
-      notes: "",
+      gstRate: String(sd?.gst_rate ?? t?.gst_rate ?? DEFAULT_TERMS.gstRate),
+      shipping: String(sd?.shipping ?? 0),
+      otherCharges: String(sd?.other_charges ?? 0),
+      deliveryDays: String(sd?.delivery_days ?? t?.delivery_days ?? DEFAULT_TERMS.deliveryDays),
+      paymentTermsDays: String(sd?.payment_terms_days ?? t?.payment_terms_days ?? DEFAULT_TERMS.paymentTermsDays),
+      validUntil: ymd(addDays(today, sd?.valid_days ?? DEFAULT_TERMS.validDays)),
+      notes: sd?.notes ?? "",
     },
     prefilled,
     unitMismatch,
+    possible,
+    usedDefaults: sd !== null,
+    oneTap,
+  };
+}
+
+/** The form's current terms as "my usual terms" to save. Call only after validateQuote returned no errors. */
+export function toDefaults(f: QuoteForm, today: Date = new Date()): SaveDefaultsInput {
+  const days = dayDiff(ymd(today), f.validUntil);
+  return {
+    gstRate: parseAmount(f.gstRate) ?? DEFAULT_TERMS.gstRate,
+    deliveryDays: wholeDays(f.deliveryDays) ?? DEFAULT_TERMS.deliveryDays,
+    paymentTermsDays: wholeDays(f.paymentTermsDays) ?? DEFAULT_TERMS.paymentTermsDays,
+    validDays: Math.min(365, Math.max(1, days ?? DEFAULT_TERMS.validDays)),
+    shipping: parseAmount(f.shipping) ?? 0,
+    otherCharges: parseAmount(f.otherCharges) ?? 0,
+    notes: f.notes.trim(),
   };
 }
 

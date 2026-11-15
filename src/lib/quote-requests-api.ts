@@ -31,6 +31,8 @@ export interface QuoteRequestRow {
   currency: string;
   /** The landed total of this supplier's own quote, when there is one. */
   my_total: number | null;
+  /** True when the request is open and every item already has a clean price from the supplier's own data (migration 19). */
+  ready?: boolean;
 }
 export interface QuoteRequestList {
   total: number;
@@ -39,12 +41,25 @@ export interface QuoteRequestList {
 }
 
 export interface ProductSuggestion {
-  product_id: string;
+  /** Null when the price comes from an earlier quote rather than the product list. */
+  product_id: string | null;
   name: string;
   price: number;
   unit: string;
   moq: number | null;
   availability: string;
+  // Quote in 60 seconds (migration 19). The database decides how sure it is; all of these are absent on older databases.
+  /** Where the price came from: the supplier's product list, or a quote they sent before. */
+  source?: "product" | "past_quote";
+  /** exact and strong are filled in; possible is only offered as a one-tap suggestion. */
+  confidence?: "exact" | "strong" | "possible";
+  /** yyyy-MM-dd of the earlier quote, for a past_quote. */
+  quoted_on?: string | null;
+  unit_ok?: boolean;
+  /** The database says this price may be filled in for the supplier. */
+  auto?: boolean;
+  /** auto, and the buyer's quantity meets the minimum order: safe for one tap. */
+  clean?: boolean;
 }
 export interface QuoteItem {
   id: string;
@@ -101,8 +116,28 @@ export interface QuoteRequestDetail {
   items: QuoteItem[];
   quote: MyQuote | null;
   last_terms: { gst_rate: number; payment_terms_days: number; delivery_days: number } | null;
+  /** The usual terms this supplier saved (migration 19), or null when none are saved. */
+  defaults?: QuoteDefaults | null;
   /** False for members who may look but not answer (the database decides; this only disables the buttons). */
   can_respond: boolean;
+}
+export interface QuoteDefaults {
+  gst_rate: number;
+  delivery_days: number;
+  payment_terms_days: number;
+  valid_days: number;
+  shipping: number;
+  other_charges: number;
+  notes: string;
+}
+export interface SaveDefaultsInput {
+  gstRate: number;
+  deliveryDays: number;
+  paymentTermsDays: number;
+  validDays: number;
+  shipping: number;
+  otherCharges: number;
+  notes: string;
 }
 export interface SubmitQuoteInput {
   lines: { itemId: string; unitPrice: number }[];
@@ -133,6 +168,7 @@ const ERRORS: Record<string, string> = {
   invalid_payment_terms: "Payment terms must be a whole number of days, from 0 to 365.",
   invalid_valid_until: "Quote validity must be from today up to 365 days away.",
   invalid_notes: "The note can be up to 1000 characters.",
+  invalid_valid_days: "Quote validity must be a whole number of days, from 1 to 365.",
   invalid_reason: "The reason can be up to 500 characters.",
   invalid_status: "That filter isn't valid.",
 };
@@ -249,8 +285,24 @@ export async function getQuoteRequest(orgId: string, rfqId: string): Promise<Quo
           delivery_days: num(d.last_terms.delivery_days),
         }
       : null,
+    defaults: d.defaults
+      ? {
+          gst_rate: num(d.defaults.gst_rate),
+          delivery_days: num(d.defaults.delivery_days),
+          payment_terms_days: num(d.defaults.payment_terms_days),
+          valid_days: num(d.defaults.valid_days),
+          shipping: num(d.defaults.shipping),
+          other_charges: num(d.defaults.other_charges),
+          notes: d.defaults.notes ?? "",
+        }
+      : null,
     can_respond: d.can_respond === true,
   };
+}
+
+/** Save the supplier's usual terms, so every new quote starts from them. Owner or procurement manager only (the database decides). */
+export async function saveQuoteDefaults(orgId: string, input: SaveDefaultsInput): Promise<void> {
+  await rpc("save_quote_defaults", { p_org: orgId, p_data: input });
 }
 
 export async function submitQuotation(

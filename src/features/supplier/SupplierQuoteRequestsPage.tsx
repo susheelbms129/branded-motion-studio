@@ -9,6 +9,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Users,
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -106,6 +107,7 @@ function InboxContent() {
   }
 
   const open = counts.open ?? 0;
+  const readyCount = (data?.items ?? []).filter((r) => r.ready === true).length;
   return (
     <div className="space-y-6">
       <header className="relative overflow-hidden rounded-3xl bg-gradient-navy p-6 text-white shadow-card sm:p-8">
@@ -128,6 +130,11 @@ function InboxContent() {
             You're here because buyers can see your verified Trust Passport. Answering is always
             free: no lead fees, no paying to be seen.
           </p>
+          {readyCount > 0 ? (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-semibold">
+              <Zap className="size-4" aria-hidden /> {readyCount} {readyCount === 1 ? "request is" : "requests are"} ready to send in one tap
+            </p>
+          ) : null}
         </div>
       </header>
 
@@ -231,6 +238,11 @@ function RequestCard({ r }: { r: QuoteRequestRow }) {
             <Users className="size-3.5" aria-hidden /> {r.invited}{" "}
             {r.invited === 1 ? "supplier" : "suppliers"} invited
           </span>
+          {r.ready ? (
+            <span className="inline-flex items-center gap-1 rounded-full tint-emerald px-2.5 py-1 font-semibold">
+              <Zap className="size-3.5" aria-hidden /> Ready in one tap
+            </span>
+          ) : null}
           {r.my_total !== null ? (
             <span className="rounded-full tint-green px-2.5 py-1 font-semibold">
               Your landed price {formatMoney(r.my_total, { currency: cur })}

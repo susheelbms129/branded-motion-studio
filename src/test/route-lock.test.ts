@@ -63,6 +63,7 @@ const PUBLIC = new Set([
   "/supplier/signup",
   "/api/public/resend-webhook",
   "/api/public/badge/$slug",
+  "/fair-ranking",
   "/verified/$slug",
 ]);
 

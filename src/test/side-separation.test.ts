@@ -32,6 +32,7 @@ describe("buyer and supplier menus stay separate", () => {
       "Quote requests",
       "Orders received",
       "Trust Passport",
+      "Fair Rank",
       "Products",
       "Company profile",
     ]);

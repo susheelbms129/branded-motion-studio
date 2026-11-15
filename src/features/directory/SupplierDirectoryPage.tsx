@@ -1,4 +1,4 @@
-import { Search, ShieldCheck, X } from "lucide-react";
+import { Scale, Search, ShieldCheck, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { SupplierCard } from "@/components/directory/SupplierCard";
+import { Link } from "@tanstack/react-router";
 import { EmptyState, ErrorState, PageHeader } from "@/components/vendora/kit";
 import {
   listSuppliers, NO_FILTERS, PAGE_SIZE,
-  type DirectoryFilters, type DirectorySupplier,
+  type DirectoryFilters, type DirectorySort, type DirectorySupplier,
 } from "@/lib/directory-api";
 
 /** Select items cannot have an empty value, so "any" is a word that can never be a real state or category. */
@@ -88,7 +89,7 @@ export function SupplierDirectoryPage() {
   const verifiedShown = items.filter((s) => s.level >= 1).length;
   function clear() {
     setTyped("");
-    setFilters(NO_FILTERS);
+    setFilters((f) => ({ ...NO_FILTERS, sort: f.sort }));
   }
 
   return (
@@ -97,10 +98,17 @@ export function SupplierDirectoryPage() {
         title="Find suppliers"
         accent="emerald"
         crumbs={[{ label: "Find suppliers" }]}
-        description="Real suppliers on Vendora, with the proof behind each one. Verified suppliers come first."
+        description="Real suppliers on Vendora, with the proof behind each one. Ranked by trust, response speed and delivery record."
       />
 
-      <div className="mb-6 grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-card lg:grid-cols-[1fr_200px_220px_auto]">
+      <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-4 py-3 text-sm">
+        <Scale className="size-4 shrink-0 text-emerald-600" aria-hidden />
+        <span className="font-semibold">Fair Rank:</span>
+        <span className="text-muted-foreground">suppliers can't pay for position and never pay to reach you. Equal suppliers take turns each day.</span>
+        <Link to="/fair-ranking" className="font-semibold text-primary underline-offset-2 hover:underline">How ranking works</Link>
+      </p>
+
+      <div className="mb-6 grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-card lg:grid-cols-[1fr_200px_220px_180px_auto]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
@@ -124,6 +132,13 @@ export function SupplierDirectoryPage() {
           <SelectContent>
             <SelectItem value={ANY}>Any category</SelectItem>
             {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filters.sort} onValueChange={(v) => setFilters((f) => ({ ...f, sort: v as DirectorySort }))}>
+          <SelectTrigger aria-label="Sort suppliers"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="fair">Fair Rank</SelectItem>
+            <SelectItem value="name">Name A to Z</SelectItem>
           </SelectContent>
         </Select>
         <label className="flex items-center gap-2.5 rounded-md border border-input px-3 py-2 text-sm font-medium">
@@ -160,6 +175,7 @@ export function SupplierDirectoryPage() {
           <p className="mb-4 flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground" aria-live="polite">
             <span><span className="font-semibold text-foreground">{total}</span> {total === 1 ? "supplier" : "suppliers"}{filtered ? " match" : ""}</span>
             {!filters.verifiedOnly && verifiedShown < items.length ? <span>· Unverified suppliers are listed last</span> : null}
+            {filters.sort === "fair" ? <span>· Ranked by Fair Rank</span> : null}
           </p>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {items.map((s) => <li key={s.org_id}><SupplierCard s={s} /></li>)}

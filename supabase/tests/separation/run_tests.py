@@ -178,8 +178,8 @@ check("every table in public has row level security", sh("select count(*) from p
 check("a visitor who is not signed in has no table access at all", sh("select count(*) from information_schema.table_privileges where grantee='anon' and table_schema='public'")[1] == "0")
 check("signed-in users have no TRUNCATE, REFERENCES or TRIGGER on any table", sh("select count(*) from information_schema.table_privileges where grantee='authenticated' and table_schema='public' and privilege_type in ('TRUNCATE','REFERENCES','TRIGGER')")[1] == "0")
 denied("a signed-in user cannot truncate a table", U("B", "truncate categories"), "permission denied")
-check("a visitor who is not signed in can call only the public passport lookup and the three invitation / membership helpers",
-      sh("select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prokind='f' and has_function_privilege('anon', p.oid, 'execute')")[1] == "get_public_passport,has_role,is_member,peek_invitation")
+check("a visitor who is not signed in can call only the public passport lookup, the public ranking rules and the three invitation / membership helpers",
+      sh("select string_agg(p.proname, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prokind='f' and has_function_privilege('anon', p.oid, 'execute')")[1] == "get_fair_rank_rules,get_public_passport,has_role,is_member,peek_invitation")
 check("every buyer tool table carries the side lock", sh("select count(*) from pg_policies where schemaname='public' and policyname='buyer_side_only' and permissive='RESTRICTIVE'")[1] == str(len(BUYER_TABLES)))
 r = run([], """select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
              join pg_attribute a on a.attrelid=c.oid and a.attname='org_id' and not a.attisdropped

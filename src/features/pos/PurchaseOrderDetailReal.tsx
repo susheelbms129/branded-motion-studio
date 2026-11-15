@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Printer, ReceiptText } from "lucide-react";
+import { PackageCheck, Printer, ReceiptText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, ErrorState, PageHeader, Panel, StatusBadge } from "@/components/vendora/kit";
@@ -22,7 +23,9 @@ import {
   MAX_RESPONSE_NOTE,
   ORDERS_KEY,
   orderError,
+  receivePurchaseOrder,
 } from "@/lib/orders-api";
+import { FAIR_RANK_KEY } from "@/lib/fair-rank-api";
 import { RFQ_KEY } from "@/lib/rfqs-api";
 import { asCurrency, day, DetailList, OrderLines } from "./OrderParts";
 
@@ -34,6 +37,8 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [recOpen, setRecOpen] = useState(false);
+  const [recDate, setRecDate] = useState("");
 
   if (q.isError)
     return (
@@ -78,6 +83,25 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
       setBusy(false);
     }
   };
+  const today = new Date().toISOString().slice(0, 10);
+  const receive = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const r = await receivePurchaseOrder(po.id, recDate || undefined);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: [ORDERS_KEY] }),
+        qc.invalidateQueries({ queryKey: [FAIR_RANK_KEY] }),
+      ]);
+      toast.success(r.on_time ? "Delivery recorded: on time. Thank you for keeping the record honest." : "Delivery recorded: after the promised date.");
+      setRecOpen(false);
+      setRecDate("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : orderError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   const place = [supplier.city, supplier.state].filter(Boolean).join(", ");
   return (
     <>
@@ -98,6 +122,12 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
                 Cancel order
               </Button>
             ) : null}
+            {q.data.can_receive ? (
+              <Button className="no-print" onClick={() => setRecOpen(true)}>
+                <PackageCheck />
+                Record delivery
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -110,6 +140,11 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
         <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
           {supplier.name} confirmed this order on {day(po.acknowledged_at)}.
           {po.supplier_note ? ` Their note: ${po.supplier_note}` : ""}
+        </p>
+      ) : null}
+      {po.status === "received" && po.delivered_at ? (
+        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
+          Delivered on {day(po.delivered_at)}{po.expected_at ? (po.delivered_at.slice(0, 10) <= po.expected_at ? ", on time" : ", after the promised date") : ""}. This is part of {supplier.name}'s public delivery record.
         </p>
       ) : null}
       {po.status === "cancelled" ? (
@@ -147,6 +182,31 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
           </Panel>
         </div>
       </div>
+      <Dialog open={recOpen} onOpenChange={(v) => !busy && setRecOpen(v)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record delivery of {po.number}</DialogTitle>
+            <DialogDescription>
+              Confirm the goods arrived. Only you can record this, so the supplier's delivery record stays honest. It cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <Label htmlFor="rec-date">Delivered on</Label>
+          <Input id="rec-date" type="date" max={today} value={recDate || today} onChange={(e) => setRecDate(e.target.value)} />
+          {error ? (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRecOpen(false)} disabled={busy}>
+              Not yet
+            </Button>
+            <Button onClick={() => void receive()} disabled={busy}>
+              {busy ? "Saving…" : "Record delivery"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={open} onOpenChange={(v) => !busy && setOpen(v)}>
         <DialogContent>
           <DialogHeader>

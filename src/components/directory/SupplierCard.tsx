@@ -1,8 +1,9 @@
-import { BadgeCheck, CalendarClock, FileCheck2, Landmark, MapPin, ShieldQuestion } from "lucide-react";
+import { BadgeCheck, CalendarClock, FileCheck2, Landmark, MapPin, ShieldQuestion, Sprout } from "lucide-react";
 
 import { SaveButton } from "@/components/directory/SaveButton";
 import { fmtDate } from "@/components/trust/TrustPassport";
 import type { DirectorySupplier } from "@/lib/directory-api";
+import { hoursText } from "@/lib/fair-rank-api";
 import { AppLink } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,8 @@ export function SupplierCard({ s }: { s: DirectorySupplier }) {
         </p>
       ) : null}
 
+      <Record s={s} />
+
       {s.description ? <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{s.description}</p> : null}
 
       <div className="mt-auto flex items-end justify-between gap-3 pt-4">
@@ -64,5 +67,32 @@ export function SupplierCard({ s }: { s: DirectorySupplier }) {
         <SaveButton supplierId={s.org_id} name={s.name} />
       </div>
     </article>
+  );
+}
+
+/**
+ * The earned record, in plain numbers a buyer can check. A number appears only once it rests on 3 real data points; before
+ * that the card says so, instead of showing a figure that means nothing.
+ */
+function Record({ s }: { s: DirectorySupplier }) {
+  if (s.level < 1 || s.fair_score === undefined) return null;
+  const facts: string[] = [];
+  if (s.reply_hours !== null && s.reply_hours !== undefined) facts.push(`Replies in ${hoursText(s.reply_hours)}`);
+  if (s.answered_pct !== null && s.answered_pct !== undefined) facts.push(`${s.answered_pct}% of RFQs answered`);
+  if (s.on_time_pct !== null && s.on_time_pct !== undefined) facts.push(`${s.on_time_pct}% delivered on time`);
+  if (facts.length === 0) {
+    return (
+      <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
+        <Sprout className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+        <span>{s.is_new ? "New on Vendora. Their record builds with real RFQs and orders." : "Record is still building. Shown once there are enough real RFQs and orders."}</span>
+      </p>
+    );
+  }
+  return (
+    <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Record from real RFQs and orders">
+      {facts.map((f) => (
+        <li key={f} className="rounded-full tint-emerald px-2.5 py-0.5 text-xs font-medium">{f}</li>
+      ))}
+    </ul>
   );
 }

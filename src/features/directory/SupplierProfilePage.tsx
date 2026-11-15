@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
 import { EmptyState, ErrorState } from "@/components/vendora/kit";
 import { getSupplierProfile, SupplierNotFound, type ProfileProduct, type SupplierProfile } from "@/lib/directory-api";
+import { getSupplierRecord, hoursText, type SupplierRecord } from "@/lib/fair-rank-api";
 import { AppLink } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import type { CheckType } from "@/lib/verification-api";
@@ -38,6 +39,7 @@ export function SupplierProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [missing, setMissing] = useState(false);
+  const [record, setRecord] = useState<SupplierRecord | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,6 +47,8 @@ export function SupplierProfilePage() {
     setMissing(false);
     try {
       setP(await getSupplierProfile(id));
+      // The record is extra evidence: if it can't load, the profile still opens.
+      setRecord(await getSupplierRecord(id).catch(() => null));
     } catch (e) {
       setP(null);
       if (e instanceof SupplierNotFound) setMissing(true);
@@ -129,6 +133,7 @@ export function SupplierProfilePage() {
 
       <TrustCoverage p={p} />
       <TrustPassport passport={p.passport} />
+      {verified && record ? <EarnedRecord r={record} /> : null}
 
       {p.description || p.categories.length > 0 ? (
         <Section title="About">
@@ -265,5 +270,36 @@ function Supply({ p }: { p: SupplierProfile }) {
         ))}
       </dl>
     </Section>
+  );
+}
+
+
+/**
+ * The record this supplier has EARNED on Vendora, from real RFQs and orders. Every number shows how many real events stand
+ * behind it, and appears only after 3. Nothing here can be paid for.
+ */
+function EarnedRecord({ r }: { r: SupplierRecord }) {
+  const rows: [string, string, string][] = [
+    ["Reply time", r.reply_hours === null ? "Not enough quotes yet" : hoursText(r.reply_hours), `${r.rfqs_counted} RFQ${r.rfqs_counted === 1 ? "" : "s"} counted`],
+    ["RFQs answered", r.answered_pct === null ? "Not enough RFQs yet" : `${r.answered_pct}%`, "a clear \"no\" counts as an answer"],
+    ["Delivered on time", r.on_time_pct === null ? "Not enough orders yet" : `${r.on_time_pct}%`, `${r.orders_counted} order${r.orders_counted === 1 ? "" : "s"} counted`],
+  ];
+  return (
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-card" aria-label="Earned record">
+      <h2 className="flex items-center gap-2 text-lg font-semibold"><Truck className="size-5" aria-hidden /> Earned record</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        From real RFQs and orders in the last {r.window_days} days. Buyers record deliveries, and suppliers cannot pay to change any of this.
+        {r.is_new ? " This supplier is new, so there is no record yet." : ""}
+      </p>
+      <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+        {rows.map(([k, v, note]) => (
+          <div key={k} className="rounded-xl bg-muted/50 p-3">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{k}</dt>
+            <dd className="mt-1 text-lg font-semibold">{v}</dd>
+            <dd className="text-xs text-muted-foreground">{note}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }

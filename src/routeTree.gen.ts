@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as FairRankingRouteImport } from './routes/fair-ranking'
 import { Route as GetStartedRouteImport } from './routes/get-started'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -31,6 +32,7 @@ import { Route as BuyerOnboardingRouteImport } from './routes/buyer.onboarding'
 import { Route as BuyerSigninRouteImport } from './routes/buyer.signin'
 import { Route as BuyerSignupRouteImport } from './routes/buyer.signup'
 import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
+import { Route as SupplierFairRankRouteImport } from './routes/supplier.fair-rank'
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
 import { Route as SupplierProductsRouteImport } from './routes/supplier.products'
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
@@ -84,6 +86,11 @@ const AcceptInviteRoute = AcceptInviteRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FairRankingRoute = FairRankingRouteImport.update({
+  id: '/fair-ranking',
+  path: '/fair-ranking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GetStartedRoute = GetStartedRouteImport.update({
@@ -179,6 +186,11 @@ const BuyerSignupRoute = BuyerSignupRouteImport.update({
 const SupplierDashboardRoute = SupplierDashboardRouteImport.update({
   id: '/supplier/dashboard',
   path: '/supplier/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupplierFairRankRoute = SupplierFairRankRouteImport.update({
+  id: '/supplier/fair-rank',
+  path: '/supplier/fair-rank',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupplierOnboardingRoute = SupplierOnboardingRouteImport.update({
@@ -392,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/app': typeof AppRouteWithChildren
+  '/fair-ranking': typeof FairRankingRoute
   '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -410,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
+  '/supplier/fair-rank': typeof SupplierFairRankRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -454,6 +468,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
+  '/fair-ranking': typeof FairRankingRoute
   '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -471,6 +486,7 @@ export interface FileRoutesByTo {
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
+  '/supplier/fair-rank': typeof SupplierFairRankRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -517,6 +533,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/accept-invite': typeof AcceptInviteRoute
   '/app': typeof AppRouteWithChildren
+  '/fair-ranking': typeof FairRankingRoute
   '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -535,6 +552,7 @@ export interface FileRoutesById {
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
+  '/supplier/fair-rank': typeof SupplierFairRankRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -582,6 +600,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/app'
+    | '/fair-ranking'
     | '/get-started'
     | '/login'
     | '/onboarding'
@@ -600,6 +619,7 @@ export interface FileRouteTypes {
     | '/buyer/signin'
     | '/buyer/signup'
     | '/supplier/dashboard'
+    | '/supplier/fair-rank'
     | '/supplier/onboarding'
     | '/supplier/products'
     | '/supplier/signin'
@@ -644,6 +664,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/accept-invite'
+    | '/fair-ranking'
     | '/get-started'
     | '/login'
     | '/onboarding'
@@ -661,6 +682,7 @@ export interface FileRouteTypes {
     | '/buyer/signin'
     | '/buyer/signup'
     | '/supplier/dashboard'
+    | '/supplier/fair-rank'
     | '/supplier/onboarding'
     | '/supplier/products'
     | '/supplier/signin'
@@ -706,6 +728,7 @@ export interface FileRouteTypes {
     | '/'
     | '/accept-invite'
     | '/app'
+    | '/fair-ranking'
     | '/get-started'
     | '/login'
     | '/onboarding'
@@ -724,6 +747,7 @@ export interface FileRouteTypes {
     | '/buyer/signin'
     | '/buyer/signup'
     | '/supplier/dashboard'
+    | '/supplier/fair-rank'
     | '/supplier/onboarding'
     | '/supplier/products'
     | '/supplier/signin'
@@ -770,6 +794,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcceptInviteRoute: typeof AcceptInviteRoute
   AppRoute: typeof AppRouteWithChildren
+  FairRankingRoute: typeof FairRankingRoute
   GetStartedRoute: typeof GetStartedRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -781,6 +806,7 @@ export interface RootRouteChildren {
   BuyerSigninRoute: typeof BuyerSigninRoute
   BuyerSignupRoute: typeof BuyerSignupRoute
   SupplierDashboardRoute: typeof SupplierDashboardRoute
+  SupplierFairRankRoute: typeof SupplierFairRankRoute
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
   SupplierProductsRoute: typeof SupplierProductsRoute
   SupplierSigninRoute: typeof SupplierSigninRoute
@@ -816,6 +842,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fair-ranking': {
+      id: '/fair-ranking'
+      path: '/fair-ranking'
+      fullPath: '/fair-ranking'
+      preLoaderRoute: typeof FairRankingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/get-started': {
@@ -949,6 +982,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/dashboard'
       fullPath: '/supplier/dashboard'
       preLoaderRoute: typeof SupplierDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/fair-rank': {
+      id: '/supplier/fair-rank'
+      path: '/supplier/fair-rank'
+      fullPath: '/supplier/fair-rank'
+      preLoaderRoute: typeof SupplierFairRankRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/supplier/onboarding': {
@@ -1320,6 +1360,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcceptInviteRoute: AcceptInviteRoute,
   AppRoute: AppRouteWithChildren,
+  FairRankingRoute: FairRankingRoute,
   GetStartedRoute: GetStartedRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
@@ -1331,6 +1372,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerSigninRoute: BuyerSigninRoute,
   BuyerSignupRoute: BuyerSignupRoute,
   SupplierDashboardRoute: SupplierDashboardRoute,
+  SupplierFairRankRoute: SupplierFairRankRoute,
   SupplierOnboardingRoute: SupplierOnboardingRoute,
   SupplierProductsRoute: SupplierProductsRoute,
   SupplierSigninRoute: SupplierSigninRoute,

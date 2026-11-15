@@ -26,13 +26,27 @@ export interface DirectorySupplier {
   government_checked: boolean;
   /** Only on the saved list: when this company saved the supplier. */
   saved_at?: string;
+  // Fair Rank evidence (migration 18). Absent on the saved list. A statistic is null until there are 3 real data points.
+  /** 0 to 100, earned from trust, response and delivery. Null when the supplier has no valid proof (it is not ranked). */
+  fair_score?: number | null;
+  /** No RFQs closed and no orders finished in the last 180 days yet. Scored on the neutral middle, not as bad. */
+  is_new?: boolean;
+  reply_hours?: number | null;
+  answered_pct?: number | null;
+  on_time_pct?: number | null;
+  rfqs_counted?: number;
+  orders_counted?: number;
 }
+
+/** "fair" is the earned Fair Rank order (the default for everyone); "name" is plain A to Z, verified first. */
+export type DirectorySort = "fair" | "name";
 
 export interface DirectoryFilters {
   search: string;
   state: string;
   category: string;
   verifiedOnly: boolean;
+  sort: DirectorySort;
 }
 
 export interface DirectoryPage {
@@ -42,7 +56,7 @@ export interface DirectoryPage {
   categories: string[];
 }
 
-export const NO_FILTERS: DirectoryFilters = { search: "", state: "", category: "", verifiedOnly: false };
+export const NO_FILTERS: DirectoryFilters = { search: "", state: "", category: "", verifiedOnly: false, sort: "fair" };
 
 function friendly(err: { message?: string } | null): string {
   const m = err?.message ?? "";
@@ -54,7 +68,7 @@ function friendly(err: { message?: string } | null): string {
     return "Saved suppliers aren't set up yet. Run migration 9 (20261120000009_saved_suppliers.sql) in Supabase.";
   }
   if (m.includes("Could not find the function") || m.includes("list_suppliers")) {
-    return "The supplier directory isn't set up yet. Run migration 7 (20261118000007_supplier_directory.sql) in Supabase.";
+    return "The supplier directory isn't set up yet. Run migrations 7 and 18 (20261118000007_supplier_directory.sql and 20261129000018_fair_ranking.sql) in Supabase.";
   }
   return "We couldn't load suppliers. Please check your connection and try again.";
 }
@@ -67,6 +81,7 @@ export async function listSuppliers(f: DirectoryFilters, offset = 0): Promise<Di
     p_verified_only: f.verifiedOnly,
     p_limit: PAGE_SIZE,
     p_offset: offset,
+    p_sort: f.sort,
   });
   if (error) throw new Error(friendly(error));
   const d = (data ?? {}) as Partial<DirectoryPage>;

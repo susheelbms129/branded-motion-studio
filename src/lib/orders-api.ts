@@ -71,6 +71,8 @@ export interface BuyerOrder {
     issued_at: string | null;
     expected_at: string | null;
     acknowledged_at: string | null;
+    /** When the buyer recorded delivery (migration 18). It feeds the supplier's Fair Rank delivery record. */
+    delivered_at?: string | null;
     cancelled_at: string | null;
     cancelled_by: "buyer" | "supplier" | null;
     payment_terms_days: number;
@@ -87,6 +89,8 @@ export interface BuyerOrder {
   lines: OrderLine[];
   amounts: OrderAmounts;
   can_cancel: boolean;
+  /** True when the supplier confirmed the order and this person may record that the goods arrived. */
+  can_receive?: boolean;
 }
 
 export interface SupplierOrderRow {
@@ -158,6 +162,8 @@ const ERRORS: Record<string, string> = {
   invalid_reason: "The reason can be up to 500 characters.",
   invalid_request: "Something is wrong with this order. Please check the form.",
   invalid_status: "That status filter isn't valid.",
+  not_receivable: "This order can't be marked as received. The supplier must confirm it first, and it can only be received once.",
+  invalid_date: "Choose a delivery date that is not in the future and not before the order was issued.",
 };
 
 export function orderError(e: unknown): string {
@@ -232,6 +238,14 @@ export async function getPurchaseOrder(poId: string): Promise<BuyerOrder> {
 
 export async function cancelPurchaseOrder(poId: string, reason: string): Promise<void> {
   await rpc("cancel_purchase_order", { p_po: poId, p_reason: reason.trim() || null });
+}
+
+/**
+ * The BUYER records that the goods arrived (yyyy-MM-dd, default today). The supplier cannot do this, so a supplier can't mark
+ * its own homework. It is the evidence behind the on-time share in Fair Rank.
+ */
+export async function receivePurchaseOrder(poId: string, deliveredOn?: string): Promise<{ delivered_on: string; on_time: boolean }> {
+  return rpc("receive_purchase_order", { p_po: poId, p_delivered_on: deliveredOn || null });
 }
 
 // ── supplier ──

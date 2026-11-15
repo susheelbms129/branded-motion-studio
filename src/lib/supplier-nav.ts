@@ -10,6 +10,7 @@ export const SUPPLIER_NAV = [
   { key: "quotes", label: "Quote requests", to: "/supplier/quote-requests" },
   { key: "orders", label: "Orders received", to: "/supplier/orders" },
   { key: "passport", label: "Trust Passport", to: "/supplier/verification" },
+  { key: "rank", label: "Fair Rank", to: "/supplier/fair-rank" },
   { key: "products", label: "Products", to: "/supplier/products" },
   { key: "profile", label: "Company profile", to: null },
 ] as const;

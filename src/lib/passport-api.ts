@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import type { Scorecard } from "@/lib/scorecard-api";
 import type { TrustPassport } from "@/lib/verification-api";
 
 /**
@@ -21,6 +22,8 @@ export interface PublicPassport {
   /** The database's today, yyyy-MM-dd: the day this page was true. */
   as_of: string;
   passport: TrustPassport;
+  /** The earned record. Missing on a database that has not run migration 21 yet, so the page still opens. */
+  scorecard?: Scorecard;
 }
 
 export interface PassportSharing {

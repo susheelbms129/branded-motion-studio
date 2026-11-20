@@ -1,3 +1,4 @@
+import { ScorecardSection } from "@/features/scorecard/ScorecardView";
 import { Loader2, Scale, Sprout, Trophy, Truck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -71,6 +72,7 @@ function Inner() {
       ) : r ? (
         <Body r={r} />
       ) : null}
+      {orgId && !loading && !error ? <div className="mt-6"><ScorecardSection orgId={orgId} variant="self" /></div> : null}
     </div>
   );
 }

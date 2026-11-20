@@ -8,6 +8,8 @@ import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPass
 import { EmptyState, ErrorState } from "@/components/vendora/kit";
 import { getSupplierProfile, SupplierNotFound, type ProfileProduct, type SupplierProfile } from "@/lib/directory-api";
 import { getSupplierRecord, hoursText, type SupplierRecord } from "@/lib/fair-rank-api";
+import { ScorecardView } from "@/features/scorecard/ScorecardView";
+import { getSupplierScorecard, type Scorecard } from "@/lib/scorecard-api";
 import { AppLink } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import type { CheckType } from "@/lib/verification-api";
@@ -40,6 +42,7 @@ export function SupplierProfilePage() {
   const [error, setError] = useState("");
   const [missing, setMissing] = useState(false);
   const [record, setRecord] = useState<SupplierRecord | null>(null);
+  const [scorecard, setScorecard] = useState<Scorecard | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +52,7 @@ export function SupplierProfilePage() {
       setP(await getSupplierProfile(id));
       // The record is extra evidence: if it can't load, the profile still opens.
       setRecord(await getSupplierRecord(id).catch(() => null));
+      setScorecard(await getSupplierScorecard(id).catch(() => null));
     } catch (e) {
       setP(null);
       if (e instanceof SupplierNotFound) setMissing(true);
@@ -133,7 +137,7 @@ export function SupplierProfilePage() {
 
       <TrustCoverage p={p} />
       <TrustPassport passport={p.passport} />
-      {verified && record ? <EarnedRecord r={record} /> : null}
+      {verified && scorecard ? <ScorecardView card={scorecard} variant="buyer" /> : verified && record ? <EarnedRecord r={record} /> : null}
 
       {p.description || p.categories.length > 0 ? (
         <Section title="About">

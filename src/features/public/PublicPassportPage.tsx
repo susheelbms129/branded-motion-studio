@@ -1,3 +1,4 @@
+import { ScorecardView } from "@/features/scorecard/ScorecardView";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, Building2, CalendarDays, MapPin, ShieldQuestion } from "lucide-react";
 
@@ -86,6 +87,8 @@ function Found({ data }: { data: PublicPassport }) {
       ) : null}
 
       <TrustPassport passport={data.passport} />
+
+      {data.scorecard ? <ScorecardView card={data.scorecard} variant="public" /> : null}
 
       <section className={card}>
         <h2 className="flex items-center gap-2 text-sm font-semibold">

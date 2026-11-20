@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck } from "lucide-react";
+import { Landmark, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
+import { PageHero } from "@/components/supplier/PageHero";
 import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
 import { DueLine, money, moneyShort, PayBadge, Stat } from "@/features/payments/PayParts";
 import { listReceivables, matchesFilter, MSME_DISCLAIMER, PAYMENTS_KEY, type PayFilter } from "@/lib/msme-payments";
@@ -39,13 +40,10 @@ function Inner() {
   const count = (f: PayFilter) => items.filter((i) => matchesFilter(i.state, f, "supplier")).length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <div>
-        <h1 className="text-3xl font-semibold">When you'll be paid</h1>
-        <p className="mt-1 text-muted-foreground">
-          Every confirmed order, with the date the buyer must pay by. Buyers don't pay anything to be on Vendora's payment tracker, and neither do you.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHero label="Payments" icon={Landmark} title="When you'll be paid" glow="glow-emerald">
+        Every confirmed order, with the date the buyer must pay by. Buyers don't pay anything to be on Vendora's payment tracker, and neither do you.
+      </PageHero>
 
       {s.covered ? (
         <div className={cn(card, "flex gap-3 border-emerald-500/30 bg-emerald-500/5")}>

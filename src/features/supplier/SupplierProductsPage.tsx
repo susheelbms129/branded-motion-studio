@@ -181,7 +181,7 @@ function ProductsContent() {
       </div>
 
       {status === "loading" ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-busy>
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-56 animate-pulse rounded-2xl bg-muted" />
           ))}
@@ -217,7 +217,7 @@ function ProductsContent() {
               reach the 3 products that make a storefront look complete.
             </p>
           ) : null}
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {shown.map((p) => (
               <ProductCard
                 key={p.id}

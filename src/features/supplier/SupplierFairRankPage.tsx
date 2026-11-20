@@ -2,6 +2,7 @@ import { ScorecardSection } from "@/features/scorecard/ScorecardView";
 import { Loader2, Scale, Sprout, Trophy, Truck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { PageHero } from "@/components/supplier/PageHero";
 import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
 import {
   FAIR_PROMISES,
@@ -54,12 +55,11 @@ function Inner() {
   }, [status, orgId]);
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="text-3xl font-semibold">Your Fair Rank</h1>
-      <p className="mt-1 text-muted-foreground">
+    <div className="space-y-6">
+      <PageHero label="Fair Rank" icon={Scale} title="Your Fair Rank" glow="glow-violet">
         Buyers see suppliers in Fair Rank order. You earn your place from trust, response speed and delivery record. You can never
         pay for it, and you never pay to reach a buyer.
-      </p>
+      </PageHero>
 
       {loading ? (
         <p className="mt-10 flex items-center gap-2 text-muted-foreground">

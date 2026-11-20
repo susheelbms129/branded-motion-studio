@@ -275,7 +275,7 @@ export function SupplierShell({ children }: { children: ReactNode }) {
         </Sheet>
 
         <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-8">
+          <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobile(true)} aria-label="Open menu">
               <Menu />
             </Button>
@@ -315,7 +315,7 @@ export function SupplierShell({ children }: { children: ReactNode }) {
               </DropdownMenu>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-8">{children}</main>
+          <main className="w-full min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">{children}</main>
         </div>
       </div>
     </SupplierContext.Provider>

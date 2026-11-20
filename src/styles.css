@@ -100,7 +100,7 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.625rem;
 
   /* Brand constants */
   --navy: oklch(0.158 0.043 269.2);
@@ -480,8 +480,20 @@ button:disabled { cursor: not-allowed; }
 .dark .tint-red { color: oklch(0.8 0.13 25); }
 .dark .tint-green { color: oklch(0.84 0.14 150); }
 
-/* Dark, thin scrollbars on the main content */
-.dark * { scrollbar-width: thin; scrollbar-color: oklch(1 0 0 / 18%) transparent; }
+/* Invisible scrollbars everywhere. Scrolling still works with wheel, touch, keyboard and trackpad. */
+html,
+body,
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 
 /* Gradient page titles, same treatment as the landing headline */
 .dark .title-gradient {

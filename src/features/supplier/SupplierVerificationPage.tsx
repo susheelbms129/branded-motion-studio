@@ -1,6 +1,7 @@
-import { Check, Clock, FileUp, Loader2, ShieldAlert } from "lucide-react";
+import { Check, Clock, FileUp, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
+import { PageHero } from "@/components/supplier/PageHero";
 import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
 import { SharePassportPanel } from "./SharePassportPanel";
 import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
@@ -81,12 +82,11 @@ function PassportContent() {
   const latest = (t: CheckType) => proofs.filter((p) => p.type === t);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="space-y-6">
+      <PageHero label="Trust Passport" icon={ShieldCheck} title="Your Trust Passport" glow="glow-emerald">
+        Each proof is checked separately and shown to buyers with its date. The more you prove, the higher buyers rank you.
+      </PageHero>
       <div>
-        <h1 className="text-3xl font-semibold">Your Trust Passport</h1>
-        <p className="mt-1 text-muted-foreground">
-          Each proof is checked separately and shown to buyers with its date. The more you prove, the higher buyers rank you.
-        </p>
 
         {loading ? (
           <p className="mt-10 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</p>

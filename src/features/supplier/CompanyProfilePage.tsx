@@ -1,9 +1,10 @@
-import { Check, Copy, ExternalLink, EyeOff, Loader2, MessageCircle, Plus, Trash2, Upload } from "lucide-react";
+import { Building2, Check, Copy, ExternalLink, EyeOff, Loader2, MessageCircle, Plus, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Field, SelectField } from "@/components/onboarding/fields";
 import { fieldClass } from "@/components/onboarding/fields";
+import { PageHero } from "@/components/supplier/PageHero";
 import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
 import {
   COVERAGE_OPTIONS,
@@ -254,12 +255,11 @@ function ProfileContent() {
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold">Company profile</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+    <div className="space-y-6">
+      <header className="space-y-3">
+        <PageHero label="Company profile" icon={Building2} title="How buyers see your company" glow="glow-blue">
           This is what buyers read before they send you a request. Keep it honest and specific; buyers compare.
-        </p>
+        </PageHero>
         {ro ? <p className="mt-2 rounded-lg bg-muted px-3 py-2 text-sm">You can view this page. Only the owner or a procurement manager can change it.</p> : null}
       </header>
 

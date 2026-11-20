@@ -13,7 +13,7 @@ export const SUPPLIER_NAV = [
   { key: "passport", label: "Trust Passport", to: "/supplier/verification" },
   { key: "rank", label: "Fair Rank", to: "/supplier/fair-rank" },
   { key: "products", label: "Products", to: "/supplier/products" },
-  { key: "profile", label: "Company profile", to: null },
+  { key: "profile", label: "Company profile", to: "/supplier/profile" },
 ] as const;
 
 export type SupplierNavKey = (typeof SUPPLIER_NAV)[number]["key"];

@@ -35,7 +35,7 @@ export interface Step {
   points: number;
   done: boolean;
   /** Where the supplier goes to do it. null = that page is not built yet. */
-  to: "/supplier/verification" | "/supplier/products" | null;
+  to: "/supplier/verification" | "/supplier/products" | "/supplier/profile" | null;
   cta: string;
 }
 
@@ -117,8 +117,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.description,
       done: i.descriptionLength >= 120,
       why: "Two or three honest sentences about what you make, who you serve and how fast you deliver.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/profile",
+      cta: "Write it",
     },
     {
       key: "capabilities",
@@ -126,8 +126,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.capabilities,
       done: i.hasCoverage && i.hasDeliveryTime && i.hasMinOrder,
       why: "Answers the first two questions every buyer asks, so they do not have to message you to find out.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/profile",
+      cta: "Set terms",
     },
     {
       key: "logo",
@@ -135,8 +135,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.logo,
       done: i.hasLogo,
       why: "A logo makes your card the one buyers recognise when they see it twice.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/profile",
+      cta: "Add logo",
     },
     {
       key: "categories",
@@ -144,8 +144,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.categories,
       done: i.categoryCount > 0,
       why: "Categories decide which buyer searches you appear in.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/profile",
+      cta: "Pick categories",
     },
     {
       key: "contact",
@@ -153,8 +153,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.contact,
       done: i.hasContact,
       why: "Buyers trust a named person over a generic company inbox.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/profile",
+      cta: "Add contact",
     },
     {
       key: "locations",
@@ -162,8 +162,8 @@ export function computeStrength(i: StrengthInput): Strength {
       points: WEIGHTS.locations,
       done: i.locationCount > 0,
       why: "Buyers outside your delivery area never see you. Buyers inside it see you sooner.",
-      to: null,
-      cta: "Soon",
+      to: "/supplier/profile",
+      cta: "Add areas",
     },
   ];
 

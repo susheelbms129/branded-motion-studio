@@ -16,8 +16,10 @@ import { Route as FairRankingRouteImport } from './routes/fair-ranking'
 import { Route as GetStartedRouteImport } from './routes/get-started'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminVerificationRouteImport } from './routes/admin.verification'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSplatRouteImport } from './routes/app.$'
@@ -32,11 +34,13 @@ import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
 import { Route as BuyerOnboardingRouteImport } from './routes/buyer.onboarding'
 import { Route as BuyerSigninRouteImport } from './routes/buyer.signin'
 import { Route as BuyerSignupRouteImport } from './routes/buyer.signup'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
 import { Route as SupplierFairRankRouteImport } from './routes/supplier.fair-rank'
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
 import { Route as SupplierPaymentsRouteImport } from './routes/supplier.payments'
 import { Route as SupplierProductsRouteImport } from './routes/supplier.products'
+import { Route as SupplierProfileRouteImport } from './routes/supplier.profile'
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
 import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
 import { Route as SupplierVerificationRouteImport } from './routes/supplier.verification'
@@ -75,6 +79,7 @@ import { Route as BuyerDashboardRfqsIndexRouteImport } from './routes/buyer.dash
 import { Route as BuyerDashboardRfqsIdRouteImport } from './routes/buyer.dashboard.rfqs.$id'
 import { Route as BuyerDashboardSuppliersIndexRouteImport } from './routes/buyer.dashboard.suppliers.index'
 import { Route as BuyerDashboardSuppliersIdRouteImport } from './routes/buyer.dashboard.suppliers.$id'
+import { Route as ApiPublicStorefrontImageSlugKindRouteImport } from './routes/api.public.storefront-image.$slug.$kind'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -111,6 +116,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
@@ -119,6 +129,11 @@ const SigninRoute = SigninRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminVerificationRoute = AdminVerificationRouteImport.update({
@@ -191,6 +206,11 @@ const BuyerSignupRoute = BuyerSignupRouteImport.update({
   path: '/buyer/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupplierDashboardRoute = SupplierDashboardRouteImport.update({
   id: '/supplier/dashboard',
   path: '/supplier/dashboard',
@@ -214,6 +234,11 @@ const SupplierPaymentsRoute = SupplierPaymentsRouteImport.update({
 const SupplierProductsRoute = SupplierProductsRouteImport.update({
   id: '/supplier/products',
   path: '/supplier/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupplierProfileRoute = SupplierProfileRouteImport.update({
+  id: '/supplier/profile',
+  path: '/supplier/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupplierSigninRoute = SupplierSigninRouteImport.update({
@@ -417,6 +442,12 @@ const BuyerDashboardSuppliersIdRoute =
     path: '/suppliers/$id',
     getParentRoute: () => BuyerDashboardRoute,
   } as any)
+const ApiPublicStorefrontImageSlugKindRoute =
+  ApiPublicStorefrontImageSlugKindRouteImport.update({
+    id: '/api/public/storefront-image/$slug/$kind',
+    path: '/api/public/storefront-image/$slug/$kind',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -426,8 +457,10 @@ export interface FileRoutesByFullPath {
   '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/verification': typeof AdminVerificationRoute
   '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -441,11 +474,13 @@ export interface FileRoutesByFullPath {
   '/buyer/onboarding': typeof BuyerOnboardingRoute
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
+  '/s/$slug': typeof SSlugRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/fair-rank': typeof SupplierFairRankRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/payments': typeof SupplierPaymentsRoute
   '/supplier/products': typeof SupplierProductsRoute
+  '/supplier/profile': typeof SupplierProfileRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
@@ -485,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/buyer/dashboard/requests/': typeof BuyerDashboardRequestsIndexRoute
   '/buyer/dashboard/rfqs/': typeof BuyerDashboardRfqsIndexRoute
   '/buyer/dashboard/suppliers/': typeof BuyerDashboardSuppliersIndexRoute
+  '/api/public/storefront-image/$slug/$kind': typeof ApiPublicStorefrontImageSlugKindRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -493,8 +529,10 @@ export interface FileRoutesByTo {
   '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/verification': typeof AdminVerificationRoute
   '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -507,11 +545,13 @@ export interface FileRoutesByTo {
   '/buyer/onboarding': typeof BuyerOnboardingRoute
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
+  '/s/$slug': typeof SSlugRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/fair-rank': typeof SupplierFairRankRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/payments': typeof SupplierPaymentsRoute
   '/supplier/products': typeof SupplierProductsRoute
+  '/supplier/profile': typeof SupplierProfileRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
@@ -551,6 +591,7 @@ export interface FileRoutesByTo {
   '/buyer/dashboard/requests': typeof BuyerDashboardRequestsIndexRoute
   '/buyer/dashboard/rfqs': typeof BuyerDashboardRfqsIndexRoute
   '/buyer/dashboard/suppliers': typeof BuyerDashboardSuppliersIndexRoute
+  '/api/public/storefront-image/$slug/$kind': typeof ApiPublicStorefrontImageSlugKindRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -561,8 +602,10 @@ export interface FileRoutesById {
   '/get-started': typeof GetStartedRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/verification': typeof AdminVerificationRoute
   '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
@@ -576,11 +619,13 @@ export interface FileRoutesById {
   '/buyer/onboarding': typeof BuyerOnboardingRoute
   '/buyer/signin': typeof BuyerSigninRoute
   '/buyer/signup': typeof BuyerSignupRoute
+  '/s/$slug': typeof SSlugRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/fair-rank': typeof SupplierFairRankRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/payments': typeof SupplierPaymentsRoute
   '/supplier/products': typeof SupplierProductsRoute
+  '/supplier/profile': typeof SupplierProfileRoute
   '/supplier/signin': typeof SupplierSigninRoute
   '/supplier/signup': typeof SupplierSignupRoute
   '/supplier/verification': typeof SupplierVerificationRoute
@@ -620,6 +665,7 @@ export interface FileRoutesById {
   '/buyer/dashboard/requests/': typeof BuyerDashboardRequestsIndexRoute
   '/buyer/dashboard/rfqs/': typeof BuyerDashboardRfqsIndexRoute
   '/buyer/dashboard/suppliers/': typeof BuyerDashboardSuppliersIndexRoute
+  '/api/public/storefront-image/$slug/$kind': typeof ApiPublicStorefrontImageSlugKindRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -631,8 +677,10 @@ export interface FileRouteTypes {
     | '/get-started'
     | '/login'
     | '/onboarding'
+    | '/robots.txt'
     | '/signin'
     | '/signup'
+    | '/sitemap.xml'
     | '/admin/verification'
     | '/app/$'
     | '/app/analytics'
@@ -646,11 +694,13 @@ export interface FileRouteTypes {
     | '/buyer/onboarding'
     | '/buyer/signin'
     | '/buyer/signup'
+    | '/s/$slug'
     | '/supplier/dashboard'
     | '/supplier/fair-rank'
     | '/supplier/onboarding'
     | '/supplier/payments'
     | '/supplier/products'
+    | '/supplier/profile'
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
@@ -690,6 +740,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/requests/'
     | '/buyer/dashboard/rfqs/'
     | '/buyer/dashboard/suppliers/'
+    | '/api/public/storefront-image/$slug/$kind'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -698,8 +749,10 @@ export interface FileRouteTypes {
     | '/get-started'
     | '/login'
     | '/onboarding'
+    | '/robots.txt'
     | '/signin'
     | '/signup'
+    | '/sitemap.xml'
     | '/admin/verification'
     | '/app/$'
     | '/app/analytics'
@@ -712,11 +765,13 @@ export interface FileRouteTypes {
     | '/buyer/onboarding'
     | '/buyer/signin'
     | '/buyer/signup'
+    | '/s/$slug'
     | '/supplier/dashboard'
     | '/supplier/fair-rank'
     | '/supplier/onboarding'
     | '/supplier/payments'
     | '/supplier/products'
+    | '/supplier/profile'
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
@@ -756,6 +811,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/requests'
     | '/buyer/dashboard/rfqs'
     | '/buyer/dashboard/suppliers'
+    | '/api/public/storefront-image/$slug/$kind'
   id:
     | '__root__'
     | '/'
@@ -765,8 +821,10 @@ export interface FileRouteTypes {
     | '/get-started'
     | '/login'
     | '/onboarding'
+    | '/robots.txt'
     | '/signin'
     | '/signup'
+    | '/sitemap.xml'
     | '/admin/verification'
     | '/app/$'
     | '/app/analytics'
@@ -780,11 +838,13 @@ export interface FileRouteTypes {
     | '/buyer/onboarding'
     | '/buyer/signin'
     | '/buyer/signup'
+    | '/s/$slug'
     | '/supplier/dashboard'
     | '/supplier/fair-rank'
     | '/supplier/onboarding'
     | '/supplier/payments'
     | '/supplier/products'
+    | '/supplier/profile'
     | '/supplier/signin'
     | '/supplier/signup'
     | '/supplier/verification'
@@ -824,6 +884,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard/requests/'
     | '/buyer/dashboard/rfqs/'
     | '/buyer/dashboard/suppliers/'
+    | '/api/public/storefront-image/$slug/$kind'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -834,18 +895,22 @@ export interface RootRouteChildren {
   GetStartedRoute: typeof GetStartedRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminVerificationRoute: typeof AdminVerificationRoute
   BuyerDashboardRoute: typeof BuyerDashboardRouteWithChildren
   BuyerOnboardingRoute: typeof BuyerOnboardingRoute
   BuyerSigninRoute: typeof BuyerSigninRoute
   BuyerSignupRoute: typeof BuyerSignupRoute
+  SSlugRoute: typeof SSlugRoute
   SupplierDashboardRoute: typeof SupplierDashboardRoute
   SupplierFairRankRoute: typeof SupplierFairRankRoute
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
   SupplierPaymentsRoute: typeof SupplierPaymentsRoute
   SupplierProductsRoute: typeof SupplierProductsRoute
+  SupplierProfileRoute: typeof SupplierProfileRoute
   SupplierSigninRoute: typeof SupplierSigninRoute
   SupplierSignupRoute: typeof SupplierSignupRoute
   SupplierVerificationRoute: typeof SupplierVerificationRoute
@@ -856,6 +921,7 @@ export interface RootRouteChildren {
   SupplierOrdersIndexRoute: typeof SupplierOrdersIndexRoute
   SupplierQuoteRequestsIndexRoute: typeof SupplierQuoteRequestsIndexRoute
   ApiPublicBadgeSlugRoute: typeof ApiPublicBadgeSlugRoute
+  ApiPublicStorefrontImageSlugKindRoute: typeof ApiPublicStorefrontImageSlugKindRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -909,6 +975,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
@@ -921,6 +994,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/verification': {
@@ -1021,6 +1101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerSignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/supplier/dashboard': {
       id: '/supplier/dashboard'
       path: '/supplier/dashboard'
@@ -1054,6 +1141,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/products'
       fullPath: '/supplier/products'
       preLoaderRoute: typeof SupplierProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/profile': {
+      id: '/supplier/profile'
+      path: '/supplier/profile'
+      fullPath: '/supplier/profile'
+      preLoaderRoute: typeof SupplierProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/supplier/signin': {
@@ -1322,6 +1416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerDashboardSuppliersIdRouteImport
       parentRoute: typeof BuyerDashboardRoute
     }
+    '/api/public/storefront-image/$slug/$kind': {
+      id: '/api/public/storefront-image/$slug/$kind'
+      path: '/api/public/storefront-image/$slug/$kind'
+      fullPath: '/api/public/storefront-image/$slug/$kind'
+      preLoaderRoute: typeof ApiPublicStorefrontImageSlugKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1426,18 +1527,22 @@ const rootRouteChildren: RootRouteChildren = {
   GetStartedRoute: GetStartedRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminVerificationRoute: AdminVerificationRoute,
   BuyerDashboardRoute: BuyerDashboardRouteWithChildren,
   BuyerOnboardingRoute: BuyerOnboardingRoute,
   BuyerSigninRoute: BuyerSigninRoute,
   BuyerSignupRoute: BuyerSignupRoute,
+  SSlugRoute: SSlugRoute,
   SupplierDashboardRoute: SupplierDashboardRoute,
   SupplierFairRankRoute: SupplierFairRankRoute,
   SupplierOnboardingRoute: SupplierOnboardingRoute,
   SupplierPaymentsRoute: SupplierPaymentsRoute,
   SupplierProductsRoute: SupplierProductsRoute,
+  SupplierProfileRoute: SupplierProfileRoute,
   SupplierSigninRoute: SupplierSigninRoute,
   SupplierSignupRoute: SupplierSignupRoute,
   SupplierVerificationRoute: SupplierVerificationRoute,
@@ -1448,6 +1553,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupplierOrdersIndexRoute: SupplierOrdersIndexRoute,
   SupplierQuoteRequestsIndexRoute: SupplierQuoteRequestsIndexRoute,
   ApiPublicBadgeSlugRoute: ApiPublicBadgeSlugRoute,
+  ApiPublicStorefrontImageSlugKindRoute: ApiPublicStorefrontImageSlugKindRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

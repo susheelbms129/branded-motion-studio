@@ -65,6 +65,10 @@ const PUBLIC = new Set([
   "/api/public/badge/$slug",
   "/fair-ranking",
   "/verified/$slug",
+  "/s/$slug",
+  "/api/public/storefront-image/$slug/$kind",
+  "/sitemap.xml",
+  "/robots.txt",
 ]);
 
 describe("every page is public on purpose or guarded", () => {
@@ -96,6 +100,7 @@ describe("every page is public on purpose or guarded", () => {
         "/supplier/orders/",
         "/supplier/orders/$id",
         "/supplier/products",
+        "/supplier/profile",
         "/supplier/quote-requests/",
         "/supplier/quote-requests/$id",
         "/supplier/verification",
@@ -119,7 +124,7 @@ describe("every page is public on purpose or guarded", () => {
   it("no route is left unclassified", () => {
     const known = (r: AnyRoute) =>
       PUBLIC.has(r.id) ||
-      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|orders|payments|fair-rank|verification|onboarding)|buyer\/onboarding)/.test(
+      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|orders|payments|fair-rank|verification|profile|onboarding)|buyer\/onboarding)/.test(
         r.id,
       );
     const loose = routes.filter((r) => !known(r)).map((r) => r.id);

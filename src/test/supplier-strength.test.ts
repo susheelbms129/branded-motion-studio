@@ -51,8 +51,10 @@ describe("storefront strength", () => {
   it("puts steps the supplier can act on today first, biggest gain first", () => {
     const { next } = computeStrength(empty);
     expect(next[0]?.key).toBe("registered");
+    // Every step now has a page. A step whose page does not exist yet would have to come after all the others.
     const firstSoon = next.findIndex((s) => s.to === null);
-    expect(next.slice(firstSoon).every((s) => s.to === null)).toBe(true);
+    if (firstSoon >= 0) expect(next.slice(firstSoon).every((s) => s.to === null)).toBe(true);
+    expect(next.every((s) => s.to !== null)).toBe(true);
   });
   it("every open step explains why it matters to a buyer", () => {
     for (const s of computeStrength(empty).steps) expect(s.why.length).toBeGreaterThan(20);

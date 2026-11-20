@@ -6,8 +6,11 @@ import { Can, EmptyState, FilterTabs, PageHeader, StatusBadge } from "@/componen
 import { ACCENT } from "@/lib/accents";
 import { formatMoney } from "@/lib/format";
 import { AppLink } from "@/lib/nav";
+import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
 import { cn } from "@/lib/utils";
+
+import { RealQuoteInsights } from "./RealQuoteInsights";
 
 const TYPE_LABEL = {
   price_increase: "Price increase",
@@ -26,6 +29,7 @@ const linkFor = (k: string, id: string) =>
 
 export function InsightsPage() {
   const ws = useWs();
+  const orgId = useUi((s) => s.orgId);
   const all = useMemo(() => ws.insights(), [ws]);
   const [tab, setTab] = useState("open");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -38,6 +42,7 @@ export function InsightsPage() {
         crumbs={[{ label: "AI Insights" }]}
         description="Every insight is computed from your own orders and requests, and shows the evidence behind it. Nothing is guessed."
       />
+      {orgId ? <RealQuoteInsights orgId={orgId} /> : null}
       <FilterTabs
         value={tab}
         onChange={setTab}

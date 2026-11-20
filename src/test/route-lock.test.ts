@@ -62,6 +62,8 @@ const PUBLIC = new Set([
   "/supplier/signin",
   "/supplier/signup",
   "/api/public/resend-webhook",
+  "/api/public/whatsapp-drain",
+  "/api/public/whatsapp-webhook",
   "/api/public/badge/$slug",
   "/fair-ranking",
   "/verified/$slug",

@@ -8,10 +8,14 @@ import { formatRelative } from "@/lib/format";
 import { MAIL_CATEGORIES, useMailLog, useMailPrefs, type MailCategory } from "@/lib/mail";
 import { appPath } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { useUi } from "@/lib/ui-store";
 import { useWs } from "@/lib/ws-store";
+
+import { WhatsAppPanel } from "./WhatsAppPanel";
 
 export function NotificationsPage() {
   const ws = useWs();
+  const orgId = useUi((s) => s.orgId);
   const nav = useNavigate();
   const { prefs, set } = useMailPrefs();
   const log = useMailLog();
@@ -73,6 +77,11 @@ export function NotificationsPage() {
           ))}
         </ul>
       )}
+      {orgId ? (
+        <div className="mt-6">
+          <WhatsAppPanel side="buyer" />
+        </div>
+      ) : null}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Panel
           title="Email notifications"

@@ -46,6 +46,8 @@ import { Route as SupplierSignupRouteImport } from './routes/supplier.signup'
 import { Route as SupplierVerificationRouteImport } from './routes/supplier.verification'
 import { Route as VerifiedSlugRouteImport } from './routes/verified.$slug'
 import { Route as ApiPublicResendWebhookRouteImport } from './routes/api.public.resend-webhook'
+import { Route as ApiPublicWhatsappDrainRouteImport } from './routes/api.public.whatsapp-drain'
+import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api.public.whatsapp-webhook'
 import { Route as AppPurchaseOrdersIndexRouteImport } from './routes/app.purchase-orders.index'
 import { Route as AppPurchaseOrdersIdRouteImport } from './routes/app.purchase-orders.$id'
 import { Route as AppRequestsIndexRouteImport } from './routes/app.requests.index'
@@ -266,6 +268,17 @@ const ApiPublicResendWebhookRoute = ApiPublicResendWebhookRouteImport.update({
   path: '/api/public/resend-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappDrainRoute = ApiPublicWhatsappDrainRouteImport.update({
+  id: '/api/public/whatsapp-drain',
+  path: '/api/public/whatsapp-drain',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWhatsappWebhookRoute =
+  ApiPublicWhatsappWebhookRouteImport.update({
+    id: '/api/public/whatsapp-webhook',
+    path: '/api/public/whatsapp-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppPurchaseOrdersIndexRoute = AppPurchaseOrdersIndexRouteImport.update({
   id: '/purchase-orders/',
   path: '/purchase-orders/',
@@ -487,6 +500,8 @@ export interface FileRoutesByFullPath {
   '/verified/$slug': typeof VerifiedSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/api/public/whatsapp-drain': typeof ApiPublicWhatsappDrainRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
   '/app/requests/$id': typeof AppRequestsIdRoute
   '/app/requests/new': typeof AppRequestsNewRoute
@@ -558,6 +573,8 @@ export interface FileRoutesByTo {
   '/verified/$slug': typeof VerifiedSlugRoute
   '/app': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/api/public/whatsapp-drain': typeof ApiPublicWhatsappDrainRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
   '/app/requests/$id': typeof AppRequestsIdRoute
   '/app/requests/new': typeof AppRequestsNewRoute
@@ -632,6 +649,8 @@ export interface FileRoutesById {
   '/verified/$slug': typeof VerifiedSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/resend-webhook': typeof ApiPublicResendWebhookRoute
+  '/api/public/whatsapp-drain': typeof ApiPublicWhatsappDrainRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/app/purchase-orders/$id': typeof AppPurchaseOrdersIdRoute
   '/app/requests/$id': typeof AppRequestsIdRoute
   '/app/requests/new': typeof AppRequestsNewRoute
@@ -707,6 +726,8 @@ export interface FileRouteTypes {
     | '/verified/$slug'
     | '/app/'
     | '/api/public/resend-webhook'
+    | '/api/public/whatsapp-drain'
+    | '/api/public/whatsapp-webhook'
     | '/app/purchase-orders/$id'
     | '/app/requests/$id'
     | '/app/requests/new'
@@ -778,6 +799,8 @@ export interface FileRouteTypes {
     | '/verified/$slug'
     | '/app'
     | '/api/public/resend-webhook'
+    | '/api/public/whatsapp-drain'
+    | '/api/public/whatsapp-webhook'
     | '/app/purchase-orders/$id'
     | '/app/requests/$id'
     | '/app/requests/new'
@@ -851,6 +874,8 @@ export interface FileRouteTypes {
     | '/verified/$slug'
     | '/app/'
     | '/api/public/resend-webhook'
+    | '/api/public/whatsapp-drain'
+    | '/api/public/whatsapp-webhook'
     | '/app/purchase-orders/$id'
     | '/app/requests/$id'
     | '/app/requests/new'
@@ -916,6 +941,8 @@ export interface RootRouteChildren {
   SupplierVerificationRoute: typeof SupplierVerificationRoute
   VerifiedSlugRoute: typeof VerifiedSlugRoute
   ApiPublicResendWebhookRoute: typeof ApiPublicResendWebhookRoute
+  ApiPublicWhatsappDrainRoute: typeof ApiPublicWhatsappDrainRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   SupplierOrdersIdRoute: typeof SupplierOrdersIdRoute
   SupplierQuoteRequestsIdRoute: typeof SupplierQuoteRequestsIdRoute
   SupplierOrdersIndexRoute: typeof SupplierOrdersIndexRoute
@@ -1183,6 +1210,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/resend-webhook'
       fullPath: '/api/public/resend-webhook'
       preLoaderRoute: typeof ApiPublicResendWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/whatsapp-drain': {
+      id: '/api/public/whatsapp-drain'
+      path: '/api/public/whatsapp-drain'
+      fullPath: '/api/public/whatsapp-drain'
+      preLoaderRoute: typeof ApiPublicWhatsappDrainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/whatsapp-webhook': {
+      id: '/api/public/whatsapp-webhook'
+      path: '/api/public/whatsapp-webhook'
+      fullPath: '/api/public/whatsapp-webhook'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/purchase-orders/': {
@@ -1548,6 +1589,8 @@ const rootRouteChildren: RootRouteChildren = {
   SupplierVerificationRoute: SupplierVerificationRoute,
   VerifiedSlugRoute: VerifiedSlugRoute,
   ApiPublicResendWebhookRoute: ApiPublicResendWebhookRoute,
+  ApiPublicWhatsappDrainRoute: ApiPublicWhatsappDrainRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   SupplierOrdersIdRoute: SupplierOrdersIdRoute,
   SupplierQuoteRequestsIdRoute: SupplierQuoteRequestsIdRoute,
   SupplierOrdersIndexRoute: SupplierOrdersIndexRoute,

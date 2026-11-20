@@ -9,6 +9,7 @@ import {
   StorefrontPreviewCard,
   TrustLadder,
 } from "@/features/supplier/dashboard-panels";
+import { WhatsAppPanel } from "@/features/settings/WhatsAppPanel";
 import { useSupplierDashboard } from "@/features/supplier/use-supplier-dashboard";
 
 export function SupplierDashboardPage() {
@@ -66,6 +67,7 @@ function DashboardContent() {
               needsFix={data.strength.proofsNeedingFix}
             />
             <QuoteInbox level={level} orgId={summary?.id ?? null} />
+            <WhatsAppPanel side="supplier" />
           </div>
         </div>
       ) : (

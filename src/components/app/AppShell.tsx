@@ -42,7 +42,7 @@ function BrandLogo({ collapsed }: { collapsed: boolean }) {
 }
 
 const GROUPS: { label: string; keys: ModuleKey[] }[] = [
-  { label: "Workspace", keys: ["dashboard", "requests", "rfqs", "purchaseOrders"] },
+  { label: "Workspace", keys: ["dashboard", "requests", "rfqs", "purchaseOrders", "payments"] },
   { label: "Sourcing", keys: ["findSuppliers", "suppliers", "materials"] },
   { label: "Intelligence", keys: ["analytics", "insights"] },
   { label: "Admin", keys: ["notifications", "team", "settings"] },

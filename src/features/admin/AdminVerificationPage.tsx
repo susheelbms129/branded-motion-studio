@@ -107,7 +107,7 @@ function Row({ it, onChanged }: { it: QueueItem; onChanged: () => Promise<void> 
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-semibold">{it.org_name} <span className="font-normal text-muted-foreground">· {it.org_state || "state not set"}</span></p>
-          <p className="text-sm text-muted-foreground">{it.type === "certificate" ? it.label : TYPE_TITLE[it.type]}</p>
+          <p className="text-sm text-muted-foreground">{it.type === "certificate" || it.type === "udyam" ? it.label : TYPE_TITLE[it.type]}</p>
         </div>
         {it.status === "verified" || it.status === "rejected" ? (
           <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", it.status === "verified" ? "tint-emerald" : "tint-amber")}>{it.status === "verified" ? "Verified" : "Rejected"} {fmtDate(it.reviewed_at)}</span>

@@ -8,8 +8,9 @@ import { fieldClass } from "@/components/onboarding/fields";
 import { checkGstin, gstinProblem } from "@/lib/gstin";
 import {
   ALLOWED_MIME, MAX_FILE_BYTES, loadPassport, loadProofs, openDocument, submitProof, withdrawProof,
-  type CheckType, type ProofRow, type TrustPassport as Passport,
+  type CheckType, type ProofRow, type TrustPassport as Passport, type UdyamActivity, type UdyamSize,
 } from "@/lib/verification-api";
+import { udyamProblem } from "@/lib/msme-payments";
 import { cn } from "@/lib/utils";
 
 const ctaBtn =
@@ -21,6 +22,7 @@ const INTRO: Record<CheckType, { title: string; why: string }> = {
   address: { title: "Business address", why: "Upload an electricity bill, rent agreement or property tax receipt that shows this address." },
   bank: { title: "Bank account", why: "Upload a cancelled cheque or bank letter. We keep only the IFSC and the last 4 digits." },
   certificate: { title: "Quality certificates", why: "ISO, BIS, FSSAI and others. Each certificate is checked on its own and shown with its expiry." },
+  udyam: { title: "Udyam (MSME) registration", why: "Free to add. It shows buyers you are a micro or small enterprise, and switches on the 45-day payment protection: buyers must pay you within 45 days or lose their tax deduction." },
 };
 
 const STATUS_TEXT: Record<string, { t: string; cls: string }> = {
@@ -97,7 +99,7 @@ function PassportContent() {
             <SharePassportPanel orgId={summary.id} name={summary.name} level={passport.level} />
 
             <div className="mt-8 space-y-5">
-              {(["registration", "address", "bank", "certificate"] as CheckType[]).map((t) => (
+              {(["registration", "address", "bank", "udyam", "certificate"] as CheckType[]).map((t) => (
                 <ProofCard key={t} type={t} rows={latest(t)} orgId={summary.id} orgState={summary.state} onChanged={async () => { await reload(summary.id); reloadShell(); }} />
               ))}
             </div>
@@ -157,7 +159,7 @@ function ProofLine({ row, onChanged }: { row: ProofRow; onChanged: () => Promise
   return (
     <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-medium">{row.type === "certificate" ? row.label : row.type === "bank" ? row.label : TYPE_TITLE[row.type]}{row.reference && row.type !== "address" ? ` · ${row.reference}` : ""}</span>
+        <span className="font-medium">{row.type === "certificate" || row.type === "bank" || row.type === "udyam" ? row.label : TYPE_TITLE[row.type]}{row.reference && row.type !== "address" ? ` · ${row.reference}` : ""}</span>
         <Badge status={row.status} />
       </div>
       {row.status === "verified" ? <p className="mt-1 text-muted-foreground">Verified {fmtDate(row.reviewed_at)} · valid until {fmtDate(row.expires_at)}</p> : null}
@@ -175,6 +177,8 @@ function ProofLine({ row, onChanged }: { row: ProofRow; onChanged: () => Promise
 
 function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckType; orgId: string; orgState: string; onDone: () => Promise<void>; onCancel: () => void }) {
   const [v, setV] = useState({ reference: "", label: "", issuer: "", issuedOn: "", expiresOn: "" });
+  const [udSize, setUdSize] = useState<UdyamSize | "">("");
+  const [udAct, setUdAct] = useState<UdyamActivity | "">("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -188,9 +192,14 @@ function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckTyp
     setErr("");
     if (!file) return setErr("Please choose the document to upload.");
     if (type === "registration" && gstMsg) return setErr(gstMsg || "Enter your GST number.");
+    if (type === "udyam" && udyamProblem(v.reference)) return setErr(udyamProblem(v.reference));
+    if (type === "udyam" && (!udSize || !udAct)) return setErr("Choose your enterprise size and what you do, exactly as on your Udyam certificate.");
     setBusy(true);
     try {
-      await submitProof({ orgId, type, file, ...v, label: type === "certificate" || type === "bank" ? v.label : "" });
+      await submitProof({
+        orgId, type, file, ...v, label: type === "certificate" || type === "bank" ? v.label : "",
+        ...(type === "udyam" ? { udyamSize: udSize as UdyamSize, udyamActivity: udAct as UdyamActivity } : {}),
+      });
       await onDone();
     } catch (x) {
       setErr(x instanceof Error ? x.message : "Something went wrong.");
@@ -224,6 +233,33 @@ function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckTyp
           <label className="block text-sm font-medium">Last 4 digits of the account number
             <input className={cn(fieldClass, "mt-1")} value={v.label} onChange={set("label")} maxLength={4} inputMode="numeric" placeholder="1234" />
           </label>
+        </div>
+      ) : null}
+      {type === "udyam" ? (
+        <div className="space-y-3">
+          <label className="block text-sm font-medium">Udyam registration number
+            <input className={cn(fieldClass, "mt-1 uppercase")} value={v.reference} onChange={set("reference")} maxLength={19} placeholder="UDYAM-MH-12-1234567" autoComplete="off" />
+            {udyamProblem(v.reference) && v.reference ? <span className="mt-1 block text-sm text-destructive">{udyamProblem(v.reference)}</span> : null}
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm font-medium">Enterprise size
+              <select className={cn(fieldClass, "mt-1")} value={udSize} onChange={(e) => setUdSize(e.target.value as UdyamSize | "")}>
+                <option value="">Choose…</option>
+                <option value="micro">Micro</option>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+              </select>
+            </label>
+            <label className="block text-sm font-medium">Main activity
+              <select className={cn(fieldClass, "mt-1")} value={udAct} onChange={(e) => setUdAct(e.target.value as UdyamActivity | "")}>
+                <option value="">Choose…</option>
+                <option value="manufacturing">Manufacturing</option>
+                <option value="services">Services</option>
+                <option value="trade">Trading</option>
+              </select>
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground">Upload your Udyam certificate. A reviewer checks the number, size and activity against it. Be accurate: buyers' tax rules depend on this, and a wrong answer is rejected.</p>
         </div>
       ) : null}
       {type === "certificate" ? (

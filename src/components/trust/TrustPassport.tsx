@@ -19,7 +19,11 @@ export const TYPE_TITLE: Record<CheckType, string> = {
   address: "Business address",
   bank: "Bank account",
   certificate: "Certificate",
+  udyam: "Udyam (MSME) registration",
 };
+
+export const UDYAM_SIZE = { micro: "Micro enterprise", small: "Small enterprise", medium: "Medium enterprise" } as const;
+export const UDYAM_ACTIVITY = { manufacturing: "Manufacturing", services: "Services", trade: "Trading" } as const;
 
 /** How a proof was checked. Never blur these: a reviewed document is not the same as a government record. */
 const EVIDENCE: Record<string, string> = {
@@ -70,6 +74,9 @@ export function TrustPassport({ passport, className }: { passport: Passport; cla
               <span>
                 <span className="block font-medium">{c.type === "certificate" ? c.label : TYPE_TITLE[c.type]}</span>
                 {c.reference ? <span className="block text-sm text-muted-foreground">{c.type === "certificate" && c.issuer ? `${c.issuer} · ` : ""}No. {c.reference}</span> : null}
+                {c.type === "udyam" && c.size && c.activity ? (
+                  <span className="block text-sm text-muted-foreground">{UDYAM_SIZE[c.size]} · {UDYAM_ACTIVITY[c.activity]}{c.size !== "medium" && c.activity !== "trade" ? " · covered by the MSME 45-day payment rule" : ""}</span>
+                ) : null}
                 {c.evidence ? (
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {EVIDENCE[c.evidence]}

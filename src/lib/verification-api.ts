@@ -6,7 +6,9 @@ import { getSupabase } from "@/lib/supabase";
  * Documents live in a PRIVATE bucket and open only through links that expire after a minute. There is no public URL.
  */
 
-export type CheckType = "registration" | "address" | "bank" | "certificate";
+export type CheckType = "registration" | "address" | "bank" | "certificate" | "udyam";
+export type UdyamSize = "micro" | "small" | "medium";
+export type UdyamActivity = "manufacturing" | "services" | "trade";
 export type CheckStatus = "draft" | "submitted" | "in_review" | "verified" | "rejected" | "superseded" | "expired";
 
 export const BUCKET = "verification-docs";
@@ -26,6 +28,8 @@ export interface ProofRow {
   reviewed_at: string | null;
   submitted_at: string | null;
   created_at: string;
+  udyam_size?: UdyamSize | null;
+  udyam_activity?: UdyamActivity | null;
 }
 
 export interface PassportCheck {
@@ -38,6 +42,9 @@ export interface PassportCheck {
   /** HOW it was checked: the live government record (and the name matched), or a document a Vendora reviewer read. */
   evidence?: "government_record" | "document_reviewed";
   record_checked_on?: string | null;
+  /** Udyam proofs only: the size and activity a reviewer checked against the certificate. */
+  size?: UdyamSize;
+  activity?: UdyamActivity;
 }
 export interface TrustPassport {
   level: 0 | 1 | 2 | 3;
@@ -119,7 +126,7 @@ function friendly(err: { message?: string } | null, fallback: string): string {
 export async function loadProofs(orgId: string): Promise<ProofRow[]> {
   const { data, error } = await getSupabase()
     .from("verification_checks")
-    .select("id, type, label, reference, issuer, expires_at, status, doc_name, review_note, reviewed_at, submitted_at, created_at")
+    .select("id, type, label, reference, issuer, expires_at, status, doc_name, review_note, reviewed_at, submitted_at, created_at, udyam_size, udyam_activity")
     .eq("org_id", orgId)
     .neq("status", "superseded")
     .order("created_at", { ascending: false });
@@ -141,6 +148,8 @@ export interface NewProof {
   issuer?: string;
   issuedOn?: string;
   expiresOn?: string;
+  udyamSize?: UdyamSize;
+  udyamActivity?: UdyamActivity;
   file: File;
 }
 
@@ -150,10 +159,15 @@ export async function submitProof(p: NewProof): Promise<void> {
   if (p.file.size > MAX_FILE_BYTES) throw new Error("The file is larger than 10 MB. Please upload a smaller one.");
   if (p.file.size === 0) throw new Error("The file is empty.");
   const sb = getSupabase();
-  const { data: id, error } = await sb.rpc("start_check", {
-    p_org: p.orgId, p_type: p.type, p_label: p.label ?? "", p_reference: p.reference ?? "", p_issuer: p.issuer ?? "",
-    p_issued_on: p.issuedOn || null, p_expires_on: p.expiresOn || null,
-  });
+  const { data: id, error } =
+    p.type === "udyam"
+      ? await sb.rpc("start_udyam_check", {
+          p_org: p.orgId, p_number: p.reference ?? "", p_size: p.udyamSize ?? "", p_activity: p.udyamActivity ?? "",
+        })
+      : await sb.rpc("start_check", {
+          p_org: p.orgId, p_type: p.type, p_label: p.label ?? "", p_reference: p.reference ?? "", p_issuer: p.issuer ?? "",
+          p_issued_on: p.issuedOn || null, p_expires_on: p.expiresOn || null,
+        });
   if (error || !id) throw new Error(friendly(error, "We couldn't start this proof. Please check the details."));
   const ext = p.file.type === "application/pdf" ? "pdf" : p.file.type === "image/png" ? "png" : "jpg";
   const path = `${p.orgId}/${id}/${crypto.randomUUID()}.${ext}`;

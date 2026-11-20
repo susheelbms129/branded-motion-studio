@@ -119,7 +119,7 @@ describe("every page is public on purpose or guarded", () => {
   it("no route is left unclassified", () => {
     const known = (r: AnyRoute) =>
       PUBLIC.has(r.id) ||
-      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|orders|verification|onboarding)|buyer\/onboarding)/.test(
+      /^\/(buyer\/dashboard|app|admin|supplier\/(dashboard|products|quote-requests|orders|payments|fair-rank|verification|onboarding)|buyer\/onboarding)/.test(
         r.id,
       );
     const loose = routes.filter((r) => !known(r)).map((r) => r.id);

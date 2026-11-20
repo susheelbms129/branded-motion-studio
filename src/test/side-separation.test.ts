@@ -31,6 +31,7 @@ describe("buyer and supplier menus stay separate", () => {
       "Dashboard",
       "Quote requests",
       "Orders received",
+      "Getting paid",
       "Trust Passport",
       "Fair Rank",
       "Products",

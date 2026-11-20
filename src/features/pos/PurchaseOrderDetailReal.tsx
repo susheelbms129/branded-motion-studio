@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, ErrorState, PageHeader, Panel, StatusBadge } from "@/components/vendora/kit";
+import { PaymentPanel } from "@/features/payments/PaymentPanel";
 import { AppLink } from "@/lib/nav";
 import {
   cancelPurchaseOrder,
@@ -163,6 +164,7 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
           </Panel>
         </div>
         <div className="space-y-4">
+          <PaymentPanel side="buyer" poId={po.id} currency={cur} />
           <Panel title="Details">
             <DetailList
               rows={[

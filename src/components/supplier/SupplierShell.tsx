@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Building2, Inbox, LayoutDashboard, LogOut, Menu, Package, ReceiptText, Scale, ShieldCheck, type LucideIcon } from "lucide-react";
+import { ArrowRight, Building2, Inbox, Landmark, LayoutDashboard, LogOut, Menu, Package, ReceiptText, Scale, ShieldCheck, type LucideIcon } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ const NAV_LOOK: Record<SupplierNavKey, { icon: LucideIcon; accent: Accent }> = {
   dashboard: { icon: LayoutDashboard, accent: "blue" },
   quotes: { icon: Inbox, accent: "violet" },
   orders: { icon: ReceiptText, accent: "emerald" },
+  payments: { icon: Landmark, accent: "emerald" },
   passport: { icon: ShieldCheck, accent: "emerald" },
   rank: { icon: Scale, accent: "violet" },
   products: { icon: Package, accent: "pink" },

@@ -9,6 +9,7 @@ export const SUPPLIER_NAV = [
   { key: "dashboard", label: "Dashboard", to: "/supplier/dashboard" },
   { key: "quotes", label: "Quote requests", to: "/supplier/quote-requests" },
   { key: "orders", label: "Orders received", to: "/supplier/orders" },
+  { key: "payments", label: "Getting paid", to: "/supplier/payments" },
   { key: "passport", label: "Trust Passport", to: "/supplier/verification" },
   { key: "rank", label: "Fair Rank", to: "/supplier/fair-rank" },
   { key: "products", label: "Products", to: "/supplier/products" },

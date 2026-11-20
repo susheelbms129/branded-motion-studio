@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PaymentPanel } from "@/features/payments/PaymentPanel";
 import { asCurrency, day, DetailList, OrderLines } from "@/features/pos/OrderParts";
 import {
   confirmPurchaseOrder,
@@ -162,7 +163,9 @@ function OrderContent({ poId }: { poId: string }) {
             {po.notes ? <p className="mt-3 text-sm">Buyer's note: {po.notes}</p> : null}
           </section>
         </div>
-        <section className={cn(card, "h-fit p-5")}>
+        <div className="h-fit space-y-4">
+        {orgId && po.state === "confirmed" ? <PaymentPanel side="supplier" orgId={orgId} poId={po.id} currency={po.currency} /> : null}
+        <section className={cn(card, "p-5")}>
           <h2 className="mb-3 text-sm font-semibold">Details</h2>
           <DetailList
             rows={[
@@ -173,6 +176,7 @@ function OrderContent({ poId }: { poId: string }) {
             ]}
           />
         </section>
+        </div>
       </div>
 
       <Dialog open={mode !== null} onOpenChange={(v) => !busy && !v && setMode(null)}>

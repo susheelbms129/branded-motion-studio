@@ -2,6 +2,7 @@ import {
   BarChart3,
   ClipboardList,
   FileSpreadsheet,
+  Landmark,
   LayoutDashboard,
   Package,
   ReceiptText,
@@ -23,6 +24,7 @@ export type ModuleKey =
   | "rfqs"
   | "quotations"
   | "purchaseOrders"
+  | "payments"
   | "findSuppliers"
   | "suppliers"
   | "materials"
@@ -38,6 +40,7 @@ export const MODULES: Record<ModuleKey, { label: string; icon: LucideIcon; accen
   rfqs: { label: "RFQs", icon: FileSpreadsheet, accent: "violet", path: "rfqs", shortcut: "Q" },
   quotations: { label: "Quotations", icon: Scale, accent: "cyan", path: "rfqs" },
   purchaseOrders: { label: "Purchase Orders", icon: ReceiptText, accent: "emerald", path: "purchase-orders", shortcut: "P" },
+  payments: { label: "Payments", icon: Landmark, accent: "emerald", path: "payments", shortcut: "Y" },
   findSuppliers: { label: "Find Suppliers", icon: SearchCheck, accent: "emerald", path: "find-suppliers", shortcut: "F" },
   suppliers: { label: "Saved Suppliers", icon: Truck, accent: "amber", path: "suppliers", shortcut: "S" },
   materials: { label: "Materials", icon: Package, accent: "pink", path: "materials" },

@@ -22,6 +22,7 @@ import { Route as AdminVerificationRouteImport } from './routes/admin.verificati
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppSplatRouteImport } from './routes/app.$'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
+import { Route as AppPaymentsRouteImport } from './routes/app.payments'
 import { Route as AppInsightsRouteImport } from './routes/app.insights'
 import { Route as AppMaterialsRouteImport } from './routes/app.materials'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
@@ -33,6 +34,7 @@ import { Route as BuyerSigninRouteImport } from './routes/buyer.signin'
 import { Route as BuyerSignupRouteImport } from './routes/buyer.signup'
 import { Route as SupplierDashboardRouteImport } from './routes/supplier.dashboard'
 import { Route as SupplierFairRankRouteImport } from './routes/supplier.fair-rank'
+import { Route as SupplierPaymentsRouteImport } from './routes/supplier.payments'
 import { Route as SupplierOnboardingRouteImport } from './routes/supplier.onboarding'
 import { Route as SupplierProductsRouteImport } from './routes/supplier.products'
 import { Route as SupplierSigninRouteImport } from './routes/supplier.signin'
@@ -51,6 +53,7 @@ import { Route as AppSuppliersIndexRouteImport } from './routes/app.suppliers.in
 import { Route as AppSuppliersIdRouteImport } from './routes/app.suppliers.$id'
 import { Route as BuyerDashboardIndexRouteImport } from './routes/buyer.dashboard.index'
 import { Route as BuyerDashboardAnalyticsRouteImport } from './routes/buyer.dashboard.analytics'
+import { Route as BuyerDashboardPaymentsRouteImport } from './routes/buyer.dashboard.payments'
 import { Route as BuyerDashboardInsightsRouteImport } from './routes/buyer.dashboard.insights'
 import { Route as BuyerDashboardMaterialsRouteImport } from './routes/buyer.dashboard.materials'
 import { Route as BuyerDashboardNotificationsRouteImport } from './routes/buyer.dashboard.notifications'
@@ -138,6 +141,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPaymentsRoute = AppPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInsightsRoute = AppInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -191,6 +199,11 @@ const SupplierDashboardRoute = SupplierDashboardRouteImport.update({
 const SupplierFairRankRoute = SupplierFairRankRouteImport.update({
   id: '/supplier/fair-rank',
   path: '/supplier/fair-rank',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupplierPaymentsRoute = SupplierPaymentsRouteImport.update({
+  id: '/supplier/payments',
+  path: '/supplier/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupplierOnboardingRoute = SupplierOnboardingRouteImport.update({
@@ -281,6 +294,11 @@ const BuyerDashboardIndexRoute = BuyerDashboardIndexRouteImport.update({
 const BuyerDashboardAnalyticsRoute = BuyerDashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => BuyerDashboardRoute,
+} as any)
+const BuyerDashboardPaymentsRoute = BuyerDashboardPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => BuyerDashboardRoute,
 } as any)
 const BuyerDashboardInsightsRoute = BuyerDashboardInsightsRouteImport.update({
@@ -413,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/admin/verification': typeof AdminVerificationRoute
   '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/payments': typeof AppPaymentsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -424,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/fair-rank': typeof SupplierFairRankRoute
+  '/supplier/payments': typeof SupplierPaymentsRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -438,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/app/rfqs/$id': typeof AppRfqsIdRoute
   '/app/suppliers/$id': typeof AppSuppliersIdRoute
   '/buyer/dashboard/analytics': typeof BuyerDashboardAnalyticsRoute
+  '/buyer/dashboard/payments': typeof BuyerDashboardPaymentsRoute
   '/buyer/dashboard/insights': typeof BuyerDashboardInsightsRoute
   '/buyer/dashboard/materials': typeof BuyerDashboardMaterialsRoute
   '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
@@ -477,6 +498,7 @@ export interface FileRoutesByTo {
   '/admin/verification': typeof AdminVerificationRoute
   '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/payments': typeof AppPaymentsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -487,6 +509,7 @@ export interface FileRoutesByTo {
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/fair-rank': typeof SupplierFairRankRoute
+  '/supplier/payments': typeof SupplierPaymentsRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -501,6 +524,7 @@ export interface FileRoutesByTo {
   '/app/rfqs/$id': typeof AppRfqsIdRoute
   '/app/suppliers/$id': typeof AppSuppliersIdRoute
   '/buyer/dashboard/analytics': typeof BuyerDashboardAnalyticsRoute
+  '/buyer/dashboard/payments': typeof BuyerDashboardPaymentsRoute
   '/buyer/dashboard/insights': typeof BuyerDashboardInsightsRoute
   '/buyer/dashboard/materials': typeof BuyerDashboardMaterialsRoute
   '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
@@ -542,6 +566,7 @@ export interface FileRoutesById {
   '/admin/verification': typeof AdminVerificationRoute
   '/app/$': typeof AppSplatRoute
   '/app/analytics': typeof AppAnalyticsRoute
+  '/app/payments': typeof AppPaymentsRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -553,6 +578,7 @@ export interface FileRoutesById {
   '/buyer/signup': typeof BuyerSignupRoute
   '/supplier/dashboard': typeof SupplierDashboardRoute
   '/supplier/fair-rank': typeof SupplierFairRankRoute
+  '/supplier/payments': typeof SupplierPaymentsRoute
   '/supplier/onboarding': typeof SupplierOnboardingRoute
   '/supplier/products': typeof SupplierProductsRoute
   '/supplier/signin': typeof SupplierSigninRoute
@@ -567,6 +593,7 @@ export interface FileRoutesById {
   '/app/rfqs/$id': typeof AppRfqsIdRoute
   '/app/suppliers/$id': typeof AppSuppliersIdRoute
   '/buyer/dashboard/analytics': typeof BuyerDashboardAnalyticsRoute
+  '/buyer/dashboard/payments': typeof BuyerDashboardPaymentsRoute
   '/buyer/dashboard/insights': typeof BuyerDashboardInsightsRoute
   '/buyer/dashboard/materials': typeof BuyerDashboardMaterialsRoute
   '/buyer/dashboard/notifications': typeof BuyerDashboardNotificationsRoute
@@ -609,6 +636,7 @@ export interface FileRouteTypes {
     | '/admin/verification'
     | '/app/$'
     | '/app/analytics'
+    | '/app/payments'
     | '/app/insights'
     | '/app/materials'
     | '/app/notifications'
@@ -620,6 +648,7 @@ export interface FileRouteTypes {
     | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/fair-rank'
+    | '/supplier/payments'
     | '/supplier/onboarding'
     | '/supplier/products'
     | '/supplier/signin'
@@ -634,6 +663,7 @@ export interface FileRouteTypes {
     | '/app/rfqs/$id'
     | '/app/suppliers/$id'
     | '/buyer/dashboard/analytics'
+    | '/buyer/dashboard/payments'
     | '/buyer/dashboard/insights'
     | '/buyer/dashboard/materials'
     | '/buyer/dashboard/notifications'
@@ -673,6 +703,7 @@ export interface FileRouteTypes {
     | '/admin/verification'
     | '/app/$'
     | '/app/analytics'
+    | '/app/payments'
     | '/app/insights'
     | '/app/materials'
     | '/app/notifications'
@@ -683,6 +714,7 @@ export interface FileRouteTypes {
     | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/fair-rank'
+    | '/supplier/payments'
     | '/supplier/onboarding'
     | '/supplier/products'
     | '/supplier/signin'
@@ -697,6 +729,7 @@ export interface FileRouteTypes {
     | '/app/rfqs/$id'
     | '/app/suppliers/$id'
     | '/buyer/dashboard/analytics'
+    | '/buyer/dashboard/payments'
     | '/buyer/dashboard/insights'
     | '/buyer/dashboard/materials'
     | '/buyer/dashboard/notifications'
@@ -737,6 +770,7 @@ export interface FileRouteTypes {
     | '/admin/verification'
     | '/app/$'
     | '/app/analytics'
+    | '/app/payments'
     | '/app/insights'
     | '/app/materials'
     | '/app/notifications'
@@ -748,6 +782,7 @@ export interface FileRouteTypes {
     | '/buyer/signup'
     | '/supplier/dashboard'
     | '/supplier/fair-rank'
+    | '/supplier/payments'
     | '/supplier/onboarding'
     | '/supplier/products'
     | '/supplier/signin'
@@ -762,6 +797,7 @@ export interface FileRouteTypes {
     | '/app/rfqs/$id'
     | '/app/suppliers/$id'
     | '/buyer/dashboard/analytics'
+    | '/buyer/dashboard/payments'
     | '/buyer/dashboard/insights'
     | '/buyer/dashboard/materials'
     | '/buyer/dashboard/notifications'
@@ -807,6 +843,7 @@ export interface RootRouteChildren {
   BuyerSignupRoute: typeof BuyerSignupRoute
   SupplierDashboardRoute: typeof SupplierDashboardRoute
   SupplierFairRankRoute: typeof SupplierFairRankRoute
+  SupplierPaymentsRoute: typeof SupplierPaymentsRoute
   SupplierOnboardingRoute: typeof SupplierOnboardingRoute
   SupplierProductsRoute: typeof SupplierProductsRoute
   SupplierSigninRoute: typeof SupplierSigninRoute
@@ -914,6 +951,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/payments': {
+      id: '/app/payments'
+      path: '/payments'
+      fullPath: '/app/payments'
+      preLoaderRoute: typeof AppPaymentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/insights': {
       id: '/app/insights'
       path: '/insights'
@@ -989,6 +1033,13 @@ declare module '@tanstack/react-router' {
       path: '/supplier/fair-rank'
       fullPath: '/supplier/fair-rank'
       preLoaderRoute: typeof SupplierFairRankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supplier/payments': {
+      id: '/supplier/payments'
+      path: '/supplier/payments'
+      fullPath: '/supplier/payments'
+      preLoaderRoute: typeof SupplierPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/supplier/onboarding': {
@@ -1115,6 +1166,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/buyer/dashboard/analytics'
       preLoaderRoute: typeof BuyerDashboardAnalyticsRouteImport
+      parentRoute: typeof BuyerDashboardRoute
+    }
+    '/buyer/dashboard/payments': {
+      id: '/buyer/dashboard/payments'
+      path: '/payments'
+      fullPath: '/buyer/dashboard/payments'
+      preLoaderRoute: typeof BuyerDashboardPaymentsRouteImport
       parentRoute: typeof BuyerDashboardRoute
     }
     '/buyer/dashboard/insights': {
@@ -1270,6 +1328,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppPaymentsRoute: typeof AppPaymentsRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppMaterialsRoute: typeof AppMaterialsRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -1290,6 +1349,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
+  AppPaymentsRoute: AppPaymentsRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppMaterialsRoute: AppMaterialsRoute,
   AppNotificationsRoute: AppNotificationsRoute,
@@ -1311,6 +1371,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface BuyerDashboardRouteChildren {
   BuyerDashboardAnalyticsRoute: typeof BuyerDashboardAnalyticsRoute
+  BuyerDashboardPaymentsRoute: typeof BuyerDashboardPaymentsRoute
   BuyerDashboardInsightsRoute: typeof BuyerDashboardInsightsRoute
   BuyerDashboardMaterialsRoute: typeof BuyerDashboardMaterialsRoute
   BuyerDashboardNotificationsRoute: typeof BuyerDashboardNotificationsRoute
@@ -1332,6 +1393,7 @@ interface BuyerDashboardRouteChildren {
 
 const BuyerDashboardRouteChildren: BuyerDashboardRouteChildren = {
   BuyerDashboardAnalyticsRoute: BuyerDashboardAnalyticsRoute,
+  BuyerDashboardPaymentsRoute: BuyerDashboardPaymentsRoute,
   BuyerDashboardInsightsRoute: BuyerDashboardInsightsRoute,
   BuyerDashboardMaterialsRoute: BuyerDashboardMaterialsRoute,
   BuyerDashboardNotificationsRoute: BuyerDashboardNotificationsRoute,
@@ -1373,6 +1435,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerSignupRoute: BuyerSignupRoute,
   SupplierDashboardRoute: SupplierDashboardRoute,
   SupplierFairRankRoute: SupplierFairRankRoute,
+  SupplierPaymentsRoute: SupplierPaymentsRoute,
   SupplierOnboardingRoute: SupplierOnboardingRoute,
   SupplierProductsRoute: SupplierProductsRoute,
   SupplierSigninRoute: SupplierSigninRoute,

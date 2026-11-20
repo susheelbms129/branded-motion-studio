@@ -26,6 +26,7 @@ import {
   orderError,
   type SupplierOrder,
 } from "@/lib/orders-api";
+import { getSupplierReorderInfo, type SupplierReorderInfo } from "@/lib/reorder-api";
 import { placeLine } from "@/lib/quote-form";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ function OrderContent({ poId }: { poId: string }) {
   const { summary, status: shell } = useSupplier();
   const orgId = summary?.id ?? null;
   const [data, setData] = useState<SupplierOrder | null>(null);
+  const [reorder, setReorder] = useState<SupplierReorderInfo | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"confirm" | "decline" | null>(null);
@@ -55,6 +57,8 @@ function OrderContent({ poId }: { poId: string }) {
     setStatus("loading");
     try {
       setData(await getSupplierOrder(orgId, poId));
+      // the reorder banner is a bonus: if it can't load, the order still opens
+      setReorder(await getSupplierReorderInfo(orgId, poId).catch(() => null));
       setStatus("ready");
     } catch (e) {
       setError(orderError(e));
@@ -134,6 +138,14 @@ function OrderContent({ poId }: { poId: string }) {
         ) : null}
       </header>
 
+      {reorder?.is_reorder ? (
+        <p className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-sm">
+          <span className="font-medium">A reorder{reorder.source_number ? ` of ${reorder.source_number}` : ""}</span>
+          {reorder.source_delivered_at ? `, delivered on ${day(reorder.source_delivered_at)}` : ""}, at the same prices you agreed last time.{" "}
+          {reorder.orders_together > 1 ? `${buyer.name} has ordered from you ${reorder.orders_together} times. ` : ""}
+          Confirm in one tap, or decline with a reason if your price has moved.
+        </p>
+      ) : null}
       {po.state === "new" && !can_respond ? (
         <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
           Waiting for an owner or procurement manager at your company to confirm this order.
@@ -185,7 +197,9 @@ function OrderContent({ poId }: { poId: string }) {
             <DialogTitle>{mode === "confirm" ? `Confirm ${po.number}?` : `Decline ${po.number}?`}</DialogTitle>
             <DialogDescription>
               {mode === "confirm"
-                ? "You agree to deliver on the price and terms of your quote."
+                ? reorder?.is_reorder
+                  ? "You agree to deliver at the same prices and terms as the earlier order."
+                  : "You agree to deliver on the price and terms of your quote."
                 : "The buyer is told and can award another supplier. Please give a short reason."}
             </DialogDescription>
           </DialogHeader>

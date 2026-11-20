@@ -17,6 +17,7 @@ import {
 import { formatDate, formatMoney } from "@/lib/format";
 import { AppLink, appPath } from "@/lib/nav";
 import { type BuyerOrderRow, listPurchaseOrders, ORDERS_KEY } from "@/lib/orders-api";
+import { ReorderSuggestions } from "@/features/reorder/ReorderSuggestions";
 import { asCurrency } from "./OrderParts";
 
 const TABS = ["all", "issued", "acknowledged", "partially_received", "received", "closed", "cancelled"] as const;
@@ -67,6 +68,7 @@ export function PurchaseOrdersReal({ orgId }: { orgId: string }) {
         crumbs={[{ label: "Purchase Orders" }]}
         description="Orders awarded from your RFQs. Suppliers confirm or decline each one, and you are told straight away."
       />
+      <ReorderSuggestions orgId={orgId} />
       <FilterTabs
         value={tab}
         onChange={setTab}

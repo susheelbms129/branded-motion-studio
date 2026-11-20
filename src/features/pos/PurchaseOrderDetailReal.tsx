@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PackageCheck, Printer, ReceiptText } from "lucide-react";
+import { PackageCheck, Printer, ReceiptText, Repeat } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, ErrorState, PageHeader, Panel, StatusBadge } from "@/components/vendora/kit";
 import { PaymentPanel } from "@/features/payments/PaymentPanel";
+import { ReorderDialog } from "@/features/reorder/ReorderDialog";
+import { getReorderContext, REORDER_KEY } from "@/lib/reorder-api";
 import { AppLink } from "@/lib/nav";
 import {
   cancelPurchaseOrder,
@@ -34,6 +36,8 @@ import { asCurrency, day, DetailList, OrderLines } from "./OrderParts";
 export function PurchaseOrderDetailReal({ id }: { id: string }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: [ORDERS_KEY, "detail", id], queryFn: () => getPurchaseOrder(id) });
+  const ctx = useQuery({ queryKey: [REORDER_KEY, "context", id], queryFn: () => getReorderContext(id) });
+  const [reorderOpen, setReorderOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -75,7 +79,7 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
         qc.invalidateQueries({ queryKey: [ORDERS_KEY] }),
         qc.invalidateQueries({ queryKey: [RFQ_KEY] }),
       ]);
-      toast.success("Order cancelled. The RFQ is open again.");
+      toast.success(po.rfq_id ? "Order cancelled. The RFQ is open again." : "Order cancelled.");
       setOpen(false);
       setReason("");
     } catch (e) {
@@ -123,6 +127,12 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
                 Cancel order
               </Button>
             ) : null}
+            {po.status === "received" || po.status === "closed" ? (
+              <Button className="no-print" onClick={() => setReorderOpen(true)}>
+                <Repeat />
+                Reorder
+              </Button>
+            ) : null}
             {q.data.can_receive ? (
               <Button className="no-print" onClick={() => setRecOpen(true)}>
                 <PackageCheck />
@@ -132,6 +142,15 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
           </>
         }
       />
+      {ctx.data?.reordered_from ? (
+        <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
+          A reorder of{" "}
+          <AppLink to={`purchase-orders/${ctx.data.reordered_from.id}`} className="font-medium underline">
+            {ctx.data.reordered_from.number}
+          </AppLink>{" "}
+          at the same prices.
+        </p>
+      ) : null}
       {po.status === "issued" ? (
         <p className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-sm">
           Waiting for {supplier.name} to confirm. You can cancel until they do.
@@ -152,7 +171,7 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
         <p className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm">
           {po.cancelled_by === "supplier" ? `${supplier.name} declined this order` : "You cancelled this order"}
           {po.cancelled_at ? ` on ${day(po.cancelled_at)}` : ""}.
-          {po.decline_reason ? ` Reason: ${po.decline_reason}` : ""} The RFQ is open again, so you can award another quote.
+          {po.decline_reason ? ` Reason: ${po.decline_reason}` : ""} {po.rfq_id ? " The RFQ is open again, so you can award another quote." : ""}
         </p>
       ) : null}
       <div className="grid gap-4 xl:grid-cols-3">
@@ -182,8 +201,23 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
               </Button>
             ) : null}
           </Panel>
+          {ctx.data && ctx.data.reorders.length > 0 ? (
+            <Panel title="Reorders of this order">
+              <ul className="space-y-2 text-sm">
+                {ctx.data.reorders.map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-3">
+                    <AppLink to={`purchase-orders/${r.id}`} className="font-medium tabular underline">
+                      {r.number}
+                    </AppLink>
+                    <StatusBadge kind="po" value={r.status} />
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          ) : null}
         </div>
       </div>
+      <ReorderDialog poId={po.id} open={reorderOpen} onOpenChange={setReorderOpen} />
       <Dialog open={recOpen} onOpenChange={(v) => !busy && setRecOpen(v)}>
         <DialogContent>
           <DialogHeader>

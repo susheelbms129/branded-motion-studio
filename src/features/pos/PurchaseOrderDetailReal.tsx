@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState, ErrorState, PageHeader, Panel, StatusBadge } from "@/components/vendora/kit";
 import { PaymentPanel } from "@/features/payments/PaymentPanel";
+import { GoodsReceivedPanel } from "@/features/receiving/GoodsReceivedPanel";
 import { ReorderDialog } from "@/features/reorder/ReorderDialog";
 import { getReorderContext, REORDER_KEY } from "@/lib/reorder-api";
 import { AppLink } from "@/lib/nav";
@@ -136,7 +137,7 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
             {q.data.can_receive ? (
               <Button className="no-print" onClick={() => setRecOpen(true)}>
                 <PackageCheck />
-                Record delivery
+                All received, OK
               </Button>
             ) : null}
           </>
@@ -177,6 +178,7 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
           <OrderLines lines={lines} amounts={amounts} currency={cur} />
+          <GoodsReceivedPanel side="buyer" poId={po.id} issuedOn={po.issued_at ? po.issued_at.slice(0, 10) : undefined} />
           <Panel title="Delivery">
             <p className="whitespace-pre-line text-sm text-muted-foreground">{po.delivery_address}</p>
             {po.notes ? <p className="mt-3 text-sm">Your note: {po.notes}</p> : null}
@@ -221,9 +223,9 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
       <Dialog open={recOpen} onOpenChange={(v) => !busy && setRecOpen(v)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Record delivery of {po.number}</DialogTitle>
+            <DialogTitle>Everything arrived in good order?</DialogTitle>
             <DialogDescription>
-              Confirm the goods arrived. Only you can record this, so the supplier's delivery record stays honest. It cannot be undone.
+              This records every item as fully received and accepted. If only part arrived, or anything was damaged, cancel and use "Record a delivery" under Goods received instead, so the quantities and photos are kept.
             </DialogDescription>
           </DialogHeader>
           <Label htmlFor="rec-date">Delivered on</Label>
@@ -238,7 +240,7 @@ export function PurchaseOrderDetailReal({ id }: { id: string }) {
               Not yet
             </Button>
             <Button onClick={() => void receive()} disabled={busy}>
-              {busy ? "Saving…" : "Record delivery"}
+              {busy ? "Saving…" : "Yes, all received"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,6 +2,8 @@ import { Check, Clock, FileUp, Loader2, ShieldAlert, ShieldCheck } from "lucide-
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { PageHero } from "@/components/supplier/PageHero";
+import { IfscCard } from "@/components/supplier/IfscCard";
+import { GST_GATE_IDLE, GstIdentityCard, type GstGate } from "@/components/supplier/GstIdentityCard";
 import { SupplierShell, useSupplier } from "@/components/supplier/SupplierShell";
 import { SharePassportPanel } from "./SharePassportPanel";
 import { TrustPassport, TYPE_TITLE, fmtDate } from "@/components/trust/TrustPassport";
@@ -182,6 +184,7 @@ function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckTyp
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [gate, setGate] = useState<GstGate>(GST_GATE_IDLE);
   const set = (k: keyof typeof v) => (e: { target: { value: string } }) => setV((s) => ({ ...s, [k]: e.target.value }));
 
   const gst = useMemo(() => (type === "registration" ? checkGstin(v.reference, orgState) : null), [type, v.reference, orgState]);
@@ -192,12 +195,15 @@ function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckTyp
     setErr("");
     if (!file) return setErr("Please choose the document to upload.");
     if (type === "registration" && gstMsg) return setErr(gstMsg || "Enter your GST number.");
+    if (type === "registration" && gate.checking) return setErr("Please wait a moment while we look up your GST number.");
+    if (type === "registration" && gate.blockReason) return setErr(gate.blockReason);
+    if (type === "registration" && gate.needsConfirm && !gate.confirmed) return setErr("Please confirm that this GST registration belongs to your business.");
     if (type === "udyam" && udyamProblem(v.reference)) return setErr(udyamProblem(v.reference));
     if (type === "udyam" && (!udSize || !udAct)) return setErr("Choose your enterprise size and what you do, exactly as on your Udyam certificate.");
     setBusy(true);
     try {
       await submitProof({
-        orgId, type, file, ...v, label: type === "certificate" || type === "bank" ? v.label : "",
+        orgId, type, file, ...v, confirmedIdentity: type === "registration" && gate.needsConfirm && gate.confirmed, label: type === "certificate" || type === "bank" ? v.label : "",
         ...(type === "udyam" ? { udyamSize: udSize as UdyamSize, udyamActivity: udAct as UdyamActivity } : {}),
       });
       await onDone();
@@ -214,12 +220,13 @@ function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckTyp
         <label className="block text-sm font-medium">GST number
           <input className={cn(fieldClass, "mt-1 uppercase")} value={v.reference} onChange={set("reference")} maxLength={15} placeholder="29ABCDE1234F1Z5" autoComplete="off" />
           {gstMsg ? <span className="mt-1 block text-sm text-destructive">{gstMsg}</span> : null}
-          {gst?.checksumOk && gst.stateName ? (
+          {gst?.checksumOk && gst.stateName && !gate.hasRecord ? (
             <span className="mt-1 flex items-center gap-1 text-sm text-emerald-700"><Check className="h-4 w-4" /> Valid number · registered in {gst.stateName}
               {gst.stateMatches === false ? <span className="ml-1 text-amber-700">(your profile says {orgState}; a reviewer will confirm)</span> : null}</span>
           ) : null}
         </label>
       ) : null}
+      {type === "registration" ? <GstIdentityCard orgId={orgId} gstin={v.reference} onGate={setGate} /> : null}
       {type === "address" ? (
         <label className="block text-sm font-medium">Full business address
           <textarea className={cn(fieldClass, "mt-1 min-h-20")} value={v.reference} onChange={set("reference")} maxLength={300} />
@@ -235,6 +242,7 @@ function ProofForm({ type, orgId, orgState, onDone, onCancel }: { type: CheckTyp
           </label>
         </div>
       ) : null}
+      {type === "bank" ? <IfscCard ifsc={v.reference} /> : null}
       {type === "udyam" ? (
         <div className="space-y-3">
           <label className="block text-sm font-medium">Udyam registration number

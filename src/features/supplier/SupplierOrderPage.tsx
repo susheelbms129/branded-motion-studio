@@ -16,6 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PaymentPanel } from "@/features/payments/PaymentPanel";
+import { GoodsReceivedPanel } from "@/features/receiving/GoodsReceivedPanel";
 import { asCurrency, day, DetailList, OrderLines } from "@/features/pos/OrderParts";
 import {
   confirmPurchaseOrder,
@@ -169,6 +170,7 @@ function OrderContent({ poId }: { poId: string }) {
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
           <OrderLines lines={lines} amounts={amounts} currency={cur} />
+          {po.state === "confirmed" ? <GoodsReceivedPanel side="supplier" poId={po.id} /> : null}
           <section className={cn(card, "p-5")}>
             <h2 className="text-sm font-semibold">Deliver to</h2>
             <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{po.delivery_address}</p>

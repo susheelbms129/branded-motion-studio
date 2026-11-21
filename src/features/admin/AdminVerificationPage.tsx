@@ -136,6 +136,7 @@ function Row({ it, onChanged }: { it: QueueItem; onChanged: () => Promise<void> 
       {it.type === "registration" ? (
         <LiveCheck
           lookup={it.lookup ?? null}
+          confirmedAt={it.supplier_confirmed_at ?? null}
           canRun={it.status === "submitted" || it.status === "in_review"}
           company={it.org_name}
           onRun={() => run(async () => { await requestGstLookup(it.id); })}
@@ -196,7 +197,7 @@ const MATCH_TEXT: Record<string, MatchText> = {
 };
 
 /** The government record, fetched live. Absent or unavailable is fine: the reviewer checks by hand as before. */
-function LiveCheck({ lookup, canRun, company, onRun, busy }: { lookup: GstLookup | null; canRun: boolean; company: string; onRun: () => void; busy: boolean }) {
+function LiveCheck({ lookup, confirmedAt, canRun, company, onRun, busy }: { lookup: GstLookup | null; confirmedAt: string | null; canRun: boolean; company: string; onRun: () => void; busy: boolean }) {
   const final = lookup?.outcome === "ok" || lookup?.outcome === "not_found";
   const runBtn = canRun && !final ? (
     <button type="button" disabled={busy} onClick={onRun} className="text-sm font-semibold text-primary hover:underline">
@@ -229,6 +230,11 @@ function LiveCheck({ lookup, canRun, company, onRun, busy }: { lookup: GstLookup
       <Flag ok={m.ok} warn={m.warn} text={`${lookup.legal_name || lookup.trade_name || "The registered name"} ${m.t}${m.ok ? "" : ` (${company})`}`} />
       {lookup.trade_name && lookup.legal_name ? <li className="text-muted-foreground">Trade name: {lookup.trade_name}</li> : null}
       {lookup.registered_on ? <li className="text-muted-foreground">Registered on {fmtDate(lookup.registered_on)}{lookup.constitution ? ` · ${lookup.constitution}` : ""}</li> : null}
+      {lookup.taxpayer_type ? <li className="text-muted-foreground">GST type: {lookup.taxpayer_type}</li> : null}
+      {lookup.address ? <li className="text-muted-foreground">Registered address: {lookup.address}</li> : null}
+      {lookup.nature_of_business ? <li className="text-muted-foreground">Nature of business: {lookup.nature_of_business}</li> : null}
+      {(lookup.block_status ?? "").toLowerCase() === "blocked" ? <Flag ok={false} warn text="The GST portal marks this registration as blocked for e-way bills." /> : null}
+      <Flag ok={!!confirmedAt} warn={!confirmedAt} text={confirmedAt ? `Supplier confirmed "this is my business" on ${fmtDate(confirmedAt)}` : "Supplier did not confirm the live record (the form was not shown it)"} />
     </ul>
   );
 }

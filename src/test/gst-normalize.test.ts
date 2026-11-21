@@ -9,6 +9,7 @@ describe("GST provider response normalizer", () => {
     expect(normalizeTaxpayer(rec)).toEqual({
       legal_name: "KAVERI INDUSTRIES PRIVATE LIMITED", trade_name: "Kaveri Industries", gst_status: "Active",
       registered_on: "2017-07-01", cancelled_on: null, constitution: "Private Limited Company",
+      state: "Karnataka", // worked out from the first two digits of the GST number
     });
   });
   it("finds the record inside different provider wrappers", () => {
@@ -46,5 +47,22 @@ describe("GST provider response normalizer", () => {
   it("escapes the GST number inside URL and JSON templates", () => {
     expect(fillTemplate("https://x/api?g={{gstin}}", "A&b=c", "url")).toBe("https://x/api?g=A%26b%3Dc");
     expect(JSON.parse(fillTemplate('{"gstin":"{{gstin}}"}', 'a"b', "json"))).toEqual({ gstin: 'a"b' });
+  });
+
+  it("reads the full gstinapi.in identity: type, address built from parts, city, state, pincode, block status", () => {
+    const body = { success: true, data: { gstin: "33AAACC1206D1ZN", legal_name: "CENTRAL WAREHOUSING CORPORATION", trade_name: "CENTRAL WAREHOUSING CORPORATION", status: "Active", taxpayer_type: "Regular", registration_date: "2017-07-01", state_code: "33", address: "Registered business address", city: "Chennai", pincode: "600015", nature_of_business: null, block_status: "Unblocked",
+      address_details: { building_number: "No.4", building_name: "Thiruvalar Illam", floor: null, street: "North Avenue", locality: "Srinagar Colony", district: null, city: null, state: null, landmark: null, pincode: "600015" } } };
+    expect(normalizeTaxpayer(body, "33AAACC1206D1ZN")).toMatchObject({
+      taxpayer_type: "Regular", city: "Chennai", state: "Tamil Nadu", pincode: "600015", block_status: "Unblocked",
+      address: "No.4, Thiruvalar Illam, North Avenue, Srinagar Colony, Chennai, Tamil Nadu 600015",
+    });
+  });
+  it("uses a real flat address, never the placeholder", () => {
+    expect(normalizeTaxpayer({ data: { legal_name: "X", address: "Shop 12, Business Park, Mumbai", pincode: "400001", state_code: "27" } })?.address).toBe("Shop 12, Business Park, Mumbai");
+    expect(normalizeTaxpayer({ data: { legal_name: "X", address: "Registered business address", city: "Pune" } })?.address).toBeUndefined();
+  });
+  it("reads the raw GSTN shape (pradr, nba list)", () => {
+    expect(normalizeTaxpayer({ lgnm: "RAW", sts: "Active", pradr: { adr: "1 MG Road, Bengaluru, Karnataka, 560001" }, nba: ["Retail Business", "Supplier of Services"] }, "29AABCT1332L1ZN"))
+      .toMatchObject({ address: "1 MG Road, Bengaluru, Karnataka, 560001", nature_of_business: "Retail Business, Supplier of Services" });
   });
 });

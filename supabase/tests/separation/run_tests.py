@@ -192,7 +192,7 @@ r = run([], """select p.proname from pg_proc p join pg_namespace n on n.oid=p.pr
 check("every security-definer function pins its search_path", r.stdout.strip() == "", r.stdout)
 r = run([], """select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
              where n.nspname='public' and p.prokind='f' and p.proname like '\\_%' and has_function_privilege('authenticated', p.oid, 'execute')
-               and p.proname not in ('_is_buyer_org','_can_manage_proofs')""")
+               and p.proname not in ('_is_buyer_org','_can_manage_proofs','_grn_can_upload','_grn_can_read')""")
 check("private helper functions (named _something) are not callable from the browser", r.stdout.strip() == "", r.stdout)
 
 print(f"\n{passed} passed, {failed} failed")

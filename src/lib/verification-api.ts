@@ -11,6 +11,20 @@ export type UdyamSize = "micro" | "small" | "medium";
 export type UdyamActivity = "manufacturing" | "services" | "trade";
 export type CheckStatus = "draft" | "submitted" | "in_review" | "verified" | "rejected" | "superseded" | "expired";
 
+/**
+ * A random file id. crypto.randomUUID only exists on https or localhost, so on a LAN address like http://192.168.1.33:8081
+ * it is missing ("crypto.randomUUID is not a function"). getRandomValues works everywhere, so fall back to it.
+ */
+function fileId(): string {
+  const c = globalThis.crypto;
+  if (typeof c?.randomUUID === "function") return c.randomUUID();
+  const b = c.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6]! & 0x0f) | 0x40;
+  b[8] = (b[8]! & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 export const BUCKET = "verification-docs";
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png"];
@@ -62,9 +76,30 @@ export interface GstLookup {
   registered_on?: string | null;
   cancelled_on?: string | null;
   constitution?: string | null;
+  taxpayer_type?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  nature_of_business?: string | null;
+  block_status?: string | null;
   name_match?: "match" | "partial" | "mismatch" | "unknown";
   fetched_at?: string;
 }
+
+/** The government record shown to the supplier while they type their GST number (GST Instant Identity). */
+export interface GstPreview extends GstLookup {
+  gstin: string;
+  /** The company name the supplier gave Vendora, so the form can say "matches" or "does not match". */
+  your_name?: string | null;
+  state_matches?: boolean | null;
+  /** Another Vendora company already has this GST number in review or verified. */
+  already_claimed?: boolean;
+}
+export type GstPreviewResult =
+  | { status: "ok"; data: GstPreview }
+  | { status: "not_found" }
+  | { status: "unavailable" | "not_configured" | "too_soon" | "daily_limit" | "not_allowed" };
 
 /** Reviewer operations: what is stuck, what failed, whether the daily expiry job is alive. */
 export interface OpsStats {
@@ -102,6 +137,8 @@ export interface QueueItem {
   review_note: string | null;
   duplicate_gstin: boolean;
   lookup?: GstLookup | null;
+  /** When the supplier confirmed "this is my business" against the live record. */
+  supplier_confirmed_at?: string | null;
 }
 
 /** Turns "ERROR: invalid_gstin: the GST number has a typo" into just the sentence after the code. */
@@ -150,11 +187,13 @@ export interface NewProof {
   expiresOn?: string;
   udyamSize?: UdyamSize;
   udyamActivity?: UdyamActivity;
+  /** GST proofs: the supplier saw the live government record and confirmed it is their business. */
+  confirmedIdentity?: boolean;
   file: File;
 }
 
 /** Create the proof, upload the file into the private bucket, attach it, submit. Each step is checked by the database. */
-export async function submitProof(p: NewProof): Promise<void> {
+export async function submitProof(p: NewProof): Promise<string> {
   if (!ALLOWED_MIME.includes(p.file.type)) throw new Error("Please upload a PDF, JPG or PNG file.");
   if (p.file.size > MAX_FILE_BYTES) throw new Error("The file is larger than 10 MB. Please upload a smaller one.");
   if (p.file.size === 0) throw new Error("The file is empty.");
@@ -170,15 +209,48 @@ export async function submitProof(p: NewProof): Promise<void> {
         });
   if (error || !id) throw new Error(friendly(error, "We couldn't start this proof. Please check the details."));
   const ext = p.file.type === "application/pdf" ? "pdf" : p.file.type === "image/png" ? "png" : "jpg";
-  const path = `${p.orgId}/${id}/${crypto.randomUUID()}.${ext}`;
+  const path = `${p.orgId}/${id}/${fileId()}.${ext}`;
   const up = await sb.storage.from(BUCKET).upload(path, p.file, { contentType: p.file.type, upsert: false });
   if (up.error) throw new Error("The upload didn't go through. Check your connection and try again.");
   const att = await sb.rpc("attach_document", { p_check: id, p_path: path, p_name: p.file.name });
   if (att.error) throw new Error(friendly(att.error, "We couldn't attach the file."));
   const sub = await sb.rpc("submit_check", { p_check: id });
   if (sub.error) throw new Error(friendly(sub.error, "We couldn't submit this proof."));
-  // The live government check runs in the background. It can never delay or fail the submission.
-  if (p.type === "registration") void requestGstLookup(id as string);
+  // The confirmation and the live government check run in the background. They can never delay or fail the submission.
+  if (p.type === "registration") {
+    void (async () => {
+      if (p.confirmedIdentity) await confirmGstIdentity(id as string);
+      await requestGstLookup(id as string);
+    })();
+  }
+  return id as string;
+}
+
+/** Records that the supplier saw the government record and said "this is my business". Never throws. */
+export async function confirmGstIdentity(checkId: string): Promise<void> {
+  try {
+    await getSupabase().rpc("confirm_gst_identity", { p_check: checkId });
+  } catch {
+    /* the reviewer still checks the proof by hand */
+  }
+}
+
+/**
+ * GST Instant Identity: asks the gst-preview Edge Function for the government record of a GST number while the supplier
+ * is still filling in the form. Never throws: if it is not deployed or the provider is down, the form just shows no record.
+ */
+export async function previewGst(orgId: string, gstin: string): Promise<GstPreviewResult> {
+  try {
+    const { data, error } = await getSupabase().functions.invoke("gst-preview", { body: { org_id: orgId, gstin: gstin.trim().toUpperCase() } });
+    if (error) return { status: "unavailable" };
+    const r = data as { status?: string; data?: GstPreview } | null;
+    if (r?.status === "ok" && r.data) return { status: "ok", data: r.data };
+    if (r?.status === "not_found") return { status: "not_found" };
+    if (r?.status === "too_soon" || r?.status === "daily_limit" || r?.status === "not_configured" || r?.status === "not_allowed") return { status: r.status };
+    return { status: "unavailable" };
+  } catch {
+    return { status: "unavailable" };
+  }
 }
 
 /**
